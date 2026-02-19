@@ -5,24 +5,18 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* BACKGROUND: Keep it clean (Slate 50) so the neon pops */
   --background: 210 40% 98%;
   --foreground: 222.2 84% 4.9%;
 
-  /* PRIMARY: The "Royal Blue" from the middle of the arrow */
-  /* This ensures text is readable (Cyan is too light for text) */
   --primary: 221 83% 53%;
   --primary-foreground: 210 40% 98%;
 
-  /* SECONDARY: The "Neon Purple" from the Diploma */
-  --secondary: 290 84% 60%; /* Adjusted to match your logo's purple */
+  --secondary: 290 84% 60%;
   --secondary-foreground: 210 40% 98%;
 
-  /* ACCENT: The "Electric Cyan" from the Arrow Tip */
-  --accent: 190 90% 50%; /* Bright Cyan */
+  --accent: 190 90% 50%;
   --accent-foreground: 222.2 47.4% 11.2%;
 
-  /* NEUTRALS (Slate - The safe choice) */
   --muted: 210 40% 96.1%;
   --muted-foreground: 215.4 16.3% 46.9%;
   --border: 214.3 31.8% 91.4%;
@@ -32,7 +26,6 @@
 }
 
 .dark {
-  /* Dark mode background - Deep Navy/Black like the logo background */
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
 
@@ -51,7 +44,6 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
 
-  /* Custom Gradient for your Brand */
   --image-gradient: linear-gradient(
     135deg,
     hsl(190 90% 50%) 0%,
@@ -64,14 +56,12 @@
   --radius-sm: calc(var(--radius) - 4px);
 }
 
-/* Utility to make text look like your logo */
 .text-brand-gradient {
   background: var(--image-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Utility for buttons to match the logo */
 .bg-brand-gradient {
   background: var(--image-gradient);
   color: white;

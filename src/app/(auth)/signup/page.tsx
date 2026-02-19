@@ -144,7 +144,6 @@ export default function SignUpPage() {
     setCvFile(e.target.files?.[0] ?? null);
   }
 
-  // STEP 0: Role selection
   if (step === 0 || !role) {
     const loginHref = role ? `/login?role=${role}` : "/login";
 
@@ -162,7 +161,7 @@ export default function SignUpPage() {
             type="button"
             onClick={() => selectRole("student")}
             className="group w-full flex items-start gap-4 p-5 border rounded-2xl text-left transition-all
-                       hover:shadow-sm hover:-translate-y-[1px]
+                       hover:shadow-sm hover:-translate-y-px
                        hover:border-blue-500 hover:bg-blue-50/50"
           >
             <div className="p-3 rounded-xl bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
@@ -180,7 +179,7 @@ export default function SignUpPage() {
             type="button"
             onClick={() => selectRole("employer")}
             className="group w-full flex items-start gap-4 p-5 border rounded-2xl text-left transition-all
-                       hover:shadow-sm hover:-translate-y-[1px]
+                       hover:shadow-sm hover:-translate-y-px
                        hover:border-purple-500 hover:bg-purple-50/50"
           >
             <div className="p-3 rounded-xl bg-purple-100 text-purple-600 transition-colors group-hover:bg-purple-600 group-hover:text-white">
@@ -210,7 +209,6 @@ export default function SignUpPage() {
     );
   }
 
-  // STEP 1/2 wrapper
   const loginHref = role ? `/login?role=${role}` : "/login";
 
   return (
@@ -238,7 +236,6 @@ export default function SignUpPage() {
       </CardHeader>
 
       <CardContent className="px-4 sm:px-8 pb-8 space-y-6">
-        {/* STEP 1 */}
         {step === 1 && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -290,7 +287,6 @@ export default function SignUpPage() {
               </p>
             </div>
 
-            {/* FIXED BUTTON ROW (no overflow) */}
             <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">
               <Button variant="outline" onClick={goBack}>
                 Back
@@ -316,10 +312,8 @@ export default function SignUpPage() {
           </div>
         )}
 
-        {/* STEP 2 */}
         {step === 2 && (
           <div className="space-y-5">
-            {/* STUDENT */}
             {!isEmployer && (
               <>
                 <div className="space-y-2">
@@ -397,7 +391,6 @@ export default function SignUpPage() {
               </>
             )}
 
-            {/* EMPLOYER */}
             {isEmployer && (
               <>
                 <div className="grid gap-2">
@@ -469,7 +462,6 @@ export default function SignUpPage() {
               </>
             )}
 
-            {/* FIXED BUTTON ROW */}
             <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
               <Button variant="outline" onClick={goBack}>
                 Back

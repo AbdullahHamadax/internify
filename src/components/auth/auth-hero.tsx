@@ -90,7 +90,7 @@ export function AuthHero() {
       <h1 className="mb-6 text-5xl font-extrabold leading-tight drop-shadow-sm">
         {content.title} <br />
         <span
-          className={`bg-gradient-to-r bg-clip-text text-transparent ${content.accentGradient}`}
+          className={`bg-linear-to-r bg-clip-text text-transparent ${content.accentGradient}`}
         >
           {content.accent}
         </span>
