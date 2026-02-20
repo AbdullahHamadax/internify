@@ -1,5 +1,7 @@
+// app/(auth)/layout.tsx
 import { AuthHero } from "@/components/auth/auth-hero";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Loader2 } from "lucide-react";
+import { Suspense } from "react";
 
 export default function AuthLayout({
   children,
@@ -27,7 +29,17 @@ export default function AuthLayout({
       </div>
 
       <div className="flex items-center justify-center bg-background p-6 lg:p-12">
-        <div className="w-full max-w-110">{children}</div>
+        <div className="w-full max-w-110">
+          <Suspense
+            fallback={
+              <div className="flex h-100 items-center justify-center">
+                <Loader2 className="animate-spin text-muted-foreground" />
+              </div>
+            }
+          >
+            {children}
+          </Suspense>{" "}
+        </div>
       </div>
     </div>
   );
