@@ -605,9 +605,11 @@ export default function SignUpPage() {
                   placeholder="John"
                   {...step1Form.register("firstName")}
                 />
-                <p className="text-xs text-red-500 min-h-4">
-                  {step1Form.formState.errors.firstName?.message ?? ""}
-                </p>
+                {step1Form.formState.errors.firstName && (
+                  <p className="text-xs text-red-500">
+                    {step1Form.formState.errors.firstName.message}
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-2">
@@ -617,9 +619,11 @@ export default function SignUpPage() {
                   placeholder="Doe"
                   {...step1Form.register("lastName")}
                 />
-                <p className="text-xs text-red-500 min-h-4">
-                  {step1Form.formState.errors.lastName?.message ?? ""}
-                </p>
+                {step1Form.formState.errors.lastName && (
+                  <p className="text-xs text-red-500">
+                    {step1Form.formState.errors.lastName.message}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -763,8 +767,8 @@ export default function SignUpPage() {
                   >
                     <Upload className="h-5 w-5" />
                   </div>
-                  <div className="flex-1">
-                    <div className="font-medium">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">
                       {cvFile ? cvFile.name : "Click to upload your CV"}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
@@ -777,7 +781,7 @@ export default function SignUpPage() {
 
             <div
               id="clerk-captcha"
-              className="clerk-captcha-slot"
+              className="clerk-captcha-slot [&:empty]:hidden"
               data-cl-theme="auto"
               data-cl-size="flexible"
             />
@@ -918,7 +922,7 @@ export default function SignUpPage() {
 
             <div
               id="clerk-captcha"
-              className="clerk-captcha-slot"
+              className="clerk-captcha-slot [&:empty]:hidden"
               data-cl-theme="auto"
               data-cl-size="flexible"
             />
