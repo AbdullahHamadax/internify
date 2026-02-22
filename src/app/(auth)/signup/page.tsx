@@ -748,7 +748,12 @@ export default function SignUpPage() {
               </button>
             </div>
 
-            <div id="clerk-captcha" className="min-h-6" />
+            <div
+              id="clerk-captcha"
+              className="clerk-captcha-slot"
+              data-cl-theme="auto"
+              data-cl-size="flexible"
+            />
 
             <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
               <Button
@@ -884,7 +889,12 @@ export default function SignUpPage() {
               )}
             </div>
 
-            <div id="clerk-captcha" className="min-h-6" />
+            <div
+              id="clerk-captcha"
+              className="clerk-captcha-slot"
+              data-cl-theme="auto"
+              data-cl-size="flexible"
+            />
 
             <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
               <Button

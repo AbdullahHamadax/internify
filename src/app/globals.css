@@ -73,3 +73,12 @@ input[type="submit"],
 input[type="reset"] {
   cursor: pointer;
 }
+
+.clerk-captcha-slot {
+  display: flex;
+  justify-content: center;
+}
+
+.clerk-captcha-slot:empty {
+  display: none;
+}
