@@ -4,11 +4,12 @@
 import { Briefcase, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSignIn } from "@clerk/nextjs";
+import { useClerk, useSignIn } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
+import { useConvex } from "convex/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -26,6 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PasswordInput } from "@/components/ui/password-input";
+import { api } from "../../../../convex/_generated/api";
 
 const loginSchema = z.object({
   email: z
@@ -42,6 +44,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { isLoaded, setActive, signIn } = useSignIn();
+  const { signOut } = useClerk();
+  const convex = useConvex();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -60,6 +64,21 @@ export default function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
 
+  // Catches errors passed in the URL after a forced sign-out
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      setSubmitError(errorParam);
+      
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("error");
+      const queryString = params.toString();
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+        scroll: false,
+      });
+    }
+  }, [searchParams, pathname, router]);
+
   function handleRoleChange(value: string) {
     if (value !== "student" && value !== "employer") return;
 
@@ -71,6 +90,53 @@ export default function LoginPage() {
     });
   }
 
+  async function sleep(ms: number) {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // Returns `null` after 8 tries instead of throwing an error.
+  async function getSignedInAccountRoleWithRetry() {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      try {
+        const currentUser = await convex.query(api.users.currentUser, {});
+        
+        if (currentUser?.user?.role) {
+          return currentUser.user.role;
+        }
+        
+        throw new Error("Unauthorized - Waiting for token sync");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error ?? "");
+        if (!message.includes("Unauthorized")) {
+          throw error; // If it's a real database crash, throw it immediately
+        }
+      }
+      await sleep(250);
+    }
+
+    // If we tried 8 times and still got nothing, calmly return null.
+    return null;
+  }
+
+  function handleRateLimitError(error: { status: number; retryAfter?: number }) {
+    if (error.status !== 429) {
+      return false;
+    }
+
+    const retryAfter = Math.max(1, Math.ceil(error.retryAfter ?? 10));
+    setSubmitError(
+      `Too many requests. Please wait ${retryAfter} seconds and try again.`,
+    );
+
+    setTimeout(() => {
+      setSubmitError((current) =>
+        current?.toLowerCase().includes("too many requests") ? null : current,
+      );
+    }, retryAfter * 1000);
+
+    return true;
+  }
+
   async function onSubmit(data: LoginFormData) {
     if (!isLoaded || !signIn) {
       setSubmitError("Authentication is still loading. Please try again.");
@@ -79,6 +145,9 @@ export default function LoginPage() {
 
     setSubmitError(null);
     setIsSubmitting(true);
+
+    // TRACKER: Did they actually make it past the Clerk password check?
+    let sessionActivated = false;
 
     try {
       const signInAttempt = await signIn.create({
@@ -96,14 +165,61 @@ export default function LoginPage() {
         return;
       }
 
-      await setActive?.({ session: signInAttempt.createdSessionId });
+      // 1. Clerk let them in
+      await setActive?.({
+        session: signInAttempt.createdSessionId,
+        navigate: async () => {},
+      });
+
+      // 2. They are officially inside Clerk!
+      sessionActivated = true;
+
+      // 3. Ask Convex for the role
+      const actualRole = await getSignedInAccountRoleWithRetry();
+
+      // 4. No role found? Kick them back to login.
+      if (!actualRole) {
+        const errorMsg = encodeURIComponent("This account is missing a profile role. Please complete registration first.");
+        await signOut({ redirectUrl: `${pathname}?role=${role}&error=${errorMsg}` });
+        return;
+      }
+
+      // 5. Wrong tab? Auto-switch them and kick them back to login.
+      if (actualRole !== role) {
+        const errorMsg = encodeURIComponent(`This account is registered as a ${actualRole}. Please sign in using the correct tab.`);
+        await signOut({ redirectUrl: `${pathname}?role=${actualRole}&error=${errorMsg}` });
+        return;
+      }
+
+      // 6. Success!
       router.push("/");
     } catch (error) {
+      // If the app crashes HERE, ONLY kick them out if they successfully passed Clerk.
+      // This stops normal "Wrong Password" errors from accidentally calling signOut().
+      if (sessionActivated) {
+        try {
+          await signOut();
+        } catch (e) {
+          console.error("Emergency sign out failed", e);
+        }
+      }
+
       if (isClerkAPIResponseError(error)) {
+        if (handleRateLimitError(error)) {
+          return;
+        }
+
         setSubmitError(
           error.errors[0]?.longMessage ??
             error.errors[0]?.message ??
             "Invalid email or password.",
+        );
+      } else if (
+        error instanceof Error &&
+        error.message.includes("Unauthorized")
+      ) {
+        setSubmitError(
+          "Signed in, but role validation failed. Check Clerk JWT template name 'convex' with audience 'convex'.",
         );
       } else {
         setSubmitError("Something went wrong while signing in.");
