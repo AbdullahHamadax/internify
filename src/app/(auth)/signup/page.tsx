@@ -233,6 +233,25 @@ export default function SignUpPage() {
     setStep(2);
   }
 
+  function handleRateLimitError(error: { status: number; retryAfter?: number }) {
+    if (error.status !== 429) {
+      return false;
+    }
+
+    const retryAfter = Math.max(1, Math.ceil(error.retryAfter ?? 10));
+    setSubmitError(
+      `Too many requests. Please wait ${retryAfter} seconds and try again.`,
+    );
+
+    setTimeout(() => {
+      setSubmitError((current) =>
+        current?.toLowerCase().includes("too many requests") ? null : current,
+      );
+    }, retryAfter * 1000);
+
+    return true;
+  }
+
   async function sleep(ms: number) {
     await new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -335,6 +354,10 @@ export default function SignUpPage() {
       setStep(3);
     } catch (error) {
       if (isClerkAPIResponseError(error)) {
+        if (handleRateLimitError(error)) {
+          return;
+        }
+
         setSubmitError(
           error.errors[0]?.longMessage ??
             error.errors[0]?.message ??
@@ -421,6 +444,10 @@ export default function SignUpPage() {
       router.push("/");
     } catch (error) {
       if (isClerkAPIResponseError(error)) {
+        if (handleRateLimitError(error)) {
+          return;
+        }
+
         setSubmitError(
           error.errors[0]?.longMessage ??
             error.errors[0]?.message ??
