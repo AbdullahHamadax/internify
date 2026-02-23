@@ -63,6 +63,26 @@ export default function Home() {
     );
   }
 
+  // ── Redirect OAuth users who haven't completed their profile ──
+  // currentUser is `undefined` while loading, `null` after Convex confirms no profile
+  if (currentUser === null) {
+    router.replace("/complete-profile");
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  // ── Still loading the Convex profile ──
+  if (currentUser === undefined) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   // ── Signed-in view ──
   const firstName =
     user?.firstName || user?.fullName || user?.username || "there";
