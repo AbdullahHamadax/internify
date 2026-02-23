@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { GraduationCap, LogIn, LogOut, UserPlus } from "lucide-react";
@@ -13,6 +14,17 @@ export default function Home() {
   const { signOut } = useClerk();
   const { isLoaded, isSignedIn, user } = useUser();
   const currentUser = useQuery(api.users.currentUser);
+
+  // Redirect OAuth users who haven't completed their profile
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) {
+      return;
+    }
+
+    if (currentUser === null) {
+      router.replace("/complete-profile");
+    }
+  }, [isLoaded, isSignedIn, currentUser, router]);
 
   // ── Loading state ──
   if (!isLoaded) {
@@ -63,19 +75,8 @@ export default function Home() {
     );
   }
 
-  // ── Redirect OAuth users who haven't completed their profile ──
-  // currentUser is `undefined` while loading, `null` after Convex confirms no profile
-  if (currentUser === null) {
-    router.replace("/complete-profile");
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  // ── Still loading the Convex profile ──
-  if (currentUser === undefined) {
+  // ── Still loading the Convex profile, or waiting for redirect ──
+  if (currentUser === undefined || currentUser === null) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
