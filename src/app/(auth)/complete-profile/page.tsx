@@ -3,7 +3,7 @@
 
 import { Building2, GraduationCap, Upload, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@clerk/nextjs";
@@ -115,11 +115,20 @@ export default function CompleteProfilePage() {
     defaultValues: { companyName: "", position: "" },
   });
 
-  // ── Redirect if user already has a profile ──
-  if (currentUser?.user?.role) {
-    router.replace("/");
-    return null;
-  }
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (currentUser?.user?.role) {
+      router.replace("/");
+    }
+  }, [isLoaded, user, currentUser, router]);
 
   // ── Loading ──
   if (!isLoaded) {
@@ -130,9 +139,8 @@ export default function CompleteProfilePage() {
     );
   }
 
-  // ── If not authenticated, redirect to login ──
-  if (!user) {
-    router.replace("/login");
+  // Keep content hidden while the redirect effect resolves auth/profile state.
+  if (!user || currentUser?.user?.role) {
     return null;
   }
 
