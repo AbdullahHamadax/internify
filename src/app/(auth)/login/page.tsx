@@ -1,4 +1,3 @@
-// app/(auth)/login/page.tsx
 "use client";
 
 import { Briefcase, GraduationCap } from "lucide-react";
@@ -291,7 +290,7 @@ export default function LoginPage() {
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
                 <Link
-                  href="#"
+                  href={`/forgot-password?role=${role}`}
                   className="text-sm text-muted-foreground hover:text-primary hover:underline"
                 >
                   Forgot password?
