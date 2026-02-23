@@ -555,18 +555,56 @@ export default function SignUpPage() {
   return (
     <Card className="rounded-3xl border shadow-sm">
       <CardHeader className="px-4 sm:px-8 pt-8">
-        <div className="flex items-center justify-between text-sm">
-          <Badge variant="secondary" className="capitalize font-normal text-sm">
-            {role}
-          </Badge>
-          <span className="text-muted-foreground">
-            Step {step} of {totalSteps}
+        {/* ── Role label ── */}
+        <div className="flex justify-center mb-1">
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+            isEmployer
+              ? "bg-purple-100 text-purple-700"
+              : "bg-blue-100 text-blue-700"
+          }`}>
+            {isEmployer ? <Building2 className="h-3 w-3" /> : <User className="h-3 w-3" />}
+            {role} Account
           </span>
         </div>
 
-        <Progress value={progressValue} className="h-2" />
+        {/* ── Step indicator ── */}
+        <div className="flex items-center justify-center gap-0 w-full max-w-xs mx-auto">
+          {Array.from({ length: totalSteps }, (_, i) => {
+            const stepNum = i + 1;
+            const isActive = step >= stepNum;
+            const isCurrent = step === stepNum;
+            const activeColor = isEmployer ? "bg-purple-600" : "bg-blue-600";
+            const activeBorder = isEmployer ? "border-purple-600" : "border-blue-600";
+            const activeText = "text-white";
+            const inactiveColor = "bg-zinc-100";
+            const inactiveBorder = "border-zinc-200";
+            const inactiveText = "text-zinc-400";
+            const lineColor = step > stepNum
+              ? (isEmployer ? "bg-purple-600" : "bg-blue-600")
+              : "bg-zinc-200";
 
-        <div className="text-center space-y-1">
+            return (
+              <div key={stepNum} className="flex items-center flex-1 last:flex-none">
+                <div
+                  className={`relative z-10 flex items-center justify-center w-9 h-9 rounded-full border-2 text-sm font-bold transition-all duration-300 ${
+                    isActive
+                      ? `${activeColor} ${activeBorder} ${activeText} ${
+                          isCurrent ? "ring-4 ring-offset-2 " + (isEmployer ? "ring-purple-200" : "ring-blue-200") : ""
+                        }`
+                      : `${inactiveColor} ${inactiveBorder} ${inactiveText}`
+                  }`}
+                >
+                  {stepNum}
+                </div>
+                {stepNum < totalSteps && (
+                  <div className={`flex-1 h-1 rounded-full transition-all duration-500 ${lineColor}`} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="text-center space-y-1 pt-2">
           <CardTitle className="text-2xl">
             {step === 1
               ? "Create your account"
@@ -665,7 +703,7 @@ export default function SignUpPage() {
             </div>
 
             <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={goBack}>
+              <Button type="button" variant="outline" onClick={goBack} className="hover:bg-zinc-100 transition-colors">
                 Back
               </Button>
               <Button
@@ -792,6 +830,7 @@ export default function SignUpPage() {
                 variant="outline"
                 onClick={goBack}
                 disabled={isSubmitting}
+                className="hover:bg-zinc-100 transition-colors"
               >
                 Back
               </Button>
@@ -933,6 +972,7 @@ export default function SignUpPage() {
                 variant="outline"
                 onClick={goBack}
                 disabled={isSubmitting}
+                className="hover:bg-zinc-100 transition-colors"
               >
                 Back
               </Button>
@@ -983,6 +1023,7 @@ export default function SignUpPage() {
                 variant="outline"
                 onClick={goBack}
                 disabled={isSubmitting}
+                className="hover:bg-zinc-100 transition-colors"
               >
                 Back
               </Button>
