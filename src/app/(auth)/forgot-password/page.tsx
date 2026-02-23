@@ -61,6 +61,7 @@ export default function ForgotPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const role = searchParams.get("role") ?? "student";
+  const isEmployer = role === "employer";
 
   const [step, setStep] = useState<"email" | "reset">("email");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -159,8 +160,8 @@ export default function ForgotPasswordPage() {
     return (
       <Card className="rounded-3xl border shadow-sm">
         <CardHeader className="text-center space-y-3 px-8 pt-8">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100">
-            <Mail className="h-7 w-7 text-blue-600" />
+          <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ${isEmployer ? "bg-purple-100" : "bg-blue-100"}`}>
+            <Mail className={`h-7 w-7 ${isEmployer ? "text-purple-600" : "text-blue-600"}`} />
           </div>
           <CardTitle className="text-2xl">Forgot password?</CardTitle>
           <CardDescription>
@@ -199,7 +200,7 @@ export default function ForgotPasswordPage() {
             <Button
               type="submit"
               disabled={isSubmitting || !isLoaded}
-              className="w-full h-11 text-base font-semibold text-white bg-blue-600 hover:bg-blue-700"
+              className={`w-full h-11 text-base font-semibold text-white ${isEmployer ? "bg-purple-600 hover:bg-purple-700" : "bg-blue-600 hover:bg-blue-700"}`}
             >
               {isSubmitting ? "Sending..." : "Send reset code"}
             </Button>
@@ -224,8 +225,8 @@ export default function ForgotPasswordPage() {
   return (
     <Card className="rounded-3xl border shadow-sm">
       <CardHeader className="text-center space-y-3 px-8 pt-8">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100">
-          <ShieldCheck className="h-7 w-7 text-blue-600" />
+        <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ${isEmployer ? "bg-purple-100" : "bg-blue-100"}`}>
+          <ShieldCheck className={`h-7 w-7 ${isEmployer ? "text-purple-600" : "text-blue-600"}`} />
         </div>
         <CardTitle className="text-2xl">Check your email</CardTitle>
         <CardDescription>
@@ -243,7 +244,7 @@ export default function ForgotPasswordPage() {
             <Button
               type="button"
               onClick={() => signOut({ redirectUrl: `/login?role=${role}` })}
-              className="w-full h-11 text-base font-semibold text-white bg-blue-600 hover:bg-blue-700"
+              className={`w-full h-11 text-base font-semibold text-white ${isEmployer ? "bg-purple-600 hover:bg-purple-700" : "bg-blue-600 hover:bg-blue-700"}`}
             >
               Back to sign in
             </Button>
@@ -319,7 +320,7 @@ export default function ForgotPasswordPage() {
             <Button
               type="submit"
               disabled={isSubmitting || !isLoaded}
-              className="w-full h-11 text-base font-semibold text-white bg-blue-600 hover:bg-blue-700"
+              className={`w-full h-11 text-base font-semibold text-white ${isEmployer ? "bg-purple-600 hover:bg-purple-700" : "bg-blue-600 hover:bg-blue-700"}`}
             >
               {isSubmitting ? "Resetting..." : "Reset password"}
             </Button>
