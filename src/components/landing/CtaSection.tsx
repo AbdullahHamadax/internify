@@ -1,0 +1,38 @@
+"use client";
+
+import { Zap, ChevronRight } from "lucide-react";
+import Link from "next/link";
+
+export default function CtaSection() {
+  return (
+    <section className="relative bg-[#0F172A] py-20 sm:py-28 overflow-hidden">
+      {/* Accent gradient glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-[#00BCD4]/15 via-[#1565C0]/10 to-[#7B1FA2]/15 rounded-full blur-3xl" />
+
+      <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
+        <Zap className="mx-auto h-10 w-10 text-[#00BCD4] mb-6" />
+        <h2 className="text-3xl sm:text-4xl font-bold text-white">
+          Ready to start building your career?
+        </h2>
+        <p className="mt-4 text-lg text-gray-400 max-w-xl mx-auto">
+          Join thousands of students completing real tasks and getting hired.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <Link
+            href="/signup"
+            className="bg-brand-gradient inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition-transform hover:scale-105"
+          >
+            Browse Tasks
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="#how-it-works"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+          >
+            Learn More
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}

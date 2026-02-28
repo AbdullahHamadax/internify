@@ -22,16 +22,41 @@
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
 
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --surface: 210 40% 98%;
+  --surface-alt: 210 20% 96%;
+
+  --logo-fade: #ffffff;
   --radius: 0.75rem;
 }
 
 .dark {
+  --logo-fade: #030712;
+
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
 
   --primary: 217 91% 60%;
+  --primary-foreground: 222.2 84% 4.9%;
+
   --secondary: 290 84% 60%;
+  --secondary-foreground: 210 40% 98%;
+
   --accent: 190 90% 50%;
+  --accent-foreground: 210 40% 98%;
+
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+
+  --card: 222 47% 6.5%;
+  --card-foreground: 210 40% 98%;
+
+  --surface: 222 47% 8%;
+  --surface-alt: 217 33% 12%;
 }
 
 @theme inline {
@@ -43,6 +68,14 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
 
   --image-gradient: linear-gradient(
     135deg,
