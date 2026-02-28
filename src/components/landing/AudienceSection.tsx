@@ -19,7 +19,7 @@ const employerBullets = [
 
 export default function AudienceSection() {
   return (
-    <section className="py-20 sm:py-28 bg-[#F8FAFC] dark:bg-gray-900/50">
+    <section className="relative z-50 isolate py-20 sm:py-28 bg-[#F8FAFC] dark:bg-gray-950">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
           {/* FOR STUDENTS */}
@@ -45,7 +45,7 @@ export default function AudienceSection() {
             </ul>
             <Link
               href="/signup"
-              className="mt-8 inline-flex items-center gap-2 bg-brand-gradient rounded-xl px-6 py-3 text-sm font-semibold text-white transition-transform hover:scale-105"
+              className="mt-8 inline-flex items-center gap-2 bg-brand-gradient rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/20"
             >
               Start Learning Free
               <ArrowRight className="h-4 w-4" />
@@ -75,7 +75,7 @@ export default function AudienceSection() {
             </ul>
             <Link
               href="/signup"
-              className="mt-8 inline-flex items-center gap-2 rounded-xl border-2 border-[#7B1FA2] px-6 py-3 text-sm font-semibold text-[#7B1FA2] dark:text-purple-400 transition-colors hover:bg-[#7B1FA2]/5"
+              className="mt-8 inline-flex items-center gap-2 rounded-xl border-2 border-[#7B1FA2] bg-white px-6 py-3 text-sm font-semibold text-[#7B1FA2] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#7B1FA2] hover:text-white hover:shadow-lg hover:shadow-purple-500/20 dark:bg-transparent dark:text-purple-400 dark:hover:bg-[#7B1FA2]/20 dark:hover:text-purple-200"
             >
               Post a Challenge
               <ArrowRight className="h-4 w-4" />

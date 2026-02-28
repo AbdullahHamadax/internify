@@ -20,14 +20,14 @@ export default function CtaSection() {
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link
             href="/signup"
-            className="bg-brand-gradient inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition-transform hover:scale-105"
+            className="bg-brand-gradient inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/25"
           >
             Browse Tasks
             <ChevronRight className="h-4 w-4" />
           </Link>
           <Link
             href="#how-it-works"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-7 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-white/35 hover:bg-white/10"
           >
             Learn More
           </Link>

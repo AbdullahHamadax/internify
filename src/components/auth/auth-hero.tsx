@@ -26,7 +26,7 @@ const HERO_COPY: {
       description:
         "The bridge between academic theory and industry reality. Join the future of hiring.",
       trustTitle: "Trusted by Leaders",
-      trustSubtitle: "Microsoft | IBM | ITI",
+      trustSubtitle: "Students | Employers | Training Partners",
       accentGradient: "from-cyan-200 to-fuchsia-200",
     },
     student: {

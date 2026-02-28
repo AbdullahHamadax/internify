@@ -1,11 +1,12 @@
 "use client";
 
 import { Users, Building2, ClipboardList, Cpu } from "lucide-react";
+import CountUp from "@/components/CountUp";
 
 const stats = [
-  { value: "10,000+", label: "Students", icon: Users },
-  { value: "50+", label: "Partner Companies", icon: Building2 },
-  { value: "500+", label: "Tasks Posted", icon: ClipboardList },
+  { value: 10000, suffix: "+", label: "Students", icon: Users, duration: 0.9 },
+  { value: 50, suffix: "+", label: "Partner Companies", icon: Building2, duration: 0.7 },
+  { value: 500, suffix: "+", label: "Tasks Posted", icon: ClipboardList, duration: 0.8 },
   { value: "AI", label: "Powered Feedback", icon: Cpu },
 ];
 
@@ -22,7 +23,22 @@ export default function StatsBar() {
                   <Icon className="h-5 w-5 text-[#1565C0] dark:text-[#42A5F5]" />
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                  {stat.value}
+                  {typeof stat.value === "number" ? (
+                    <>
+                      <CountUp
+                        from={0}
+                        to={stat.value}
+                        separator=","
+                        direction="up"
+                        duration={stat.duration}
+                        className="tabular-nums"
+                        startCounting
+                      />
+                      {stat.suffix}
+                    </>
+                  ) : (
+                    stat.value
+                  )}
                 </p>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   {stat.label}

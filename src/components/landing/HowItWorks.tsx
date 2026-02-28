@@ -29,7 +29,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-20 sm:py-28">
+    <section id="how-it-works" className="relative z-10 py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto">
@@ -72,8 +72,9 @@ export default function HowItWorks() {
             })}
           </div>
 
-          {/* Right — CardSwap visual */}
-          <div className="relative h-[420px] hidden lg:block">
+          {/* Right — CardSwap visual (floating, overflows beneath next section) */}
+          <div className="relative hidden h-[420px] lg:block">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-[#00BCD4]/8 via-[#1565C0]/6 to-[#7B1FA2]/10 blur-[100px] dark:from-[#00BCD4]/12 dark:via-[#1565C0]/10 dark:to-[#7B1FA2]/12 pointer-events-none" />
             <CardSwap
               cardDistance={50}
               verticalDistance={50}
@@ -88,7 +89,7 @@ export default function HowItWorks() {
                 return (
                   <Card
                     key={step.num}
-                    className="!bg-white dark:!bg-gray-900 !border-gray-100 dark:!border-gray-800 p-8 flex flex-col justify-center"
+                    className="flex flex-col justify-center p-8 !border-gray-200 !bg-white !shadow-lg !shadow-gray-200/70 dark:!border-gray-800 dark:!bg-gray-900 dark:!shadow-black/30"
                   >
                     <div
                       className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${step.accent} shadow-lg mb-5`}
