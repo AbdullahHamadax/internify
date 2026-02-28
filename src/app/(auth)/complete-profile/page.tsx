@@ -83,21 +83,21 @@ export default function CompleteProfilePage() {
   const theme = useMemo(() => {
     if (isEmployer) {
       return {
-        accentText: "text-purple-600",
+        accentText: "text-purple-600 dark:text-purple-400",
         primaryBtn: "bg-purple-600 hover:bg-purple-700",
-        softBg: "bg-purple-50/50",
+        softBg: "bg-purple-50/50 dark:bg-purple-950/30",
         dashHover: "hover:border-purple-500",
-        iconBg: "bg-purple-100",
-        iconText: "text-purple-600",
+        iconBg: "bg-purple-100 dark:bg-purple-900",
+        iconText: "text-purple-600 dark:text-purple-400",
       };
     }
     return {
-      accentText: "text-blue-600",
+      accentText: "text-blue-600 dark:text-blue-400",
       primaryBtn: "bg-blue-600 hover:bg-blue-700",
-      softBg: "bg-blue-50/50",
+      softBg: "bg-blue-50/50 dark:bg-blue-950/30",
       dashHover: "hover:border-blue-500",
-      iconBg: "bg-blue-100",
-      iconText: "text-blue-600",
+      iconBg: "bg-blue-100 dark:bg-blue-900",
+      iconText: "text-blue-600 dark:text-blue-400",
     };
   }, [isEmployer]);
 
@@ -242,9 +242,9 @@ export default function CompleteProfilePage() {
             aria-label="Continue as a student"
             className="group w-full flex items-start gap-4 p-5 border rounded-2xl text-left transition-all
                        hover:shadow-sm hover:-translate-y-px
-                       hover:border-blue-500 hover:bg-blue-50/50"
+                       hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
           >
-            <div className="p-3 rounded-xl bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+            <div className="p-3 rounded-xl bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-900 dark:text-blue-400">
               <User className="w-6 h-6" />
             </div>
             <div className="space-y-1">
@@ -261,9 +261,9 @@ export default function CompleteProfilePage() {
             aria-label="Continue as an employer"
             className="group w-full flex items-start gap-4 p-5 border rounded-2xl text-left transition-all
                        hover:shadow-sm hover:-translate-y-px
-                       hover:border-purple-500 hover:bg-purple-50/50"
+                       hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-950/30"
           >
-            <div className="p-3 rounded-xl bg-purple-100 text-purple-600 transition-colors group-hover:bg-purple-600 group-hover:text-white">
+            <div className="p-3 rounded-xl bg-purple-100 text-purple-600 transition-colors group-hover:bg-purple-600 group-hover:text-white dark:bg-purple-900 dark:text-purple-400">
               <Building2 className="w-6 h-6" />
             </div>
             <div className="space-y-1">
@@ -297,8 +297,8 @@ export default function CompleteProfilePage() {
           <span
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
               isEmployer
-                ? "bg-purple-100 text-purple-700"
-                : "bg-blue-100 text-blue-700"
+                ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
             }`}
           >
             {isEmployer ? (
@@ -318,7 +318,7 @@ export default function CompleteProfilePage() {
 
       <CardContent className="px-4 sm:px-8 pb-8 space-y-6">
         {submitError && (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
             {submitError}
           </p>
         )}
@@ -337,17 +337,15 @@ export default function CompleteProfilePage() {
                 value={studentForm.watch("academicStatus")}
                 onValueChange={(v) =>
                   v &&
-                  studentForm.setValue(
-                    "academicStatus",
-                    v as AcademicStatus,
-                    { shouldValidate: true },
-                  )
+                  studentForm.setValue("academicStatus", v as AcademicStatus, {
+                    shouldValidate: true,
+                  })
                 }
                 className="grid w-full grid-cols-1 min-[375px]:grid-cols-2 gap-3"
               >
                 <ToggleGroupItem
                   value="undergraduate"
-                  className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50"
+                  className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50 dark:data-[state=on]:bg-blue-950 dark:data-[state=on]:border-blue-400"
                 >
                   <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
                   Undergraduate
@@ -420,7 +418,7 @@ export default function CompleteProfilePage() {
                 variant="outline"
                 onClick={goBack}
                 disabled={isSubmitting}
-                className="hover:bg-zinc-100 transition-colors"
+                className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
               >
                 Back
               </Button>
@@ -486,16 +484,46 @@ export default function CompleteProfilePage() {
                   )
                 }
               >
-                <SelectTrigger className="h-11 rounded-lg bg-white cursor-pointer transition-colors hover:bg-slate-50">
+                <SelectTrigger className="h-11 rounded-lg bg-white cursor-pointer transition-colors hover:bg-slate-50 dark:bg-gray-800 dark:hover:bg-gray-700">
                   <SelectValue placeholder="Select your level..." />
                 </SelectTrigger>
-                <SelectContent className="bg-white z-50 shadow-lg border-gray-200">
-                  <SelectItem value="mid" className="cursor-pointer focus:bg-slate-100">Mid</SelectItem>
-                  <SelectItem value="senior" className="cursor-pointer focus:bg-slate-100">Senior</SelectItem>
-                  <SelectItem value="lead" className="cursor-pointer focus:bg-slate-100">Lead</SelectItem>
-                  <SelectItem value="manager" className="cursor-pointer focus:bg-slate-100">Manager</SelectItem>
-                  <SelectItem value="director" className="cursor-pointer focus:bg-slate-100">Director</SelectItem>
-                  <SelectItem value="executive" className="cursor-pointer focus:bg-slate-100">Executive</SelectItem>
+                <SelectContent className="bg-white z-50 shadow-lg border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem
+                    value="mid"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                  >
+                    Mid
+                  </SelectItem>
+                  <SelectItem
+                    value="senior"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                  >
+                    Senior
+                  </SelectItem>
+                  <SelectItem
+                    value="lead"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                  >
+                    Lead
+                  </SelectItem>
+                  <SelectItem
+                    value="manager"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                  >
+                    Manager
+                  </SelectItem>
+                  <SelectItem
+                    value="director"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                  >
+                    Director
+                  </SelectItem>
+                  <SelectItem
+                    value="executive"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                  >
+                    Executive
+                  </SelectItem>
                 </SelectContent>
               </Select>
               {employerForm.formState.errors.rankLevel && (

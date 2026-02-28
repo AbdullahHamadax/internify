@@ -129,21 +129,21 @@ export default function SignUpPage() {
   const theme = useMemo(() => {
     if (isEmployer) {
       return {
-        accentText: "text-purple-600",
+        accentText: "text-purple-600 dark:text-purple-400",
         primaryBtn: "bg-purple-600 hover:bg-purple-700",
-        softBg: "bg-purple-50/50",
+        softBg: "bg-purple-50/50 dark:bg-purple-950/30",
         dashHover: "hover:border-purple-500",
-        iconBg: "bg-purple-100",
-        iconText: "text-purple-600",
+        iconBg: "bg-purple-100 dark:bg-purple-900",
+        iconText: "text-purple-600 dark:text-purple-400",
       };
     }
     return {
-      accentText: "text-blue-600",
+      accentText: "text-blue-600 dark:text-blue-400",
       primaryBtn: "bg-blue-600 hover:bg-blue-700",
-      softBg: "bg-blue-50/50",
+      softBg: "bg-blue-50/50 dark:bg-blue-950/30",
       dashHover: "hover:border-blue-500",
-      iconBg: "bg-blue-100",
-      iconText: "text-blue-600",
+      iconBg: "bg-blue-100 dark:bg-blue-900",
+      iconText: "text-blue-600 dark:text-blue-400",
     };
   }, [isEmployer]);
 
@@ -233,7 +233,10 @@ export default function SignUpPage() {
     setStep(2);
   }
 
-  function handleRateLimitError(error: { status: number; retryAfter?: number }) {
+  function handleRateLimitError(error: {
+    status: number;
+    retryAfter?: number;
+  }) {
     if (error.status !== 429) {
       return false;
     }
@@ -341,7 +344,10 @@ export default function SignUpPage() {
         lastName: payload.step1.lastName,
       });
 
-      if (signUpAttempt.status === "complete" && signUpAttempt.createdSessionId) {
+      if (
+        signUpAttempt.status === "complete" &&
+        signUpAttempt.createdSessionId
+      ) {
         await setActive?.({ session: signUpAttempt.createdSessionId });
         await persistProfileWithRetry(payload);
         router.push("/");
@@ -435,7 +441,9 @@ export default function SignUpPage() {
         verificationAttempt.status !== "complete" ||
         !verificationAttempt.createdSessionId
       ) {
-        setSubmitError("Verification is incomplete. Please try the code again.");
+        setSubmitError(
+          "Verification is incomplete. Please try the code again.",
+        );
         return;
       }
 
@@ -500,9 +508,9 @@ export default function SignUpPage() {
             aria-label="Sign up as a student"
             className="group w-full flex items-start gap-4 p-5 border rounded-2xl text-left transition-all
                        hover:shadow-sm hover:-translate-y-px
-                       hover:border-blue-500 hover:bg-blue-50/50"
+                       hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
           >
-            <div className="p-3 rounded-xl bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+            <div className="p-3 rounded-xl bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-900 dark:text-blue-400">
               <User className="w-6 h-6" />
             </div>
             <div className="space-y-1">
@@ -519,9 +527,9 @@ export default function SignUpPage() {
             aria-label="Sign up as an employer"
             className="group w-full flex items-start gap-4 p-5 border rounded-2xl text-left transition-all
                        hover:shadow-sm hover:-translate-y-px
-                       hover:border-purple-500 hover:bg-purple-50/50"
+                       hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-950/30"
           >
-            <div className="p-3 rounded-xl bg-purple-100 text-purple-600 transition-colors group-hover:bg-purple-600 group-hover:text-white">
+            <div className="p-3 rounded-xl bg-purple-100 text-purple-600 transition-colors group-hover:bg-purple-600 group-hover:text-white dark:bg-purple-900 dark:text-purple-400">
               <Building2 className="w-6 h-6" />
             </div>
             <div className="space-y-1">
@@ -557,12 +565,18 @@ export default function SignUpPage() {
       <CardHeader className="px-4 sm:px-8 pt-8">
         {/* ── Role label ── */}
         <div className="flex justify-center mb-1">
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-            isEmployer
-              ? "bg-purple-100 text-purple-700"
-              : "bg-blue-100 text-blue-700"
-          }`}>
-            {isEmployer ? <Building2 className="h-3 w-3" /> : <User className="h-3 w-3" />}
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+              isEmployer
+                ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+            }`}
+          >
+            {isEmployer ? (
+              <Building2 className="h-3 w-3" />
+            ) : (
+              <User className="h-3 w-3" />
+            )}
             {role} Account
           </span>
         </div>
@@ -574,22 +588,33 @@ export default function SignUpPage() {
             const isActive = step >= stepNum;
             const isCurrent = step === stepNum;
             const activeColor = isEmployer ? "bg-purple-600" : "bg-blue-600";
-            const activeBorder = isEmployer ? "border-purple-600" : "border-blue-600";
+            const activeBorder = isEmployer
+              ? "border-purple-600"
+              : "border-blue-600";
             const activeText = "text-white";
-            const inactiveColor = "bg-zinc-100";
-            const inactiveBorder = "border-zinc-200";
-            const inactiveText = "text-zinc-400";
-            const lineColor = step > stepNum
-              ? (isEmployer ? "bg-purple-600" : "bg-blue-600")
-              : "bg-zinc-200";
+            const inactiveColor = "bg-zinc-100 dark:bg-gray-700";
+            const inactiveBorder = "border-zinc-200 dark:border-gray-600";
+            const inactiveText = "text-zinc-400 dark:text-gray-500";
+            const lineColor =
+              step > stepNum
+                ? isEmployer
+                  ? "bg-purple-600"
+                  : "bg-blue-600"
+                : "bg-zinc-200 dark:bg-gray-700";
 
             return (
-              <div key={stepNum} className="flex items-center flex-1 last:flex-none">
+              <div
+                key={stepNum}
+                className="flex items-center flex-1 last:flex-none"
+              >
                 <div
                   className={`relative z-10 flex items-center justify-center w-9 h-9 rounded-full border-2 text-sm font-bold transition-all duration-300 ${
                     isActive
                       ? `${activeColor} ${activeBorder} ${activeText} ${
-                          isCurrent ? "ring-4 ring-offset-2 " + (isEmployer ? "ring-purple-200" : "ring-blue-200") : ""
+                          isCurrent
+                            ? "ring-4 ring-offset-2 " +
+                              (isEmployer ? "ring-purple-200" : "ring-blue-200")
+                            : ""
                         }`
                       : `${inactiveColor} ${inactiveBorder} ${inactiveText}`
                   }`}
@@ -597,7 +622,9 @@ export default function SignUpPage() {
                   {stepNum}
                 </div>
                 {stepNum < totalSteps && (
-                  <div className={`flex-1 h-1 rounded-full transition-all duration-500 ${lineColor}`} />
+                  <div
+                    className={`flex-1 h-1 rounded-full transition-all duration-500 ${lineColor}`}
+                  />
                 )}
               </div>
             );
@@ -624,7 +651,7 @@ export default function SignUpPage() {
 
       <CardContent className="px-4 sm:px-8 pb-8 space-y-6">
         {submitError && (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
             {submitError}
           </p>
         )}
@@ -703,7 +730,12 @@ export default function SignUpPage() {
             </div>
 
             <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={goBack} className="hover:bg-zinc-100 transition-colors">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={goBack}
+                className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
+              >
                 Back
               </Button>
               <Button
@@ -750,7 +782,7 @@ export default function SignUpPage() {
               >
                 <ToggleGroupItem
                   value="undergraduate"
-                  className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50"
+                  className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50 dark:data-[state=on]:bg-blue-950 dark:data-[state=on]:border-blue-400"
                 >
                   <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
                   Undergraduate
@@ -758,7 +790,7 @@ export default function SignUpPage() {
 
                 <ToggleGroupItem
                   value="graduate"
-                  className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50"
+                  className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50 dark:data-[state=on]:bg-blue-950 dark:data-[state=on]:border-blue-400"
                 >
                   <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
                   Graduate
@@ -830,7 +862,7 @@ export default function SignUpPage() {
                 variant="outline"
                 onClick={goBack}
                 disabled={isSubmitting}
-                className="hover:bg-zinc-100 transition-colors"
+                className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
               >
                 Back
               </Button>
@@ -910,43 +942,43 @@ export default function SignUpPage() {
                   )
                 }
               >
-                <SelectTrigger className="h-11 rounded-lg bg-white cursor-pointer transition-colors hover:bg-slate-50">
+                <SelectTrigger className="h-11 rounded-lg bg-white cursor-pointer transition-colors hover:bg-slate-50 dark:bg-gray-800 dark:hover:bg-gray-700">
                   <SelectValue placeholder="Select your level..." />
                 </SelectTrigger>
-                <SelectContent className="bg-white z-50 shadow-lg border-gray-200">
+                <SelectContent className="bg-white z-50 shadow-lg border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                   <SelectItem
                     value="mid"
-                    className="cursor-pointer focus:bg-slate-100"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
                   >
                     Mid
                   </SelectItem>
                   <SelectItem
                     value="senior"
-                    className="cursor-pointer focus:bg-slate-100"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
                   >
                     Senior
                   </SelectItem>
                   <SelectItem
                     value="lead"
-                    className="cursor-pointer focus:bg-slate-100"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
                   >
                     Lead
                   </SelectItem>
                   <SelectItem
                     value="manager"
-                    className="cursor-pointer focus:bg-slate-100"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
                   >
                     Manager
                   </SelectItem>
                   <SelectItem
                     value="director"
-                    className="cursor-pointer focus:bg-slate-100"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
                   >
                     Director
                   </SelectItem>
                   <SelectItem
                     value="executive"
-                    className="cursor-pointer focus:bg-slate-100"
+                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
                   >
                     Executive
                   </SelectItem>
@@ -972,7 +1004,7 @@ export default function SignUpPage() {
                 variant="outline"
                 onClick={goBack}
                 disabled={isSubmitting}
-                className="hover:bg-zinc-100 transition-colors"
+                className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
               >
                 Back
               </Button>
@@ -1002,7 +1034,11 @@ export default function SignUpPage() {
         )}
 
         {step === 3 && (
-          <form onSubmit={onVerifyEmailCodeSubmit} className="space-y-5" noValidate>
+          <form
+            onSubmit={onVerifyEmailCodeSubmit}
+            className="space-y-5"
+            noValidate
+          >
             <div className="space-y-2">
               <Label htmlFor="email-code">Email verification code</Label>
               <Input
@@ -1023,7 +1059,7 @@ export default function SignUpPage() {
                 variant="outline"
                 onClick={goBack}
                 disabled={isSubmitting}
-                className="hover:bg-zinc-100 transition-colors"
+                className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
               >
                 Back
               </Button>

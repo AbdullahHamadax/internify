@@ -135,9 +135,7 @@ export default function ForgotPasswordPage() {
           "Password reset successfully! Please sign in with your new password.",
         );
       } else {
-        setSubmitError(
-          "Password reset incomplete. Please try the code again.",
-        );
+        setSubmitError("Password reset incomplete. Please try the code again.");
       }
     } catch (error) {
       if (isClerkAPIResponseError(error)) {
@@ -160,8 +158,12 @@ export default function ForgotPasswordPage() {
     return (
       <Card className="rounded-3xl border shadow-sm">
         <CardHeader className="text-center space-y-3 px-8 pt-8">
-          <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ${isEmployer ? "bg-purple-100" : "bg-blue-100"}`}>
-            <Mail className={`h-7 w-7 ${isEmployer ? "text-purple-600" : "text-blue-600"}`} />
+          <div
+            className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ${isEmployer ? "bg-purple-100 dark:bg-purple-900" : "bg-blue-100 dark:bg-blue-900"}`}
+          >
+            <Mail
+              className={`h-7 w-7 ${isEmployer ? "text-purple-600 dark:text-purple-400" : "text-blue-600 dark:text-blue-400"}`}
+            />
           </div>
           <CardTitle className="text-2xl">Forgot password?</CardTitle>
           <CardDescription>
@@ -192,7 +194,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             {submitError && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
                 {submitError}
               </p>
             )}
@@ -225,8 +227,12 @@ export default function ForgotPasswordPage() {
   return (
     <Card className="rounded-3xl border shadow-sm">
       <CardHeader className="text-center space-y-3 px-8 pt-8">
-        <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ${isEmployer ? "bg-purple-100" : "bg-blue-100"}`}>
-          <ShieldCheck className={`h-7 w-7 ${isEmployer ? "text-purple-600" : "text-blue-600"}`} />
+        <div
+          className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ${isEmployer ? "bg-purple-100 dark:bg-purple-900" : "bg-blue-100 dark:bg-blue-900"}`}
+        >
+          <ShieldCheck
+            className={`h-7 w-7 ${isEmployer ? "text-purple-600 dark:text-purple-400" : "text-blue-600 dark:text-blue-400"}`}
+          />
         </div>
         <CardTitle className="text-2xl">Check your email</CardTitle>
         <CardDescription>
@@ -238,7 +244,7 @@ export default function ForgotPasswordPage() {
       <CardContent className="px-8 pb-8 space-y-5">
         {successMessage ? (
           <div className="flex flex-col items-center gap-4">
-            <div className="w-full rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 text-center font-medium">
+            <div className="w-full rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 text-center font-medium dark:border-green-800 dark:bg-green-950 dark:text-green-400">
               {successMessage}
             </div>
             <Button
@@ -312,7 +318,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             {submitError && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
                 {submitError}
               </p>
             )}

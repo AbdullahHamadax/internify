@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 import { GraduationCap, Menu, X } from "lucide-react";
 import Link from "next/link";
-import ThemeToggle from "@/components/ThemeToggle";
+import { useCallback, useEffect, useState } from "react";
 
 const navLinks = [
   { label: "How it Works", href: "#how-it-works" },
   { label: "For Students", href: "#for-students" },
   { label: "For Employers", href: "#for-employers" },
-  { label: "Blog", href: "#" },
+  { label: "About", href: "#" },
 ];
 
 export default function Navbar() {
@@ -75,13 +75,13 @@ export default function Navbar() {
             <ThemeToggle />
             <Link
               href="/login"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Log In
             </Link>
             <Link
               href="/signup"
-              className="bg-brand-gradient rounded-lg px-5 py-2 text-sm font-semibold text-white shadow-sm transition-transform hover:scale-105"
+              className="bg-brand-gradient rounded-lg px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
               Get Started
             </Link>
@@ -92,7 +92,7 @@ export default function Navbar() {
             <ThemeToggle />
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="p-2 text-gray-600 dark:text-gray-400"
+              className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
               aria-label="Toggle menu"
             >
               {mobileOpen ? (
@@ -122,13 +122,13 @@ export default function Navbar() {
             <div className="mt-3 flex flex-col gap-2">
               <Link
                 href="/login"
-                className="rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="rounded-lg border border-gray-200 px-4 py-2.5 text-center text-sm font-semibold text-gray-700 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 Log In
               </Link>
               <Link
                 href="/signup"
-                className="bg-brand-gradient rounded-lg px-5 py-2.5 text-center text-sm font-semibold text-white shadow-sm"
+                className="bg-brand-gradient rounded-lg px-5 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-md"
               >
                 Get Started
               </Link>
