@@ -115,3 +115,17 @@ input[type="reset"] {
 .clerk-captcha-slot:empty {
   display: none;
 }
+
+@keyframes card-tilt {
+  0%,
+  100% {
+    transform: rotate(-1deg);
+  }
+  50% {
+    transform: rotate(1deg);
+  }
+}
+
+.animate-card-tilt {
+  animation: card-tilt 2.5s ease-in-out infinite;
+}
