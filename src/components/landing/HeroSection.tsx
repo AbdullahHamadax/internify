@@ -51,7 +51,7 @@ export default function HeroSection() {
               {/* Glow behind the card */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#00BCD4]/20 via-[#1565C0]/15 to-[#7B1FA2]/20 rounded-3xl blur-2xl scale-105" />
 
-              <div className="relative w-[320px] sm:w-[360px] rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500">
+              <div className="relative w-[320px] sm:w-[360px] rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-2xl animate-card-tilt">
                 {/* Company row */}
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
