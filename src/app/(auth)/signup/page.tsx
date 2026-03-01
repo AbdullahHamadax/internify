@@ -3,6 +3,7 @@
 
 import { Building2, GraduationCap, Upload, User } from "lucide-react";
 import Link from "next/link";
+import Stepper, { Step } from "@/components/Stepper";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 
@@ -580,499 +581,494 @@ export default function SignUpPage() {
             {role} Account
           </span>
         </div>
-
-        {/* ── Step indicator ── */}
-        <div className="flex items-center justify-center gap-0 w-full max-w-xs mx-auto">
-          {Array.from({ length: totalSteps }, (_, i) => {
-            const stepNum = i + 1;
-            const isActive = step >= stepNum;
-            const isCurrent = step === stepNum;
-            const activeColor = isEmployer ? "bg-purple-600" : "bg-blue-600";
-            const activeBorder = isEmployer
-              ? "border-purple-600"
-              : "border-blue-600";
-            const activeText = "text-white";
-            const inactiveColor = "bg-zinc-100 dark:bg-gray-700";
-            const inactiveBorder = "border-zinc-200 dark:border-gray-600";
-            const inactiveText = "text-zinc-400 dark:text-gray-500";
-            const lineColor =
-              step > stepNum
-                ? isEmployer
-                  ? "bg-purple-600"
-                  : "bg-blue-600"
-                : "bg-zinc-200 dark:bg-gray-700";
-
-            return (
-              <div
-                key={stepNum}
-                className="flex items-center flex-1 last:flex-none"
-              >
-                <div
-                  className={`relative z-10 flex items-center justify-center w-9 h-9 rounded-full border-2 text-sm font-bold transition-all duration-300 ${
-                    isActive
-                      ? `${activeColor} ${activeBorder} ${activeText} ${
-                          isCurrent
-                            ? "ring-4 ring-offset-2 " +
-                              (isEmployer ? "ring-purple-200" : "ring-blue-200")
-                            : ""
-                        }`
-                      : `${inactiveColor} ${inactiveBorder} ${inactiveText}`
-                  }`}
-                >
-                  {stepNum}
-                </div>
-                {stepNum < totalSteps && (
-                  <div
-                    className={`flex-1 h-1 rounded-full transition-all duration-500 ${lineColor}`}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="text-center space-y-1 pt-2">
-          <CardTitle className="text-2xl">
-            {step === 1
-              ? "Create your account"
-              : step === 2
-                ? "Complete your profile"
-                : "Verify your email"}
-          </CardTitle>
-          <CardDescription>
-            {step === 1
-              ? "Enter your basic account details"
-              : step === 2
-                ? "Tell us more about yourself"
-                : "Enter the verification code sent to your email"}
-          </CardDescription>
-        </div>
       </CardHeader>
 
-      <CardContent className="px-4 sm:px-8 pb-8 space-y-6">
-        {submitError && (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
-            {submitError}
-          </p>
-        )}
-        {/* ── Step 1: Credentials ── */}
-        {step === 1 && (
-          <form
-            onSubmit={step1Form.handleSubmit(onStep1Submit)}
-            className="space-y-4"
-            noValidate
-          >
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="firstName">First name</Label>
-                <Input
-                  id="firstName"
-                  placeholder="John"
-                  {...step1Form.register("firstName")}
-                />
-                {step1Form.formState.errors.firstName && (
-                  <p className="text-xs text-red-500">
-                    {step1Form.formState.errors.firstName.message}
-                  </p>
-                )}
+      <CardContent className="px-0 pb-0">
+        <Stepper
+          currentStep={step}
+          footerClassName="hidden"
+          stepContainerClassName="w-full max-w-xs mx-auto pb-6 pt-2"
+          contentClassName="px-0"
+          stepCircleContainerClassName="shadow-none border-none"
+          disableStepIndicators
+        >
+          {/* ── Step 1: Credentials ── */}
+          <Step>
+            <div className="px-4 sm:px-8 pb-8 space-y-6">
+              <div className="text-center space-y-1 mb-6">
+                <CardTitle className="text-2xl">Create your account</CardTitle>
+                <CardDescription>
+                  Enter your basic account details
+                </CardDescription>
               </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="lastName">Last name</Label>
-                <Input
-                  id="lastName"
-                  placeholder="Doe"
-                  {...step1Form.register("lastName")}
-                />
-                {step1Form.formState.errors.lastName && (
-                  <p className="text-xs text-red-500">
-                    {step1Form.formState.errors.lastName.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="email">
-                {isEmployer ? "Work Email" : "Email"}
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                {...step1Form.register("email")}
-                aria-invalid={!!step1Form.formState.errors.email}
-              />
-              {step1Form.formState.errors.email && (
-                <p className="text-xs text-red-500">
-                  {step1Form.formState.errors.email.message}
+              {submitError && step === 1 && (
+                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+                  {submitError}
                 </p>
               )}
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <PasswordInput
-                id="password"
-                placeholder="••••••••"
-                {...step1Form.register("password")}
-                aria-invalid={!!step1Form.formState.errors.password}
-              />
-              {step1Form.formState.errors.password ? (
-                <p className="text-xs text-red-500">
-                  {step1Form.formState.errors.password.message}
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Min 8 characters, one uppercase, one lowercase, one number
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={goBack}
-                className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
+              <form
+                onSubmit={step1Form.handleSubmit(onStep1Submit)}
+                className="space-y-4"
+                noValidate
               >
-                Back
-              </Button>
-              <Button
-                type="submit"
-                className={`text-white font-semibold text-xs min-[375px]:text-sm whitespace-normal ${theme.primaryBtn}`}
-              >
-                Continue
-              </Button>
-            </div>
-
-            <p className="text-sm text-muted-foreground text-center pt-2">
-              Already have an account?{" "}
-              <Link
-                href={loginHref}
-                className="font-semibold text-primary hover:underline"
-              >
-                Log in
-              </Link>
-            </p>
-          </form>
-        )}
-
-        {/* ── Step 2: Student Profile ── */}
-        {step === 2 && !isEmployer && (
-          <form
-            onSubmit={studentStep2Form.handleSubmit(onStudentStep2Submit)}
-            className="space-y-5"
-            noValidate
-          >
-            <div className="space-y-2">
-              <Label>Academic Status</Label>
-              <ToggleGroup
-                type="single"
-                value={studentStep2Form.watch("academicStatus")}
-                onValueChange={(v) =>
-                  v &&
-                  studentStep2Form.setValue(
-                    "academicStatus",
-                    v as AcademicStatus,
-                    { shouldValidate: true },
-                  )
-                }
-                className="grid w-full grid-cols-1 min-[375px]:grid-cols-2 gap-3"
-              >
-                <ToggleGroupItem
-                  value="undergraduate"
-                  className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50 dark:data-[state=on]:bg-blue-950 dark:data-[state=on]:border-blue-400"
-                >
-                  <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
-                  Undergraduate
-                </ToggleGroupItem>
-
-                <ToggleGroupItem
-                  value="graduate"
-                  className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50 dark:data-[state=on]:bg-blue-950 dark:data-[state=on]:border-blue-400"
-                >
-                  <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
-                  Graduate
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="field">Speciality / Field of Study</Label>
-              <Input
-                id="field"
-                placeholder="e.g., Computer Science, Business, Design..."
-                {...studentStep2Form.register("fieldOfStudy")}
-                aria-invalid={!!studentStep2Form.formState.errors.fieldOfStudy}
-              />
-              {studentStep2Form.formState.errors.fieldOfStudy && (
-                <p className="text-xs text-red-500">
-                  {studentStep2Form.formState.errors.fieldOfStudy.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Upload CV (Optional)</Label>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                accept=".pdf,.doc,.docx"
-                onChange={onFileChange}
-              />
-
-              <button
-                type="button"
-                onClick={pickFile}
-                aria-label="Upload CV"
-                className={`w-full rounded-xl border border-dashed p-4 text-left transition-all
-                            hover:shadow-sm ${theme.softBg} ${theme.dashHover}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`p-2 rounded-lg ${theme.iconBg} ${theme.iconText}`}
-                  >
-                    <Upload className="h-5 w-5" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="firstName">First name</Label>
+                    <Input
+                      id="firstName"
+                      placeholder="John"
+                      {...step1Form.register("firstName")}
+                    />
+                    {step1Form.formState.errors.firstName && (
+                      <p className="text-xs text-red-500">
+                        {step1Form.formState.errors.firstName.message}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">
-                      {cvFile ? cvFile.name : "Click to upload your CV"}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Accepted formats: PDF, DOC, DOCX
-                    </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="lastName">Last name</Label>
+                    <Input
+                      id="lastName"
+                      placeholder="Doe"
+                      {...step1Form.register("lastName")}
+                    />
+                    {step1Form.formState.errors.lastName && (
+                      <p className="text-xs text-red-500">
+                        {step1Form.formState.errors.lastName.message}
+                      </p>
+                    )}
                   </div>
                 </div>
-              </button>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="email">
+                    {isEmployer ? "Work Email" : "Email"}
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    {...step1Form.register("email")}
+                    aria-invalid={!!step1Form.formState.errors.email}
+                  />
+                  {step1Form.formState.errors.email && (
+                    <p className="text-xs text-red-500">
+                      {step1Form.formState.errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Password</Label>
+                  <PasswordInput
+                    id="password"
+                    placeholder="••••••••"
+                    {...step1Form.register("password")}
+                    aria-invalid={!!step1Form.formState.errors.password}
+                  />
+                  {step1Form.formState.errors.password ? (
+                    <p className="text-xs text-red-500">
+                      {step1Form.formState.errors.password.message}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Min 8 characters, one uppercase, one lowercase, one number
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={goBack}
+                    className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    className={`text-white font-semibold text-xs min-[375px]:text-sm whitespace-normal ${theme.primaryBtn}`}
+                  >
+                    Continue
+                  </Button>
+                </div>
+
+                <p className="text-sm text-muted-foreground text-center pt-2">
+                  Already have an account?{" "}
+                  <Link
+                    href={loginHref}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    Log in
+                  </Link>
+                </p>
+              </form>
             </div>
+          </Step>
 
-            <div
-              id="clerk-captcha"
-              className="clerk-captcha-slot [&:empty]:hidden"
-              data-cl-theme="auto"
-              data-cl-size="flexible"
-            />
-
-            <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={goBack}
-                disabled={isSubmitting}
-                className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
-              >
-                Back
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting || !isLoaded}
-                className={`text-white font-semibold text-sm whitespace-normal ${theme.primaryBtn}`}
-              >
-                {isSubmitting ? "Creating account..." : "Complete Registration"}
-              </Button>
-            </div>
-
-            <Separator />
-
-            <p className="text-xs text-center text-muted-foreground">
-              By creating an account, you agree to our{" "}
-              <Link href="#" className="underline hover:text-primary">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="#" className="underline hover:text-primary">
-                Privacy Policy
-              </Link>
-              .
-            </p>
-          </form>
-        )}
-
-        {/* ── Step 2: Employer Profile ── */}
-        {step === 2 && isEmployer && (
-          <form
-            onSubmit={employerStep2Form.handleSubmit(onEmployerStep2Submit)}
-            className="space-y-5"
-            noValidate
-          >
-            <div className="grid gap-2">
-              <Label htmlFor="company">Company Name</Label>
-              <Input
-                id="company"
-                placeholder="e.g., TechCorp Inc."
-                {...employerStep2Form.register("companyName")}
-                aria-invalid={!!employerStep2Form.formState.errors.companyName}
-              />
-              {employerStep2Form.formState.errors.companyName && (
-                <p className="text-xs text-red-500">
-                  {employerStep2Form.formState.errors.companyName.message}
+          {/* ── Step 2: Profile ── */}
+          <Step>
+            <div className="px-4 sm:px-8 pb-8 space-y-6">
+              <div className="text-center space-y-1 mb-6">
+                <CardTitle className="text-2xl">
+                  Complete your profile
+                </CardTitle>
+                <CardDescription>Tell us more about yourself</CardDescription>
+              </div>
+              {submitError && step === 2 && (
+                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+                  {submitError}
                 </p>
               )}
-            </div>
+              {!isEmployer ? (
+                <form
+                  onSubmit={studentStep2Form.handleSubmit(onStudentStep2Submit)}
+                  className="space-y-5"
+                  noValidate
+                >
+                  <div className="space-y-2">
+                    <Label>Academic Status</Label>
+                    <ToggleGroup
+                      type="single"
+                      value={studentStep2Form.watch("academicStatus")}
+                      onValueChange={(v) =>
+                        v &&
+                        studentStep2Form.setValue(
+                          "academicStatus",
+                          v as AcademicStatus,
+                          { shouldValidate: true },
+                        )
+                      }
+                      className="grid w-full grid-cols-1 min-[375px]:grid-cols-2 gap-3"
+                    >
+                      <ToggleGroupItem
+                        value="undergraduate"
+                        className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50 dark:data-[state=on]:bg-blue-950 dark:data-[state=on]:border-blue-400"
+                      >
+                        <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
+                        Undergraduate
+                      </ToggleGroupItem>
 
-            <div className="grid gap-2">
-              <Label htmlFor="position">Your Role / Position</Label>
-              <Input
-                id="position"
-                placeholder="e.g., HR Manager, Tech Lead, CEO..."
-                {...employerStep2Form.register("position")}
-                aria-invalid={!!employerStep2Form.formState.errors.position}
-              />
-              {employerStep2Form.formState.errors.position && (
-                <p className="text-xs text-red-500">
-                  {employerStep2Form.formState.errors.position.message}
-                </p>
+                      <ToggleGroupItem
+                        value="graduate"
+                        className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50 dark:data-[state=on]:bg-blue-950 dark:data-[state=on]:border-blue-400"
+                      >
+                        <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
+                        Graduate
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="field">Speciality / Field of Study</Label>
+                    <Input
+                      id="field"
+                      placeholder="e.g., Computer Science, Business, Design..."
+                      {...studentStep2Form.register("fieldOfStudy")}
+                      aria-invalid={
+                        !!studentStep2Form.formState.errors.fieldOfStudy
+                      }
+                    />
+                    {studentStep2Form.formState.errors.fieldOfStudy && (
+                      <p className="text-xs text-red-500">
+                        {studentStep2Form.formState.errors.fieldOfStudy.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Upload CV (Optional)</Label>
+
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.doc,.docx"
+                      onChange={onFileChange}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={pickFile}
+                      aria-label="Upload CV"
+                      className={`w-full rounded-xl border border-dashed p-4 text-left transition-all
+                            hover:shadow-sm ${theme.softBg} ${theme.dashHover}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`p-2 rounded-lg ${theme.iconBg} ${theme.iconText}`}
+                        >
+                          <Upload className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">
+                            {cvFile ? cvFile.name : "Click to upload your CV"}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Accepted formats: PDF, DOC, DOCX
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+
+                  <div
+                    id="clerk-captcha"
+                    className="clerk-captcha-slot [&:empty]:hidden"
+                    data-cl-theme="auto"
+                    data-cl-size="flexible"
+                  />
+
+                  <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={goBack}
+                      disabled={isSubmitting}
+                      className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting || !isLoaded}
+                      className={`text-white font-semibold text-sm whitespace-normal ${theme.primaryBtn}`}
+                    >
+                      {isSubmitting
+                        ? "Creating account..."
+                        : "Complete Registration"}
+                    </Button>
+                  </div>
+
+                  <Separator />
+
+                  <p className="text-xs text-center text-muted-foreground">
+                    By creating an account, you agree to our{" "}
+                    <Link href="#" className="underline hover:text-primary">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="#" className="underline hover:text-primary">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </p>
+                </form>
+              ) : (
+                <form
+                  onSubmit={employerStep2Form.handleSubmit(
+                    onEmployerStep2Submit,
+                  )}
+                  className="space-y-5"
+                  noValidate
+                >
+                  <div className="grid gap-2">
+                    <Label htmlFor="company">Company Name</Label>
+                    <Input
+                      id="company"
+                      placeholder="e.g., TechCorp Inc."
+                      {...employerStep2Form.register("companyName")}
+                      aria-invalid={
+                        !!employerStep2Form.formState.errors.companyName
+                      }
+                    />
+                    {employerStep2Form.formState.errors.companyName && (
+                      <p className="text-xs text-red-500">
+                        {employerStep2Form.formState.errors.companyName.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="position">Your Role / Position</Label>
+                    <Input
+                      id="position"
+                      placeholder="e.g., HR Manager, Tech Lead, CEO..."
+                      {...employerStep2Form.register("position")}
+                      aria-invalid={
+                        !!employerStep2Form.formState.errors.position
+                      }
+                    />
+                    {employerStep2Form.formState.errors.position && (
+                      <p className="text-xs text-red-500">
+                        {employerStep2Form.formState.errors.position.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Rank / Level</Label>
+                    <Select
+                      value={employerStep2Form.watch("rankLevel")}
+                      onValueChange={(v) =>
+                        employerStep2Form.setValue(
+                          "rankLevel",
+                          v as EmployerStep2Data["rankLevel"],
+                          {
+                            shouldValidate: true,
+                          },
+                        )
+                      }
+                    >
+                      <SelectTrigger className="h-11 rounded-lg bg-white cursor-pointer transition-colors hover:bg-slate-50 dark:bg-gray-800 dark:hover:bg-gray-700">
+                        <SelectValue placeholder="Select your level..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white z-50 shadow-lg border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                        <SelectItem
+                          value="mid"
+                          className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                        >
+                          Mid
+                        </SelectItem>
+                        <SelectItem
+                          value="senior"
+                          className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                        >
+                          Senior
+                        </SelectItem>
+                        <SelectItem
+                          value="lead"
+                          className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                        >
+                          Lead
+                        </SelectItem>
+                        <SelectItem
+                          value="manager"
+                          className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                        >
+                          Manager
+                        </SelectItem>
+                        <SelectItem
+                          value="director"
+                          className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                        >
+                          Director
+                        </SelectItem>
+                        <SelectItem
+                          value="executive"
+                          className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
+                        >
+                          Executive
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {employerStep2Form.formState.errors.rankLevel && (
+                      <p className="text-xs text-red-500">
+                        {employerStep2Form.formState.errors.rankLevel.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div
+                    id="clerk-captcha"
+                    className="clerk-captcha-slot [&:empty]:hidden"
+                    data-cl-theme="auto"
+                    data-cl-size="flexible"
+                  />
+
+                  <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={goBack}
+                      disabled={isSubmitting}
+                      className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting || !isLoaded}
+                      className={`text-white font-semibold text-sm whitespace-normal ${theme.primaryBtn}`}
+                    >
+                      {isSubmitting
+                        ? "Creating account..."
+                        : "Complete Registration"}
+                    </Button>
+                  </div>
+
+                  <Separator />
+
+                  <p className="text-xs text-center text-muted-foreground">
+                    By creating an account, you agree to our{" "}
+                    <Link href="#" className="underline hover:text-primary">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="#" className="underline hover:text-primary">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </p>
+                </form>
               )}
             </div>
+          </Step>
 
-            <div className="grid gap-2">
-              <Label>Rank / Level</Label>
-              <Select
-                value={employerStep2Form.watch("rankLevel")}
-                onValueChange={(v) =>
-                  employerStep2Form.setValue(
-                    "rankLevel",
-                    v as EmployerStep2Data["rankLevel"],
-                    {
-                      shouldValidate: true,
-                    },
-                  )
-                }
-              >
-                <SelectTrigger className="h-11 rounded-lg bg-white cursor-pointer transition-colors hover:bg-slate-50 dark:bg-gray-800 dark:hover:bg-gray-700">
-                  <SelectValue placeholder="Select your level..." />
-                </SelectTrigger>
-                <SelectContent className="bg-white z-50 shadow-lg border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-                  <SelectItem
-                    value="mid"
-                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
-                  >
-                    Mid
-                  </SelectItem>
-                  <SelectItem
-                    value="senior"
-                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
-                  >
-                    Senior
-                  </SelectItem>
-                  <SelectItem
-                    value="lead"
-                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
-                  >
-                    Lead
-                  </SelectItem>
-                  <SelectItem
-                    value="manager"
-                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
-                  >
-                    Manager
-                  </SelectItem>
-                  <SelectItem
-                    value="director"
-                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
-                  >
-                    Director
-                  </SelectItem>
-                  <SelectItem
-                    value="executive"
-                    className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
-                  >
-                    Executive
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              {employerStep2Form.formState.errors.rankLevel && (
-                <p className="text-xs text-red-500">
-                  {employerStep2Form.formState.errors.rankLevel.message}
-                </p>
-              )}
-            </div>
+          {/* ── Step 3: Verification ── */}
+          {totalSteps === 3 && (
+            <Step>
+              <div className="px-4 sm:px-8 pb-8 space-y-6">
+                <div className="text-center space-y-1 mb-6">
+                  <CardTitle className="text-2xl">Verify your email</CardTitle>
+                  <CardDescription>
+                    Enter the verification code sent to your email
+                  </CardDescription>
+                </div>
+                {submitError && step === 3 && (
+                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+                    {submitError}
+                  </p>
+                )}
+                <form
+                  onSubmit={onVerifyEmailCodeSubmit}
+                  className="space-y-5"
+                  noValidate
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="email-code">Email verification code</Label>
+                    <Input
+                      id="email-code"
+                      value={verificationCode}
+                      onChange={(event) =>
+                        setVerificationCode(event.target.value)
+                      }
+                      placeholder="Enter the code from your email"
+                      autoComplete="one-time-code"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      We sent a one-time code to{" "}
+                      <strong>{step1Data?.email}</strong>.
+                    </p>
+                  </div>
 
-            <div
-              id="clerk-captcha"
-              className="clerk-captcha-slot [&:empty]:hidden"
-              data-cl-theme="auto"
-              data-cl-size="flexible"
-            />
-
-            <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={goBack}
-                disabled={isSubmitting}
-                className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
-              >
-                Back
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting || !isLoaded}
-                className={`text-white font-semibold text-sm whitespace-normal ${theme.primaryBtn}`}
-              >
-                {isSubmitting ? "Creating account..." : "Complete Registration"}
-              </Button>
-            </div>
-
-            <Separator />
-
-            <p className="text-xs text-center text-muted-foreground">
-              By creating an account, you agree to our{" "}
-              <Link href="#" className="underline hover:text-primary">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="#" className="underline hover:text-primary">
-                Privacy Policy
-              </Link>
-              .
-            </p>
-          </form>
-        )}
-
-        {step === 3 && (
-          <form
-            onSubmit={onVerifyEmailCodeSubmit}
-            className="space-y-5"
-            noValidate
-          >
-            <div className="space-y-2">
-              <Label htmlFor="email-code">Email verification code</Label>
-              <Input
-                id="email-code"
-                value={verificationCode}
-                onChange={(event) => setVerificationCode(event.target.value)}
-                placeholder="Enter the code from your email"
-                autoComplete="one-time-code"
-              />
-              <p className="text-xs text-muted-foreground">
-                We sent a one-time code to <strong>{step1Data?.email}</strong>.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={goBack}
-                disabled={isSubmitting}
-                className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
-              >
-                Back
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting || verificationCode.trim().length === 0}
-                className={`text-white font-semibold text-sm whitespace-normal ${theme.primaryBtn}`}
-              >
-                {isSubmitting ? "Verifying..." : "Verify and Continue"}
-              </Button>
-            </div>
-          </form>
-        )}
+                  <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={goBack}
+                      disabled={isSubmitting}
+                      className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={
+                        isSubmitting || verificationCode.trim().length === 0
+                      }
+                      className={`text-white font-semibold text-sm whitespace-nowrap ${theme.primaryBtn}`}
+                    >
+                      {isSubmitting ? "Verifying..." : "Verify and Continue"}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </Step>
+          )}
+        </Stepper>
       </CardContent>
     </Card>
   );
