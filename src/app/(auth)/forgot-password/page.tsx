@@ -156,7 +156,7 @@ export default function ForgotPasswordPage() {
 
   if (step === "email") {
     return (
-      <Card className="rounded-3xl border shadow-sm">
+      <Card className="rounded-3xl border shadow-sm border-r-3 border-b-3 border-black dark:border-white">
         <CardHeader className="text-center space-y-3 px-8 pt-8">
           <div
             className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ${isEmployer ? "bg-purple-100 dark:bg-purple-900" : "bg-blue-100 dark:bg-blue-900"}`}
