@@ -1,9 +1,12 @@
 "use client";
 
-import { Search, Send, Award } from "lucide-react";
+import { useState } from "react";
+import { Search, Send, Award, Briefcase, Bot, ShieldCheck } from "lucide-react";
 import CardSwap, { Card } from "@/components/CardSwap";
+import AnimateIn from "@/components/AnimateIn";
+import { motion } from "motion/react";
 
-const steps = [
+const studentSteps = [
   {
     num: 1,
     icon: Search,
@@ -27,61 +30,111 @@ const steps = [
   },
 ];
 
+const employerSteps = [
+  {
+    num: 1,
+    icon: Briefcase,
+    title: "Post a Challenge",
+    desc: "Create verified tasks based on your company's actual real-world projects and requirements.",
+    accent: "from-[#7B1FA2] to-[#AB47BC]",
+  },
+  {
+    num: 2,
+    icon: Bot,
+    title: "AI Evaluates Submissions",
+    desc: "Our AI engine automatically scores and gives detailed feedback on all student work at scale.",
+    accent: "from-[#00BCD4] to-[#1565C0]",
+  },
+  {
+    num: 3,
+    icon: ShieldCheck,
+    title: "Hire Proven Talent",
+    desc: "Access a pre-screened pool of candidates who have already proven they can do the job.",
+    accent: "from-[#1565C0] to-[#7B1FA2]",
+  },
+];
+
 export default function HowItWorks() {
+  const [activeTab, setActiveTab] = useState<"students" | "employers">(
+    "students",
+  );
+  const steps = activeTab === "students" ? studentSteps : employerSteps;
+
   return (
-    <section id="how-it-works" className="relative z-10 py-20 sm:py-28">
+    <section
+      id="how-it-works"
+      className="relative z-10 py-20 sm:py-28 overflow-hidden"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto">
+        <AnimateIn className="text-center max-w-2xl mx-auto">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
             How Internify Works
           </h2>
+
           <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
-            Three steps from student to certified professional
+            {activeTab === "students"
+              ? "Three steps from student to certified professional."
+              : "Three steps to hire proven, pre-vetted talent."}
           </p>
-        </div>
+        </AnimateIn>
 
-        {/* Two-column layout: steps list + card swap */}
-        <div className="mt-16 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left — steps list */}
-          <div className="space-y-8">
-            {steps.map((step) => {
-              const Icon = step.icon;
-              return (
-                <div key={step.num} className="flex gap-5">
-                  {/* Number circle */}
-                  <div className="shrink-0">
-                    <div className="bg-brand-gradient flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-lg shadow-blue-500/15">
-                      {step.num}
-                    </div>
-                  </div>
-                  {/* Content */}
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {step.title}
-                      </h3>
-                    </div>
-                    <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-md">
-                      {step.desc}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+        {/* Custom Animated Toggle */}
+        <AnimateIn delay={0.1} className="mt-10 flex justify-center">
+          <div className="relative flex rounded-full bg-gray-100/80 dark:bg-gray-800/50 p-1 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+            <button
+              onClick={() => setActiveTab("students")}
+              className={`relative z-10 px-6 sm:px-8 py-2.5 text-sm font-semibold transition-colors outline-none ${
+                activeTab === "students"
+                  ? "text-gray-900 dark:text-white"
+                  : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+              }`}
+            >
+              For Students
+              {activeTab === "students" && (
+                <motion.div
+                  layoutId="how-it-works-toggle"
+                  className="absolute inset-0 -z-10 rounded-full bg-white dark:bg-gray-700 shadow-sm"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("employers")}
+              className={`relative z-10 px-6 sm:px-8 py-2.5 text-sm font-semibold transition-colors outline-none ${
+                activeTab === "employers"
+                  ? "text-gray-900 dark:text-white"
+                  : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+              }`}
+            >
+              For Employers
+              {activeTab === "employers" && (
+                <motion.div
+                  layoutId="how-it-works-toggle"
+                  className="absolute inset-0 -z-10 rounded-full bg-white dark:bg-gray-700 shadow-sm"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+            </button>
           </div>
+        </AnimateIn>
 
-          {/* Right — CardSwap visual (floating, overflows beneath next section) */}
-          <div className="relative hidden h-[420px] lg:block">
+        {/* Centered CardSwap */}
+        <AnimateIn delay={0.2} className="mt-16 sm:mt-24 flex justify-center">
+          {/* Wrapper to maintain height and position */}
+          <div className="relative h-[420px] w-full max-w-[420px]">
+            {/* Soft background glow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-[#00BCD4]/8 via-[#1565C0]/6 to-[#7B1FA2]/10 blur-[100px] dark:from-[#00BCD4]/12 dark:via-[#1565C0]/10 dark:to-[#7B1FA2]/12 pointer-events-none" />
+
+            {/* CardSwap visually centered. Changing key forces remount/restart of animation */}
             <CardSwap
+              key={activeTab}
               cardDistance={50}
-              verticalDistance={50}
-              delay={3000}
+              verticalDistance={40}
+              delay={3500}
               pauseOnHover
-              width={380}
-              height={280}
+              width={400}
+              height={320}
               easing="elastic"
             >
               {steps.map((step) => {
@@ -89,22 +142,22 @@ export default function HowItWorks() {
                 return (
                   <Card
                     key={step.num}
-                    className="flex flex-col justify-center p-8 !border-gray-200 !bg-white !shadow-lg !shadow-gray-200/70 dark:!border-gray-800 dark:!bg-gray-900 dark:!shadow-black/30"
+                    className="flex flex-col justify-center p-8 sm:p-10 !border-gray-200 !bg-white !shadow-xl !shadow-gray-200/70 dark:!border-gray-800 dark:!bg-gray-900 dark:!shadow-black/50"
                   >
                     <div
-                      className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${step.accent} shadow-lg mb-5`}
+                      className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${step.accent} shadow-lg mb-6`}
                     >
                       <Icon className="h-7 w-7 text-white" />
                     </div>
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-brand-gradient text-sm font-bold">
+                      <span className="text-brand-gradient text-sm font-bold tracking-wide uppercase">
                         Step {step.num}
                       </span>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                       {step.title}
                     </h3>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                    <p className="mt-3 text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">
                       {step.desc}
                     </p>
                   </Card>
@@ -112,7 +165,7 @@ export default function HowItWorks() {
               })}
             </CardSwap>
           </div>
-        </div>
+        </AnimateIn>
       </div>
     </section>
   );
