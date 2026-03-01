@@ -2,6 +2,7 @@
 
 import { ArrowRight, Building2, Star } from "lucide-react";
 import Link from "next/link";
+import AnimateIn from "@/components/AnimateIn";
 
 export default function HeroSection() {
   return (
@@ -14,39 +15,49 @@ export default function HeroSection() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left content */}
           <div className="max-w-xl">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
-              <span className="text-gray-900 dark:text-white">
-                Build Skills That
-              </span>
-              <br />
-              <span className="text-brand-gradient">Get You Hired.</span>
-            </h1>
+            <AnimateIn delay={0}>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
+                <span className="text-gray-900 dark:text-white">
+                  Build Skills That
+                </span>
+                <br />
+                <span className="text-brand-gradient">Get You Hired.</span>
+              </h1>
+            </AnimateIn>
 
-            <p className="mt-6 text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-              Internify connects students with real employer challenges.
-              Complete tasks, earn verified certificates, and land your first
-              job faster.
-            </p>
+            <AnimateIn delay={0.1}>
+              <p className="mt-6 text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+                Internify connects students with real employer challenges.
+                Complete tasks, earn verified certificates, and land your first
+                job faster.
+              </p>
+            </AnimateIn>
 
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Link
-                href="/signup"
-                className="bg-brand-gradient inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/25"
-              >
-                Start for Free
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/signup"
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-7 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700 hover:shadow-md dark:hover:border-purple-500/40 dark:hover:bg-gray-700 dark:hover:text-purple-300"
-              >
-                Post a Task
-              </Link>
-            </div>
+            <AnimateIn delay={0.2}>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link
+                  href="/signup"
+                  className="bg-brand-gradient inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/25"
+                >
+                  Start for Free
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-7 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700 hover:shadow-md dark:hover:border-purple-500/40 dark:hover:bg-gray-700 dark:hover:text-purple-300"
+                >
+                  Post a Task
+                </Link>
+              </div>
+            </AnimateIn>
           </div>
 
           {/* Right – floating task card */}
-          <div className="relative flex justify-center lg:justify-end">
+          <AnimateIn
+            direction="right"
+            delay={0.15}
+            className="relative flex justify-center lg:justify-end"
+          >
             <div className="relative">
               {/* Glow behind the card */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#00BCD4]/20 via-[#1565C0]/15 to-[#7B1FA2]/20 rounded-3xl blur-2xl scale-105" />
@@ -103,7 +114,7 @@ export default function HeroSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </AnimateIn>
         </div>
       </div>
     </section>

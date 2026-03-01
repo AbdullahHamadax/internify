@@ -102,11 +102,17 @@ export function AuthHero() {
 
       <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/20 p-4 backdrop-blur-md">
         <div className="flex -space-x-3">
-          {[1, 2, 3].map((i) => (
+          {[
+            { letter: "S", gradient: "from-[#00BCD4] to-[#1565C0]" },
+            { letter: "E", gradient: "from-[#1565C0] to-[#7B1FA2]" },
+            { letter: "T", gradient: "from-[#7B1FA2] to-[#00BCD4]" },
+          ].map((avatar) => (
             <div
-              key={i}
-              className="h-9 w-9 rounded-full bg-slate-200 ring-2 ring-white/20"
-            />
+              key={avatar.letter}
+              className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br ${avatar.gradient} text-xs font-bold text-white ring-2 ring-white/20`}
+            >
+              {avatar.letter}
+            </div>
           ))}
         </div>
         <div className="text-sm">
