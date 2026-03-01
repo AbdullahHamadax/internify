@@ -255,14 +255,13 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="rounded-3xl border shadow-sm">
+    <Card className="rounded-3xl shadow-sm border border-r-3 border-b-3 border-black dark:border-white">
       <CardHeader className="text-center space-y-2 px-8 pt-8">
         <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>
           Sign in to your <span className="capitalize">{role}</span> account
         </CardDescription>
       </CardHeader>
-
       <CardContent className="px-8 pb-8 space-y-6">
         <p className="text-sm text-center font-semibold text-muted-foreground">
           Choose account type

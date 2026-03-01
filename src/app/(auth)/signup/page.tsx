@@ -493,7 +493,7 @@ export default function SignUpPage() {
     const loginHref = role ? `/login?role=${role}` : "/login";
 
     return (
-      <Card className="rounded-3xl border shadow-sm">
+      <Card className="rounded-3xl border shadow-sm border-r-3 border-b-3 border-black dark:border-white">
         <CardHeader className="text-center space-y-2 px-4 sm:px-8 pt-8">
           <CardTitle className="text-2xl">Join Internify</CardTitle>
           <CardDescription>
@@ -561,7 +561,7 @@ export default function SignUpPage() {
   const loginHref = role ? `/login?role=${role}` : "/login";
 
   return (
-    <Card className="rounded-3xl border shadow-sm">
+    <Card className="rounded-3xl border shadow-sm border-r-3 border-b-3 border-black dark:border-white">
       <CardHeader className="px-4 sm:px-8 pt-8">
         {/* ── Role label ── */}
         <div className="flex justify-center mb-1">
