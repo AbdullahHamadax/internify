@@ -3,16 +3,18 @@
 import ThemeToggle from "@/components/ThemeToggle";
 import { GraduationCap, Menu, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 const navLinks = [
-  { label: "How it Works", href: "#how-it-works" },
-  { label: "For Students", href: "#for-students" },
-  { label: "For Employers", href: "#for-employers" },
-  { label: "About", href: "#" },
+  { label: "How it Works", href: "/#how-it-works" },
+  { label: "For Students", href: "/#for-students" },
+  { label: "For Employers", href: "/#for-employers" },
+  { label: "About", href: "/about" },
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -24,16 +26,22 @@ export default function Navbar() {
 
   const handleNavClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-      if (href.startsWith("#") && href.length > 1) {
-        e.preventDefault();
-        const el = document.getElementById(href.slice(1));
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-          setMobileOpen(false);
+      // Hash links like "/#how-it-works"
+      if (href.startsWith("/#")) {
+        const id = href.slice(2);
+        // If already on the homepage, smooth-scroll to the section
+        if (pathname === "/") {
+          e.preventDefault();
+          const el = document.getElementById(id);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
         }
+        // Otherwise let the browser navigate to /#section naturally
+        setMobileOpen(false);
       }
     },
-    [],
+    [pathname],
   );
 
   return (
