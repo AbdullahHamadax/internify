@@ -37,7 +37,9 @@ export default function AuthLayout({
             <span className="tracking-wide">Internify</span>
           </div>
 
-          <AuthHero />
+          <Suspense fallback={null}>
+            <AuthHero />
+          </Suspense>
 
           <div className="relative z-10 text-xs font-medium uppercase tracking-wider text-blue-100/70">
             (c) 2026 Internify Platform
