@@ -1,0 +1,252 @@
+"use client";
+
+import {
+  Target,
+  Lightbulb,
+  Bot,
+  ShieldCheck,
+  Handshake,
+  GraduationCap,
+  Briefcase,
+  ArrowRight,
+} from "lucide-react";
+import Link from "next/link";
+import AnimateIn from "@/components/AnimateIn";
+import Navbar from "@/components/landing/Navbar";
+import Footer from "@/components/landing/Footer";
+import CtaSection from "@/components/landing/CtaSection";
+
+/* ═══════════════════════════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════════════════════════ */
+
+const problemPoints = [
+  {
+    icon: GraduationCap,
+    title: "Theory Without Practice",
+    text: "University curricula teach fundamentals, but graduates often lack hands-on experience with real business problems and modern tooling.",
+  },
+  {
+    icon: Briefcase,
+    title: "Hiring Is a Gamble",
+    text: "Employers spend months screening candidates only to discover that degrees and GPAs don\u0027t reliably predict on-the-job performance.",
+  },
+  {
+    icon: Target,
+    title: "The First-Job Paradox",
+    text: '"Need experience to get experience." Students are trapped in a loop where every entry-level role demands skills they never had the chance to prove.',
+  },
+];
+
+const values = [
+  {
+    icon: Lightbulb,
+    title: "Real-World Skills",
+    desc: "Every task on Internify is authored by a real employer and mirrors actual work. No toy projects — only challenges that build genuine competence.",
+    accent: "from-[#00BCD4] to-[#1565C0]",
+  },
+  {
+    icon: Bot,
+    title: "AI-Powered Fairness",
+    desc: "Our AI evaluation engine scores submissions objectively and instantly, removing bias and giving every student an equal shot.",
+    accent: "from-[#1565C0] to-[#7B1FA2]",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Verified Credentials",
+    desc: "Certificates earned on Internify are tamper-proof and company-branded. Employers trust them because they represent proven ability.",
+    accent: "from-[#7B1FA2] to-[#AB47BC]",
+  },
+  {
+    icon: Handshake,
+    title: "Industry Partnerships",
+    desc: "We partner directly with companies to create challenges that reflect their hiring needs, so students train on what actually matters.",
+    accent: "from-[#00BCD4] to-[#7B1FA2]",
+  },
+];
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE
+   ═══════════════════════════════════════════════════════════ */
+
+export default function AboutPage() {
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-950">
+      <Navbar />
+
+      {/* ─── HERO ─── */}
+      <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-20 overflow-hidden">
+        {/* Gradient blobs */}
+        <div className="absolute top-0 right-0 -z-10 w-[600px] h-[600px] bg-gradient-to-br from-[#00BCD4]/8 via-[#1565C0]/6 to-[#7B1FA2]/8 dark:from-[#00BCD4]/15 dark:via-[#1565C0]/10 dark:to-[#7B1FA2]/15 rounded-full blur-3xl translate-x-1/3 -translate-y-1/4" />
+        <div className="absolute bottom-0 left-0 -z-10 w-[400px] h-[400px] bg-gradient-to-tr from-[#7B1FA2]/5 to-[#00BCD4]/5 dark:from-[#7B1FA2]/10 dark:to-[#00BCD4]/10 rounded-full blur-3xl -translate-x-1/3 translate-y-1/4" />
+
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+          <AnimateIn>
+            <span className="inline-block rounded-full bg-blue-50 dark:bg-blue-500/10 px-5 py-2 text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-6">
+              Our Story
+            </span>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
+              <span className="text-gray-900 dark:text-white">
+                Why We Built{" "}
+              </span>
+              <span className="text-brand-gradient">Internify</span>
+            </h1>
+          </AnimateIn>
+
+          <AnimateIn delay={0.1}>
+            <p className="mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto">
+              Internify is an AI-powered, two-sided learning-to-hiring platform
+              that closes the gap between university training and industry needs
+              by hosting employer-authored, real-world challenges.
+            </p>
+          </AnimateIn>
+        </div>
+      </section>
+
+      {/* ─── THE PROBLEM ─── */}
+      <section className="dot-pattern relative z-10 isolate py-20 sm:py-28 bg-[#F8FAFC] dark:bg-gray-950">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <AnimateIn className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+              The Problem We Saw
+            </h2>
+            <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
+              The bridge between education and employment is broken — and
+              everyone pays the price.
+            </p>
+          </AnimateIn>
+
+          <div className="mt-14 grid md:grid-cols-3 gap-6 lg:gap-8">
+            {problemPoints.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <AnimateIn key={item.title} delay={i * 0.1}>
+                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#00BCD4] to-[#1565C0] shadow-lg">
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="mt-5 text-lg font-bold text-gray-900 dark:text-white">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                      {item.text}
+                    </p>
+                  </div>
+                </AnimateIn>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── OUR SOLUTION ─── */}
+      <section className="relative py-20 sm:py-28 overflow-hidden">
+        {/* Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-r from-[#00BCD4]/8 via-[#1565C0]/6 to-[#7B1FA2]/8 dark:from-[#00BCD4]/15 dark:via-[#1565C0]/10 dark:to-[#7B1FA2]/15 rounded-full blur-3xl" />
+
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <AnimateIn className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+              Our Solution
+            </h2>
+            <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
+              We flipped the script: instead of guessing who&apos;s job-ready,
+              let them prove it.
+            </p>
+          </AnimateIn>
+
+          <AnimateIn delay={0.15}>
+            <div className="mt-14 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 backdrop-blur-sm p-8 sm:p-10 shadow-lg">
+              <div className="space-y-6 text-gray-600 dark:text-gray-400 leading-relaxed text-base">
+                <p>
+                  Internify is a{" "}
+                  <strong className="text-gray-900 dark:text-white">
+                    two-sided marketplace
+                  </strong>{" "}
+                  where{" "}
+                  <strong className="text-gray-900 dark:text-white">
+                    employers post real-world challenges
+                  </strong>{" "}
+                  and{" "}
+                  <strong className="text-gray-900 dark:text-white">
+                    students solve them
+                  </strong>{" "}
+                  to prove their skills. Think of it as an internship experience
+                  condensed into focused, bite-sized tasks.
+                </p>
+                <p>
+                  Every submission is evaluated by our{" "}
+                  <strong className="text-gray-900 dark:text-white">
+                    AI-powered engine
+                  </strong>
+                  , providing instant, objective, and detailed feedback — no
+                  waiting weeks for a human reviewer. Students who pass earn{" "}
+                  <strong className="text-gray-900 dark:text-white">
+                    verified, tamper-proof certificates
+                  </strong>{" "}
+                  branded by the employer, turning every completed challenge
+                  into a concrete portfolio piece.
+                </p>
+                <p>
+                  For employers, this means access to a{" "}
+                  <strong className="text-gray-900 dark:text-white">
+                    pre-screened talent pool
+                  </strong>{" "}
+                  of candidates who have already demonstrated they can do the
+                  work — reducing time-to-hire and eliminating the guesswork
+                  from entry-level recruitment.
+                </p>
+              </div>
+            </div>
+          </AnimateIn>
+        </div>
+      </section>
+
+      {/* ─── VALUES / WHAT SETS US APART ─── */}
+      <section className="noise-overlay relative py-20 sm:py-28 bg-[#F8FAFC] dark:bg-gray-950 overflow-hidden">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <AnimateIn className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+              What Sets Us Apart
+            </h2>
+            <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
+              Built on principles that put students and employers first.
+            </p>
+          </AnimateIn>
+
+          <div className="mt-14 grid sm:grid-cols-2 gap-6 lg:gap-8">
+            {values.map((val, i) => {
+              const Icon = val.icon;
+              return (
+                <AnimateIn key={val.title} delay={i * 0.1}>
+                  <div className="group rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                    {/* Gradient accent bar */}
+                    <div
+                      className={`absolute top-0 left-6 right-6 h-[2px] rounded-full bg-gradient-to-r ${val.accent} opacity-0 group-hover:opacity-60 transition-opacity`}
+                    />
+                    <div
+                      className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${val.accent} shadow-lg`}
+                    >
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="mt-5 text-lg font-bold text-gray-900 dark:text-white">
+                      {val.title}
+                    </h3>
+                    <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                      {val.desc}
+                    </p>
+                  </div>
+                </AnimateIn>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CTA ─── */}
+      <CtaSection />
+
+      <Footer />
+    </div>
+  );
+}
