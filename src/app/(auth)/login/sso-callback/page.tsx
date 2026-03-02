@@ -1,8 +1,9 @@
-"use client";
-
+// 1. REMOVE "use client" so this becomes a Server Component
 import { AuthenticateWithRedirectCallback } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
-import { Suspense } from "react"; // 1. Import Suspense
+
+// 2. Tell Next.js to NEVER statically build this page, bypassing the error entirely
+export const dynamic = "force-dynamic";
 
 export default function SSOCallbackPage() {
   return (
@@ -10,10 +11,8 @@ export default function SSOCallbackPage() {
       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       <p className="text-sm text-muted-foreground">Completing sign-in...</p>
 
-      {/* 2. Wrap the Clerk component in Suspense */}
-      <Suspense fallback={null}>
-        <AuthenticateWithRedirectCallback />
-      </Suspense>
+      {/* Clerk handles its own client-side logic internally */}
+      <AuthenticateWithRedirectCallback />
 
       {/* Required when Clerk's bot sign-up protection is enabled */}
       <div id="clerk-captcha" />
