@@ -6,6 +6,7 @@ import Link from "next/link";
 import Stepper, { Step } from "@/components/Stepper";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
+import { Typography } from "@/components/ui/Typography";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth, useSignUp } from "@clerk/nextjs";
@@ -515,10 +516,16 @@ export default function SignUpPage() {
               <User className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <div className="font-semibold">I&apos;m a Student</div>
-              <div className="text-sm text-muted-foreground">
+              <Typography
+                variant="span"
+                weight="semibold"
+                className="block text-base"
+              >
+                I&apos;m a Student
+              </Typography>
+              <Typography variant="span" color="muted" className="block">
                 Solve tasks, build your portfolio, and earn certificates.
-              </div>
+              </Typography>
             </div>
           </button>
 
@@ -534,16 +541,22 @@ export default function SignUpPage() {
               <Building2 className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <div className="font-semibold">I&apos;m an Employer</div>
-              <div className="text-sm text-muted-foreground">
+              <Typography
+                variant="span"
+                weight="semibold"
+                className="block text-base"
+              >
+                I&apos;m an Employer
+              </Typography>
+              <Typography variant="span" color="muted" className="block">
                 Post challenges and evaluate junior talent with AI.
-              </div>
+              </Typography>
             </div>
           </button>
         </CardContent>
 
         <CardFooter className="justify-center pb-8">
-          <p className="text-sm text-muted-foreground">
+          <Typography variant="span" color="muted" className="text-sm">
             Already have an account?{" "}
             <Link
               href={loginHref}
@@ -551,7 +564,7 @@ export default function SignUpPage() {
             >
               Log in
             </Link>
-          </p>
+          </Typography>
         </CardFooter>
       </Card>
     );
@@ -695,7 +708,11 @@ export default function SignUpPage() {
                   </Button>
                 </div>
 
-                <p className="text-sm text-muted-foreground text-center pt-2">
+                <Typography
+                  variant="span"
+                  color="muted"
+                  className="block text-center pt-2"
+                >
                   Already have an account?{" "}
                   <Link
                     href={loginHref}
@@ -703,7 +720,7 @@ export default function SignUpPage() {
                   >
                     Log in
                   </Link>
-                </p>
+                </Typography>
               </form>
             </div>
           </Step>
@@ -844,7 +861,11 @@ export default function SignUpPage() {
 
                   <Separator />
 
-                  <p className="text-xs text-center text-muted-foreground">
+                  <Typography
+                    variant="caption"
+                    color="muted"
+                    className="block text-center"
+                  >
                     By creating an account, you agree to our{" "}
                     <Link href="#" className="underline hover:text-primary">
                       Terms of Service
@@ -854,7 +875,7 @@ export default function SignUpPage() {
                       Privacy Policy
                     </Link>
                     .
-                  </p>
+                  </Typography>
                 </form>
               ) : (
                 <form
@@ -991,7 +1012,11 @@ export default function SignUpPage() {
 
                   <Separator />
 
-                  <p className="text-xs text-center text-muted-foreground">
+                  <Typography
+                    variant="caption"
+                    color="muted"
+                    className="block text-center"
+                  >
                     By creating an account, you agree to our{" "}
                     <Link href="#" className="underline hover:text-primary">
                       Terms of Service
@@ -1001,7 +1026,7 @@ export default function SignUpPage() {
                       Privacy Policy
                     </Link>
                     .
-                  </p>
+                  </Typography>
                 </form>
               )}
             </div>

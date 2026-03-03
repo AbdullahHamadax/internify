@@ -15,6 +15,7 @@ import AnimateIn from "@/components/AnimateIn";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import CtaSection from "@/components/landing/CtaSection";
+import { Typography } from "@/components/ui/Typography";
 
 /* ═══════════════════════════════════════════════════════════
    DATA
@@ -85,20 +86,26 @@ export default function AboutPage() {
             <span className="inline-block rounded-full bg-blue-50 dark:bg-blue-500/10 px-5 py-2 text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-6">
               Our Story
             </span>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
-              <span className="text-gray-900 dark:text-white">
+            <Typography variant="h1">
+              <Typography as="span" variant="h1">
                 Why We Built{" "}
-              </span>
-              <span className="text-brand-gradient">Internify</span>
-            </h1>
+              </Typography>
+              <Typography as="span" variant="h1" color="gradient">
+                Internify
+              </Typography>
+            </Typography>
           </AnimateIn>
 
           <AnimateIn delay={0.1}>
-            <p className="mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto">
+            <Typography
+              variant="p"
+              color="muted"
+              className="mt-6 text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto"
+            >
               Internify is an AI-powered, two-sided learning-to-hiring platform
               that closes the gap between university training and industry needs
               by hosting employer-authored, real-world challenges.
-            </p>
+            </Typography>
           </AnimateIn>
         </div>
       </section>
@@ -107,13 +114,11 @@ export default function AboutPage() {
       <section className="dot-pattern relative z-10 isolate py-20 sm:py-28 bg-[#F8FAFC] dark:bg-gray-950">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <AnimateIn className="text-center max-w-2xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-              The Problem We Saw
-            </h2>
-            <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
+            <Typography variant="h2">The Problem We Saw</Typography>
+            <Typography variant="p" color="muted" className="mt-4 text-lg">
               The bridge between education and employment is broken — and
               everyone pays the price.
-            </p>
+            </Typography>
           </AnimateIn>
 
           <div className="mt-14 grid md:grid-cols-3 gap-6 lg:gap-8">
@@ -125,12 +130,16 @@ export default function AboutPage() {
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#00BCD4] to-[#1565C0] shadow-lg">
                       <Icon className="h-6 w-6 text-white" />
                     </div>
-                    <h3 className="mt-5 text-lg font-bold text-gray-900 dark:text-white">
+                    <Typography variant="h4" as="h3" className="mt-5">
                       {item.title}
-                    </h3>
-                    <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                    </Typography>
+                    <Typography
+                      variant="span"
+                      color="muted"
+                      className="mt-3 leading-relaxed"
+                    >
                       {item.text}
-                    </p>
+                    </Typography>
                   </div>
                 </AnimateIn>
               );
@@ -146,13 +155,11 @@ export default function AboutPage() {
 
         <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <AnimateIn className="text-center max-w-2xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-              Our Solution
-            </h2>
-            <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
+            <Typography variant="h2">Our Solution</Typography>
+            <Typography variant="p" color="muted" className="mt-4 text-lg">
               We flipped the script: instead of guessing who&apos;s job-ready,
               let them prove it.
-            </p>
+            </Typography>
           </AnimateIn>
 
           <AnimateIn delay={0.15}>
@@ -206,12 +213,10 @@ export default function AboutPage() {
       <section className="noise-overlay relative py-20 sm:py-28 bg-[#F8FAFC] dark:bg-gray-950 overflow-hidden">
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <AnimateIn className="text-center max-w-2xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-              What Sets Us Apart
-            </h2>
-            <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
+            <Typography variant="h2">What Sets Us Apart</Typography>
+            <Typography variant="p" color="muted" className="mt-4 text-lg">
               Built on principles that put students and employers first.
-            </p>
+            </Typography>
           </AnimateIn>
 
           <div className="mt-14 grid sm:grid-cols-2 gap-6 lg:gap-8">
@@ -229,12 +234,16 @@ export default function AboutPage() {
                     >
                       <Icon className="h-6 w-6 text-white" />
                     </div>
-                    <h3 className="mt-5 text-lg font-bold text-gray-900 dark:text-white">
+                    <Typography variant="h4" as="h3" className="mt-5">
                       {val.title}
-                    </h3>
-                    <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                    </Typography>
+                    <Typography
+                      variant="span"
+                      color="muted"
+                      className="mt-3 leading-relaxed"
+                    >
                       {val.desc}
-                    </p>
+                    </Typography>
                   </div>
                 </AnimateIn>
               );

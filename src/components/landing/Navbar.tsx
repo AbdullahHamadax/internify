@@ -5,6 +5,7 @@ import { GraduationCap, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { Typography } from "@/components/ui/Typography";
 
 const navLinks = [
   { label: "How it Works", href: "/#how-it-works" },
@@ -59,9 +60,13 @@ export default function Navbar() {
             <div className="bg-brand-gradient rounded-lg p-1.5">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+            <Typography
+              variant="span"
+              className="text-xl tracking-tight"
+              weight="bold"
+            >
               Internify
-            </span>
+            </Typography>
           </Link>
 
           {/* Center links – desktop */}

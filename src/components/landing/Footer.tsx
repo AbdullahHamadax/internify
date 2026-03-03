@@ -1,6 +1,7 @@
 "use client";
 
 import { GraduationCap } from "lucide-react";
+import { Typography } from "@/components/ui/Typography";
 
 const footerColumns = [
   {
@@ -39,18 +40,31 @@ export default function Footer() {
               <div className="bg-brand-gradient rounded-lg p-1.5">
                 <GraduationCap className="h-5 w-5 text-white" />
               </div>
-              <span className="text-lg font-bold text-white">Internify</span>
+              <Typography
+                variant="span"
+                color="white"
+                className="text-lg"
+                weight="bold"
+              >
+                Internify
+              </Typography>
             </div>
-            <p className="mt-4 text-sm text-gray-400 leading-relaxed max-w-xs">
+            <Typography
+              variant="span"
+              color="muted"
+              className="mt-4 leading-relaxed max-w-xs"
+            >
               Bridging education and industry. Empowering students to build
               real-world skills and launch their careers.
-            </p>
+            </Typography>
           </div>
 
           {/* Link columns */}
           {footerColumns.map((col) => (
             <div key={col.title}>
-              <h4 className="text-sm font-semibold text-white">{col.title}</h4>
+              <Typography variant="span" color="white" weight="semibold">
+                {col.title}
+              </Typography>
               <ul className="mt-4 space-y-3">
                 {col.links.map((link) => (
                   <li key={link.label}>
@@ -69,9 +83,9 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-12 border-t border-white/10 pt-8">
-          <p className="text-center text-sm text-gray-500">
+          <Typography variant="span" color="muted" className="text-center">
             &copy; 2026 Internify Platform. All rights reserved.
-          </p>
+          </Typography>
         </div>
       </div>
     </footer>

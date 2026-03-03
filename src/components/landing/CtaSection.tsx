@@ -3,6 +3,7 @@
 import { Zap, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import AnimateIn from "@/components/AnimateIn";
+import { Typography } from "@/components/ui/Typography";
 
 export default function CtaSection() {
   return (
@@ -12,12 +13,16 @@ export default function CtaSection() {
 
       <AnimateIn className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
         <Zap className="mx-auto h-10 w-10 text-[#00BCD4] mb-6" />
-        <h2 className="text-3xl sm:text-4xl font-bold text-white">
+        <Typography variant="h2" color="white">
           Ready to start building your career?
-        </h2>
-        <p className="mt-4 text-lg text-gray-400 max-w-xl mx-auto">
+        </Typography>
+        <Typography
+          variant="p"
+          color="muted"
+          className="mt-4 text-lg max-w-xl mx-auto"
+        >
           Join thousands of students completing real tasks and getting hired.
-        </p>
+        </Typography>
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link
             href="/signup"

@@ -4,6 +4,7 @@
 import { Building2, GraduationCap, Upload, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Typography } from "@/components/ui/Typography";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@clerk/nextjs";
@@ -248,10 +249,16 @@ export default function CompleteProfilePage() {
               <User className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <div className="font-semibold">I&apos;m a Student</div>
-              <div className="text-sm text-muted-foreground">
+              <Typography
+                variant="span"
+                weight="semibold"
+                className="block text-base"
+              >
+                I&apos;m a Student
+              </Typography>
+              <Typography variant="span" color="muted" className="block">
                 Solve tasks, build your portfolio, and earn certificates.
-              </div>
+              </Typography>
             </div>
           </button>
 
@@ -267,21 +274,27 @@ export default function CompleteProfilePage() {
               <Building2 className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <div className="font-semibold">I&apos;m an Employer</div>
-              <div className="text-sm text-muted-foreground">
+              <Typography
+                variant="span"
+                weight="semibold"
+                className="block text-base"
+              >
+                I&apos;m an Employer
+              </Typography>
+              <Typography variant="span" color="muted" className="block">
                 Post challenges and evaluate junior talent with AI.
-              </div>
+              </Typography>
             </div>
           </button>
         </CardContent>
 
         <CardFooter className="justify-center pb-8">
-          <p className="text-sm text-muted-foreground">
+          <Typography variant="span" color="muted" className="text-sm">
             Signed in as{" "}
-            <span className="font-medium text-foreground">
+            <Typography variant="span" weight="medium">
               {user?.primaryEmailAddress?.emailAddress}
-            </span>
-          </p>
+            </Typography>
+          </Typography>
         </CardFooter>
       </Card>
     );
@@ -556,12 +569,16 @@ export default function CompleteProfilePage() {
 
         <Separator />
 
-        <p className="text-xs text-center text-muted-foreground">
+        <Typography
+          variant="caption"
+          color="muted"
+          className="block text-center"
+        >
           Signed in as{" "}
-          <span className="font-medium">
+          <Typography variant="span" weight="medium">
             {user?.primaryEmailAddress?.emailAddress}
-          </span>
-        </p>
+          </Typography>
+        </Typography>
       </CardContent>
     </Card>
   );

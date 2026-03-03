@@ -5,6 +5,7 @@ import { Briefcase, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Typography } from "@/components/ui/Typography";
 
 import { useClerk, useSignIn } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
@@ -263,9 +264,14 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="px-8 pb-8 space-y-6">
-        <p className="text-sm text-center font-semibold text-muted-foreground">
+        <Typography
+          variant="span"
+          color="muted"
+          weight="semibold"
+          className="block text-center mb-6"
+        >
           Choose account type
-        </p>
+        </Typography>
 
         <div
           role="tablist"
@@ -357,9 +363,13 @@ export default function LoginPage() {
 
           <div className="flex items-center gap-3 py-2">
             <Separator className="flex-1 bg-gray-400 dark:bg-gray-600" />
-            <span className="text-xs uppercase text-muted-foreground whitespace-nowrap">
+            <Typography
+              variant="caption"
+              color="muted"
+              className="uppercase whitespace-nowrap"
+            >
               Or continue with
-            </span>
+            </Typography>
             <Separator className="flex-1 bg-gray-400 dark:bg-gray-600" />
           </div>
 
@@ -422,7 +432,7 @@ export default function LoginPage() {
             </Button>
           </div>
 
-          <div className="text-center text-sm pt-2">
+          <Typography variant="span" className="block text-center pt-2">
             Don&apos;t have an account?{" "}
             <Link
               href={`/signup?role=${role}`}
@@ -430,7 +440,7 @@ export default function LoginPage() {
             >
               Sign up
             </Link>
-          </div>
+          </Typography>
         </form>
       </CardContent>
     </Card>

@@ -3,6 +3,7 @@
 import { ArrowRight, Building2, Star } from "lucide-react";
 import Link from "next/link";
 import AnimateIn from "@/components/AnimateIn";
+import { Typography } from "@/components/ui/Typography";
 
 export default function HeroSection() {
   return (
@@ -16,21 +17,25 @@ export default function HeroSection() {
           {/* Left content */}
           <div className="max-w-xl">
             <AnimateIn delay={0}>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
-                <span className="text-gray-900 dark:text-white">
-                  Build Skills That
-                </span>
+              <Typography variant="h1">
+                Build Skills That
                 <br />
-                <span className="text-brand-gradient">Get You Hired.</span>
-              </h1>
+                <Typography as="span" variant="h1" color="gradient">
+                  Get You Hired.
+                </Typography>
+              </Typography>
             </AnimateIn>
 
             <AnimateIn delay={0.1}>
-              <p className="mt-6 text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+              <Typography
+                variant="p"
+                color="muted"
+                className="mt-6 text-lg leading-relaxed"
+              >
                 Internify connects students with real employer challenges.
                 Complete tasks, earn verified certificates, and land your first
                 job faster.
-              </p>
+              </Typography>
             </AnimateIn>
 
             <AnimateIn delay={0.2}>
@@ -69,24 +74,28 @@ export default function HeroSection() {
                     <Building2 className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <Typography variant="span" weight="semibold">
                       TechCorp Inc.
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                    </Typography>
+                    <Typography variant="caption" color="muted">
                       Software Engineering
-                    </p>
+                    </Typography>
                   </div>
                 </div>
 
                 {/* Task body */}
                 <div className="mt-5">
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                  <Typography variant="h4" as="h3" className="text-base">
                     Build a REST API
-                  </h3>
-                  <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                  </Typography>
+                  <Typography
+                    variant="span"
+                    color="muted"
+                    className="mt-1.5 leading-relaxed"
+                  >
                     Design and implement a RESTful API for a task management
                     application with authentication.
-                  </p>
+                  </Typography>
                 </div>
 
                 {/* Badges */}

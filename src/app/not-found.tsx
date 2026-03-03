@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { Home, ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
+import { Typography } from "@/components/ui/Typography";
 
 export default function NotFound() {
   // Apply the user's persisted theme on mount
@@ -33,9 +34,13 @@ export default function NotFound() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
         >
-          <h1 className="text-[10rem] sm:text-[13rem] font-bold leading-none tracking-tighter text-brand-gradient select-none">
+          <Typography
+            variant="h1"
+            color="gradient"
+            className="text-[10rem] sm:text-[13rem] leading-none tracking-tighter select-none"
+          >
             404
-          </h1>
+          </Typography>
         </motion.div>
 
         {/* Subtitle */}
@@ -44,13 +49,17 @@ export default function NotFound() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
         >
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+          <Typography variant="h3" as="h2">
             Page Not Found
-          </h2>
-          <p className="mt-3 text-base text-gray-500 dark:text-gray-400 leading-relaxed max-w-md mx-auto">
+          </Typography>
+          <Typography
+            variant="p"
+            color="muted"
+            className="mt-3 leading-relaxed max-w-md mx-auto"
+          >
             Looks like this page got lost on its way to the interview.
             Let&apos;s get you back on track.
-          </p>
+          </Typography>
         </motion.div>
 
         {/* CTA buttons */}

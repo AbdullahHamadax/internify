@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import LogoLoop from "@/components/LogoLoop";
+import { Typography } from "@/components/ui/Typography";
 
 const baseLogos = [
   { src: "/google.svg", alt: "Google", href: "https://google.com" },
@@ -56,9 +57,14 @@ export default function PartnerLogos() {
   return (
     <section id="partners" className="py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-        <p className="text-sm font-medium uppercase tracking-widest text-gray-400 dark:text-gray-500">
+        <Typography
+          variant="caption"
+          color="muted"
+          weight="medium"
+          className="uppercase tracking-widest"
+        >
           Trusted by leading organizations
-        </p>
+        </Typography>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <LogoLoop
             logos={logos}
