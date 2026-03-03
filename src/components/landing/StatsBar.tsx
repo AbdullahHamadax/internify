@@ -3,6 +3,7 @@
 import { Users, Building2, ClipboardList, Bot } from "lucide-react";
 import CountUp from "@/components/CountUp";
 import AnimateIn from "@/components/AnimateIn";
+import { Typography } from "@/components/ui/Typography";
 
 const stats = [
   {
@@ -73,7 +74,7 @@ export default function StatsBar() {
                     </div>
 
                     <div className="min-w-0">
-                      <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-none">
+                      <Typography variant="h3" as="p" className="leading-none">
                         {typeof stat.value === "number" ? (
                           <>
                             <CountUp
@@ -90,10 +91,10 @@ export default function StatsBar() {
                         ) : (
                           stat.value
                         )}
-                      </p>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      </Typography>
+                      <Typography variant="span" color="muted" className="mt-1">
                         {stat.label}
-                      </p>
+                      </Typography>
                     </div>
                   </div>
                 </div>

@@ -2,6 +2,7 @@
 
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
+import { Typography } from "@/components/ui/Typography";
 import { GraduationCap, LogOut } from "lucide-react";
 
 import { api } from "../../convex/_generated/api";
@@ -28,17 +29,21 @@ export default function SignedInView() {
       : "bg-blue-100 text-blue-700";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground p-6">
       <div className="w-full max-w-sm space-y-8 text-center">
         <div className="flex items-center justify-center gap-3">
           <div className="bg-brand-gradient p-2.5 rounded-xl shadow-lg">
             <GraduationCap className="w-7 h-7 text-white" />
           </div>
-          <span className="text-2xl font-bold tracking-wide">Internify</span>
+          <Typography variant="h3" as="span" className="tracking-wide">
+            Internify
+          </Typography>
         </div>
 
         <div className="space-y-3">
-          <h1 className="text-3xl font-bold">Hello, {firstName}!</h1>
+          <Typography variant="h2" as="h1">
+            Hello, {firstName}!
+          </Typography>
           {role ? (
             <span
               className={`inline-block rounded-full px-4 py-1.5 text-sm font-semibold capitalize ${roleBadgeClass}`}
@@ -46,9 +51,9 @@ export default function SignedInView() {
               {role}
             </span>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <Typography variant="span" color="muted">
               Loading your profile…
-            </p>
+            </Typography>
           )}
         </div>
 

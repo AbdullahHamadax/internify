@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
+import { Typography } from "@/components/ui/Typography";
 
 type Role = "student" | "employer";
 type Mode = "login" | "signup";
@@ -87,18 +88,28 @@ export function AuthHero() {
 
   return (
     <div className="relative z-10 max-w-md">
-      <h1 className="mb-6 text-5xl font-extrabold leading-tight drop-shadow-sm">
+      <Typography
+        variant="h1"
+        color="white"
+        className="mb-6 text-5xl leading-tight drop-shadow-sm"
+        weight="extrabold"
+      >
         {content.title} <br />
         <span
           className={`bg-linear-to-r bg-clip-text text-transparent ${content.accentGradient}`}
         >
           {content.accent}
         </span>
-      </h1>
+      </Typography>
 
-      <p className="mb-8 text-lg font-medium text-blue-50">
+      <Typography
+        variant="p"
+        className="mb-8 text-lg"
+        weight="medium"
+        color="white"
+      >
         {content.description}
-      </p>
+      </Typography>
 
       <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/20 p-4 backdrop-blur-md">
         <div className="flex -space-x-3">
@@ -116,10 +127,12 @@ export function AuthHero() {
           ))}
         </div>
         <div className="text-sm">
-          <p className="font-bold text-white">{content.trustTitle}</p>
-          <p className="text-xs text-cyan-200 opacity-90">
+          <Typography variant="span" color="white" weight="bold">
+            {content.trustTitle}
+          </Typography>
+          <Typography variant="caption" className="text-cyan-200 opacity-90">
             {content.trustSubtitle}
-          </p>
+          </Typography>
         </div>
       </div>
     </div>

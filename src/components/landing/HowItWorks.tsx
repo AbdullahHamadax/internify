@@ -5,6 +5,7 @@ import { Search, Send, Award, Briefcase, Bot, ShieldCheck } from "lucide-react";
 import CardSwap, { Card } from "@/components/CardSwap";
 import AnimateIn from "@/components/AnimateIn";
 import { motion } from "motion/react";
+import { Typography } from "@/components/ui/Typography";
 
 const studentSteps = [
   {
@@ -68,15 +69,13 @@ export default function HowItWorks() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <AnimateIn className="text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-            How Internify Works
-          </h2>
+          <Typography variant="h2">How Internify Works</Typography>
 
-          <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
+          <Typography variant="p" color="muted" className="mt-4 text-lg">
             {activeTab === "students"
               ? "Three steps from student to certified professional."
               : "Three steps to hire proven, pre-vetted talent."}
-          </p>
+          </Typography>
         </AnimateIn>
 
         {/* Custom Animated Toggle */}
@@ -154,12 +153,14 @@ export default function HowItWorks() {
                         Step {step.num}
                       </span>
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                      {step.title}
-                    </h3>
-                    <p className="mt-3 text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">
+                    <Typography variant="h3">{step.title}</Typography>
+                    <Typography
+                      variant="p"
+                      color="muted"
+                      className="mt-3 text-sm sm:text-base leading-relaxed"
+                    >
                       {step.desc}
-                    </p>
+                    </Typography>
                   </Card>
                 );
               })}
