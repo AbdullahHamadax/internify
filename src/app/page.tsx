@@ -16,6 +16,7 @@ import PartnerLogos from "@/components/landing/PartnerLogos";
 import CtaSection from "@/components/landing/CtaSection";
 import Footer from "@/components/landing/Footer";
 import SignedInView from "@/components/SignedInView";
+import EmployerDashboard from "@/components/employer/EmployerDashboard";
 
 /* ═══════════════════════════════════════════════════════════
    HOMEPAGE (landing page for signed-out users)
@@ -71,6 +72,11 @@ export default function Home() {
     return <LandingPage />;
   }
 
-  // Signed-in → show the dashboard view (preserved from original)
+  // Signed-in employer → show the employer dashboard
+  if (currentUser?.user?.role === "employer") {
+    return <EmployerDashboard />;
+  }
+
+  // Signed-in student (or loading profile) → show placeholder
   return <SignedInView />;
 }
