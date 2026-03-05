@@ -5,13 +5,13 @@ import { Building2, GraduationCap, Upload, User } from "lucide-react";
 import Link from "next/link";
 import Stepper, { Step } from "@/components/Stepper";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Typography } from "@/components/ui/Typography";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth, useSignUp } from "@clerk/nextjs";
+import { useAuth, useSignUp, useUser } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -102,7 +102,9 @@ type EmployerStep2Data = z.infer<typeof employerStep2Schema>;
 export default function SignUpPage() {
   const { getToken } = useAuth();
   const { isLoaded, setActive, signUp } = useSignUp();
+  const { isLoaded: isUserLoaded, isSignedIn } = useUser();
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
+  const currentUser = useQuery(api.users.currentUser);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -189,6 +191,29 @@ export default function SignUpPage() {
     mode: "onTouched",
     defaultValues: { companyName: "", position: "" },
   });
+
+  // ── Already-signed-in guard ──
+  useEffect(() => {
+    if (!isUserLoaded || !isSignedIn) return;
+    if (currentUser === undefined) {
+      const timer = setTimeout(() => router.replace("/"), 3000);
+      return () => clearTimeout(timer);
+    }
+    if (currentUser?.user?.role) {
+      router.replace("/");
+    } else {
+      router.replace("/complete-profile");
+    }
+  }, [isUserLoaded, isSignedIn, currentUser, router]);
+
+  // Show spinner while Clerk is loading OR if already signed in (redirect pending)
+  if (!isUserLoaded || isSignedIn) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   // ── Helpers ──
 
@@ -604,6 +629,7 @@ export default function SignUpPage() {
           contentClassName="px-0"
           stepCircleContainerClassName="shadow-none border-none"
           disableStepIndicators
+          activeColor={isEmployer ? "purple" : "blue"}
         >
           {/* ── Step 1: Credentials ── */}
           <Step>

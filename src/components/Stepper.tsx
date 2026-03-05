@@ -28,6 +28,8 @@ interface StepperProps extends HTMLAttributes<HTMLDivElement> {
     onStepClick: (clicked: number) => void;
   }) => ReactNode;
   currentStep?: number;
+  /** Brand color for active/complete step indicators: 'blue' | 'purple'. Falls back to generic primary. */
+  activeColor?: "blue" | "purple";
 }
 
 export default function Stepper({
@@ -46,6 +48,7 @@ export default function Stepper({
   disableStepIndicators = false,
   renderStepIndicator,
   currentStep: externalCurrentStep,
+  activeColor,
   ...rest
 }: StepperProps) {
   const [internalStep, setInternalStep] = useState<number>(initialStep);
@@ -116,6 +119,7 @@ export default function Stepper({
                     step={stepNumber}
                     disableStepIndicators={disableStepIndicators}
                     currentStep={currentStep}
+                    activeColor={activeColor}
                     onClickStep={(clicked) => {
                       setDirection(clicked > currentStep ? 1 : -1);
                       updateStep(clicked);
@@ -123,7 +127,10 @@ export default function Stepper({
                   />
                 )}
                 {isNotLastStep && (
-                  <StepConnector isComplete={currentStep > stepNumber} />
+                  <StepConnector
+                    isComplete={currentStep > stepNumber}
+                    activeColor={activeColor}
+                  />
                 )}
               </React.Fragment>
             );
@@ -274,6 +281,7 @@ interface StepIndicatorProps {
   currentStep: number;
   onClickStep: (clicked: number) => void;
   disableStepIndicators?: boolean;
+  activeColor?: "blue" | "purple";
 }
 
 function StepIndicator({
@@ -281,6 +289,7 @@ function StepIndicator({
   currentStep,
   onClickStep,
   disableStepIndicators = false,
+  activeColor,
 }: StepIndicatorProps) {
   const status =
     currentStep === step
@@ -294,6 +303,30 @@ function StepIndicator({
       onClickStep(step);
     }
   };
+
+  // Determine color classes based on activeColor prop
+  const colorClasses = (() => {
+    if (!activeColor) {
+      // Default: use generic primary
+      return {
+        active: "bg-primary text-primary-foreground",
+        complete: "bg-primary text-primary-foreground",
+        inactive: "bg-muted text-muted-foreground",
+      };
+    }
+    if (activeColor === "blue") {
+      return {
+        active: "bg-blue-600 text-white dark:bg-blue-500",
+        complete: "bg-blue-600 text-white dark:bg-blue-500",
+        inactive: "bg-muted text-muted-foreground",
+      };
+    }
+    return {
+      active: "bg-purple-600 text-white dark:bg-purple-500",
+      complete: "bg-purple-600 text-white dark:bg-purple-500",
+      inactive: "bg-muted text-muted-foreground",
+    };
+  })();
 
   return (
     <motion.div
@@ -310,17 +343,13 @@ function StepIndicator({
         }}
         transition={{ duration: 0.3 }}
         className={`flex h-8 w-8 items-center justify-center rounded-full font-semibold transition-colors duration-300 ${
-          status === "complete"
-            ? "bg-primary text-primary-foreground"
-            : status === "active"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground"
+          colorClasses[status]
         }`}
       >
         {status === "complete" ? (
           <CheckIcon className="h-4 w-4" />
         ) : status === "active" ? (
-          <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+          <div className="h-2 w-2 rounded-full bg-white" />
         ) : (
           <span className="text-sm">{step}</span>
         )}
@@ -331,18 +360,25 @@ function StepIndicator({
 
 interface StepConnectorProps {
   isComplete: boolean;
+  activeColor?: "blue" | "purple";
 }
 
-function StepConnector({ isComplete }: StepConnectorProps) {
+function StepConnector({ isComplete, activeColor }: StepConnectorProps) {
   const lineVariants: Variants = {
     incomplete: { width: 0 },
     complete: { width: "100%" },
   };
 
+  const completeBg = !activeColor
+    ? "bg-primary"
+    : activeColor === "blue"
+      ? "bg-blue-600 dark:bg-blue-500"
+      : "bg-purple-600 dark:bg-purple-500";
+
   return (
     <div className="relative mx-2 h-0.5 flex-1 overflow-hidden rounded bg-muted">
       <motion.div
-        className="absolute left-0 top-0 h-full bg-primary"
+        className={`absolute left-0 top-0 h-full ${completeBg}`}
         variants={lineVariants}
         initial={false}
         animate={isComplete ? "complete" : "incomplete"}

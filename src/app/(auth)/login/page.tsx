@@ -7,10 +7,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Typography } from "@/components/ui/Typography";
 
-import { useClerk, useSignIn } from "@clerk/nextjs";
+import { useClerk, useSignIn, useUser } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useConvex } from "convex/react";
+import { useConvex, useQuery } from "convex/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -45,7 +45,9 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { isLoaded, setActive, signIn } = useSignIn();
   const { signOut } = useClerk();
+  const { isLoaded: isUserLoaded, isSignedIn } = useUser();
   const convex = useConvex();
+  const currentUser = useQuery(api.users.currentUser);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -64,6 +66,29 @@ export default function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
 
+  // ── Already-signed-in guard ──
+  // If user is already authenticated via Clerk, redirect them appropriately
+  // instead of letting them sit on the login page or get a cryptic error.
+  useEffect(() => {
+    if (!isUserLoaded || !isSignedIn) return;
+
+    // currentUser is undefined while loading, null if no Convex record exists
+    if (currentUser === undefined) {
+      // Convex is still loading (or WebSocket is down).
+      // Timeout fallback: redirect to / which has its own guard.
+      const timer = setTimeout(() => {
+        router.replace("/");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+
+    if (currentUser?.user?.role) {
+      router.replace("/");
+    } else {
+      router.replace("/complete-profile");
+    }
+  }, [isUserLoaded, isSignedIn, currentUser, router]);
+
   // Catches errors passed in the URL after a forced sign-out
   useEffect(() => {
     const errorParam = searchParams.get("error");
@@ -78,6 +103,16 @@ export default function LoginPage() {
       });
     }
   }, [searchParams, pathname, router]);
+
+  // ── Early return AFTER all hooks ──
+  // Show spinner while Clerk is loading OR if already signed in (redirect pending).
+  if (!isUserLoaded || isSignedIn) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   function handleRoleChange(value: string) {
     if (value !== "student" && value !== "employer") return;
@@ -195,14 +230,11 @@ export default function LoginPage() {
       // 3. Ask Convex for the role
       const actualRole = await getSignedInAccountRoleWithRetry();
 
-      // 4. No role found? Kick them back to login.
+      // 4. No role found? Send them to complete their profile.
+      //    This happens when a user exists in Clerk (e.g. via Google OAuth)
+      //    but never finished the Convex profile setup.
       if (!actualRole) {
-        const errorMsg = encodeURIComponent(
-          "This account is missing a profile role. Please complete registration first.",
-        );
-        await signOut({
-          redirectUrl: `${pathname}?role=${role}&error=${errorMsg}`,
-        });
+        router.push("/complete-profile");
         return;
       }
 

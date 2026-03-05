@@ -1,13 +1,13 @@
 // app/(auth)/complete-profile/page.tsx
 "use client";
 
-import { Building2, GraduationCap, Upload, User } from "lucide-react";
+import { Building2, GraduationCap, LogOut, Upload, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Typography } from "@/components/ui/Typography";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useUser } from "@clerk/nextjs";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -66,6 +66,7 @@ type EmployerProfileData = z.infer<typeof employerProfileSchema>;
 
 export default function CompleteProfilePage() {
   const { isLoaded, user } = useUser();
+  const { signOut } = useClerk();
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
   const currentUser = useQuery(api.users.currentUser);
   const router = useRouter();
@@ -288,13 +289,21 @@ export default function CompleteProfilePage() {
           </button>
         </CardContent>
 
-        <CardFooter className="justify-center pb-8">
+        <CardFooter className="flex-col items-center gap-3 pb-8">
           <Typography variant="span" color="muted" className="text-sm">
             Signed in as{" "}
             <Typography variant="span" weight="medium">
               {user?.primaryEmailAddress?.emailAddress}
             </Typography>
           </Typography>
+          <button
+            type="button"
+            onClick={() => signOut({ redirectUrl: "/login" })}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-red-600 dark:hover:text-red-400"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out or use a different account
+          </button>
         </CardFooter>
       </Card>
     );
@@ -569,16 +578,26 @@ export default function CompleteProfilePage() {
 
         <Separator />
 
-        <Typography
-          variant="caption"
-          color="muted"
-          className="block text-center"
-        >
-          Signed in as{" "}
-          <Typography variant="span" weight="medium">
-            {user?.primaryEmailAddress?.emailAddress}
+        <div className="flex flex-col items-center gap-2">
+          <Typography
+            variant="caption"
+            color="muted"
+            className="block text-center"
+          >
+            Signed in as{" "}
+            <Typography variant="span" weight="medium">
+              {user?.primaryEmailAddress?.emailAddress}
+            </Typography>
           </Typography>
-        </Typography>
+          <button
+            type="button"
+            onClick={() => signOut({ redirectUrl: "/login" })}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-red-600 dark:hover:text-red-400"
+          >
+            <LogOut className="h-3 w-3" />
+            Sign out
+          </button>
+        </div>
       </CardContent>
     </Card>
   );
