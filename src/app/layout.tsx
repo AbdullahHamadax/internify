@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Sora, DM_Sans } from "next/font/google";
 
 import { ConvexClientProvider } from "@/components/providers/convex-client-provider";
+import "devicon/devicon.min.css";
 import "./globals.css";
 
 const sora = Sora({
