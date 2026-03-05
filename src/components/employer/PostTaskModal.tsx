@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, type KeyboardEvent } from "react";
-import { X, Plus } from "lucide-react";
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import { X, Plus, Save, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { TaskStatus } from "./TaskManagement";
+import type { Task, TaskStatus } from "./TaskManagement";
+import deviconData from "devicon/devicon.json";
 
 export interface PostTaskData {
   title: string;
@@ -45,12 +46,14 @@ interface PostTaskModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (task: PostTaskData) => Promise<void> | void;
+  initialData?: Task | null;
 }
 
 export default function PostTaskModal({
   open,
   onClose,
   onSubmit,
+  initialData,
 }: PostTaskModalProps) {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
@@ -61,6 +64,30 @@ export default function PostTaskModal({
   const [deadline, setDeadline] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const skillInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setTitle(initialData.title);
+        setCategory(initialData.category);
+        setSkillLevel(initialData.skillLevel.toLowerCase());
+        setDescription(initialData.description || "");
+        setSkills(initialData.skills || []);
+        
+        if (initialData.deadline) {
+          const d = new Date(initialData.deadline);
+          const pad = (n: number) => n.toString().padStart(2, "0");
+          setDeadline(
+            `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+          );
+        } else {
+          setDeadline("");
+        }
+      } else {
+        resetForm();
+      }
+    }
+  }, [open, initialData]);
 
   if (!open) return null;
 
@@ -75,10 +102,20 @@ export default function PostTaskModal({
     setErrors({});
   };
 
+  const normalizeSkill = (skill: string) => {
+    const cleaned = skill.trim().replace(/[^a-zA-Z0-9 ]/g, "");
+    return cleaned.replace(/\w\S*/g, (txt) => {
+      return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
+    });
+  };
+
   const addSkill = () => {
-    const trimmed = skillInput.trim();
-    if (trimmed && !skills.includes(trimmed)) {
-      setSkills([...skills, trimmed]);
+    const normalized = normalizeSkill(skillInput);
+    if (normalized && !skills.includes(normalized)) {
+      setSkills([...skills, normalized]);
+      setSkillInput("");
+    } else if (normalized) {
+      // Already exists, just clear input
       setSkillInput("");
     }
   };
@@ -140,7 +177,9 @@ export default function PostTaskModal({
     <div className="emp-modal-overlay" onClick={onClose}>
       <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
         <div className="emp-modal__header">
-          <h2 className="emp-modal__header-title">Post a New Task</h2>
+          <h2 className="emp-modal__header-title">
+            {initialData ? "Edit Task" : "Post a New Task"}
+          </h2>
           <button
             type="button"
             className="emp-icon-btn"
@@ -248,19 +287,40 @@ export default function PostTaskModal({
               className="emp-tags"
               onClick={() => skillInputRef.current?.focus()}
             >
-              {skills.map((skill) => (
-                <span key={skill} className="emp-tag">
-                  {skill}
-                  <button
-                    type="button"
-                    className="emp-tag__remove"
-                    onClick={() => removeSkill(skill)}
-                    aria-label={`Remove ${skill}`}
-                  >
-                    <X className="size-3" />
-                  </button>
-                </span>
-              ))}
+              {skills.map((skill) => {
+                // Determine icon for the skill
+                const deviconName = skill.toLowerCase().replace(/[^a-z0-9]/g, "");
+                
+                // Check if the icon exists in devicon standard or altnames
+                const hasIcon = (deviconData as any[]).some(
+                  (icon) => icon.name === deviconName || icon.altnames.includes(deviconName)
+                );
+                
+                return (
+                  <span key={skill} className="emp-tag flex items-center pr-1 pl-2.5">
+                    {hasIcon ? (
+                      <i className={`devicon-${deviconName}-plain colored text-sm mr-1.5 opacity-90`}></i>
+                    ) : (
+                      <div className="mr-1.5 flex items-center justify-center opacity-70">
+                        {/* Fallback generic tag icon */}
+                        <Tag className="w-3.5 h-3.5" />
+                      </div>
+                    )}
+                    {skill}
+                    <button
+                      type="button"
+                      className="emp-tag__remove ml-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeSkill(skill);
+                      }}
+                      aria-label={`Remove ${skill}`}
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                );
+              })}
               <input
                 ref={skillInputRef}
                 type="text"
@@ -278,10 +338,10 @@ export default function PostTaskModal({
 
           {/* Deadline */}
           <div className="emp-modal__field">
-            <Label htmlFor="task-deadline">Deadline</Label>
+            <Label htmlFor="task-deadline">Deadline (Date & Time)</Label>
             <Input
               id="task-deadline"
-              type="date"
+              type="datetime-local"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
               aria-invalid={!!errors.deadline}
@@ -298,10 +358,19 @@ export default function PostTaskModal({
           </Button>
           <Button
             onClick={handleSubmit}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5"
           >
-            <Plus className="size-4" />
-            Publish Task
+            {initialData ? (
+              <>
+                <Save className="size-4" />
+                Save Changes
+              </>
+            ) : (
+              <>
+                <Plus className="size-4" />
+                Publish Task
+              </>
+            )}
           </Button>
         </div>
       </div>

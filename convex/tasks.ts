@@ -112,3 +112,81 @@ export const getEmployerStats = query({
     };
   },
 });
+
+export const deleteTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .unique();
+
+    if (!user || user.role !== "employer") {
+      throw new Error("Unauthorized: Only employers can manage tasks");
+    }
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    if (task.employerId !== user._id) {
+      throw new Error("Unauthorized: You can only delete your own tasks");
+    }
+
+    await ctx.db.delete(args.taskId);
+  },
+});
+
+export const updateTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    title: v.string(),
+    category: v.string(),
+    skillLevel: v.union(v.literal("beginner"), v.literal("intermediate"), v.literal("advanced")),
+    description: v.string(),
+    skills: v.array(v.string()),
+    deadline: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .unique();
+
+    if (!user || user.role !== "employer") {
+      throw new Error("Unauthorized: Only employers can manage tasks");
+    }
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    if (task.employerId !== user._id) {
+      throw new Error("Unauthorized: You can only edit your own tasks");
+    }
+
+    await ctx.db.patch(args.taskId, {
+      title: args.title,
+      category: args.category,
+      skillLevel: args.skillLevel,
+      description: args.description,
+      skills: args.skills,
+      deadline: args.deadline,
+      updatedAt: Date.now(),
+    });
+  },
+});
