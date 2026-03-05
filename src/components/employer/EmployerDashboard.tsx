@@ -35,6 +35,7 @@ import StatsCards, { type DashboardStats } from "./StatsCards";
 import TaskManagement, { type Task, type TaskStatus } from "./TaskManagement";
 import AnalyticsPanel from "./AnalyticsPanel";
 import PostTaskModal, { type PostTaskData } from "./PostTaskModal";
+import TaskDetailModal from "./TaskDetailModal";
 
 import "./employer-dashboard.css";
 
@@ -274,9 +275,13 @@ export default function EmployerDashboard() {
   const employerTasks = useQuery(api.tasks.getEmployerTasks);
   const employerStats = useQuery(api.tasks.getEmployerStats);
   const createTask = useMutation(api.tasks.createTask);
+  const deleteTask = useMutation(api.tasks.deleteTask);
+  const updateTask = useMutation(api.tasks.updateTask);
 
   const [activeNav, setActiveNav] = useState("dashboard");
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const tasks: Task[] =
     employerTasks?.map((t: any) => ({
@@ -287,6 +292,9 @@ export default function EmployerDashboard() {
       status: t.status as TaskStatus,
       applications: 0,
       daysLeft: Math.max(0, Math.ceil((t.deadline - Date.now()) / (1000 * 60 * 60 * 24))),
+      deadline: t.deadline,
+      description: t.description,
+      skills: t.skills,
     })) || [];
 
   const stats: DashboardStats = employerStats || INITIAL_STATS;
@@ -297,22 +305,51 @@ export default function EmployerDashboard() {
     setActiveNav(id);
   }, []);
 
+  const handleViewTask = useCallback((task: Task) => {
+    setSelectedTask(task);
+  }, []);
+
+  const handleDeleteTask = useCallback(
+    async (taskId: string) => {
+      try {
+        await deleteTask({ taskId: taskId as any });
+      } catch (error) {
+        console.error("Failed to delete task:", error);
+      }
+    },
+    [deleteTask],
+  );
+
   const handlePostTask = useCallback(
     async (taskData: PostTaskData) => {
       try {
-        await createTask({
-          title: taskData.title,
-          category: taskData.category,
-          skillLevel: taskData.skillLevel,
-          description: taskData.description,
-          skills: taskData.skills,
-          deadline: taskData.deadline,
-        });
+        if (editingTask) {
+          await updateTask({
+            taskId: editingTask.id as any,
+            title: taskData.title,
+            category: taskData.category,
+            skillLevel: taskData.skillLevel,
+            description: taskData.description,
+            skills: taskData.skills,
+            deadline: taskData.deadline,
+          });
+          setEditingTask(null);
+        } else {
+          await createTask({
+            title: taskData.title,
+            category: taskData.category,
+            skillLevel: taskData.skillLevel,
+            description: taskData.description,
+            skills: taskData.skills,
+            deadline: taskData.deadline,
+          });
+        }
+        setModalOpen(false);
       } catch (error) {
-        console.error("Failed to post task:", error);
+        console.error("Failed to save task:", error);
       }
     },
-    [createTask],
+    [createTask, updateTask, editingTask],
   );
 
   // Get time-aware greeting
@@ -386,18 +423,35 @@ export default function EmployerDashboard() {
 
             {/* Body: Task Management + Analytics */}
             <div className="emp-body">
-              <TaskManagement tasks={tasks} />
+              <TaskManagement tasks={tasks} onViewTask={handleViewTask} />
               <AnalyticsPanel />
             </div>
           </>
         )}
       </main>
 
-      {/* Post‑task modal */}
+      {/* Post-task modal */}
       <PostTaskModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        initialData={editingTask}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingTask(null);
+        }}
         onSubmit={handlePostTask}
+      />
+
+      {/* Task Detail modal */}
+      <TaskDetailModal
+        task={selectedTask}
+        open={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onDelete={handleDeleteTask}
+        onEdit={() => {
+          setEditingTask(selectedTask);
+          setSelectedTask(null);
+          setModalOpen(true);
+        }}
       />
     </div>
   );

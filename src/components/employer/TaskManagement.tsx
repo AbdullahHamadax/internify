@@ -20,12 +20,16 @@ export interface Task {
   status: TaskStatus;
   applications: number;
   daysLeft?: number;
+  deadline?: number;
+  description?: string;
+  skills?: string[];
   completedDate?: string;
   avgScore?: number;
 }
 
 interface TaskManagementProps {
   tasks: Task[];
+  onViewTask: (task: Task) => void;
 }
 
 const STATUS_LABEL: Record<TaskStatus, string> = {
@@ -60,7 +64,7 @@ function getCategoryClass(category: string): string {
   return "emp-cat-tag--default";
 }
 
-function TaskRow({ task }: { task: Task }) {
+function TaskRow({ task, onView }: { task: Task; onView: (task: Task) => void }) {
   return (
     <div className="emp-task-row">
       <div className="emp-task-row__info">
@@ -83,7 +87,26 @@ function TaskRow({ task }: { task: Task }) {
               >
                 <Users className="size-3.5" /> {task.applications}
               </span>
-              {task.daysLeft !== undefined && (
+              {task.deadline !== undefined ? (
+                <>
+                  <span className="emp-task-row__meta-sep" />
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                    }}
+                  >
+                    <Clock className="size-3.5" />{" "}
+                    {new Date(task.deadline).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </>
+              ) : task.daysLeft !== undefined && (
                 <>
                   <span className="emp-task-row__meta-sep" />
                   <span
@@ -132,7 +155,7 @@ function TaskRow({ task }: { task: Task }) {
           <span className="emp-badge__dot" />
           {STATUS_LABEL[task.status]}
         </span>
-        <button type="button" className="emp-task-row__link">
+        <button type="button" className="emp-task-row__link" onClick={() => onView(task)}>
           {task.status === "completed" ? "Results" : "View"}
         </button>
       </div>
@@ -140,7 +163,7 @@ function TaskRow({ task }: { task: Task }) {
   );
 }
 
-export default function TaskManagement({ tasks }: TaskManagementProps) {
+export default function TaskManagement({ tasks, onViewTask }: TaskManagementProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -205,7 +228,7 @@ export default function TaskManagement({ tasks }: TaskManagementProps) {
                 </div>
               ) : (
                 filterTasks(status).map((task) => (
-                  <TaskRow key={task.id} task={task} />
+                  <TaskRow key={task.id} task={task} onView={onViewTask} />
                 ))
               )}
             </TabsContent>
