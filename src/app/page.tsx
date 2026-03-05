@@ -48,17 +48,16 @@ export default function Home() {
   const { isLoaded, isSignedIn } = useUser();
   const currentUser = useQuery(api.users.currentUser);
 
-  // Redirect OAuth users who haven't completed their profile
+  // Redirect signed-in users who haven't completed their Convex profile
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) {
-      return;
-    }
+    if (!isLoaded || !isSignedIn) return;
+    // currentUser: undefined = loading, null = no record in Convex
     if (currentUser === null) {
       router.replace("/complete-profile");
     }
   }, [isLoaded, isSignedIn, currentUser, router]);
 
-  // Loading state
+  // Loading state (Clerk not ready)
   if (!isLoaded) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -72,11 +71,21 @@ export default function Home() {
     return <LandingPage />;
   }
 
+  // Signed-in but Convex profile is still loading or missing → show spinner
+  // (the useEffect above will redirect to /complete-profile if null)
+  if (!currentUser?.user?.role) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   // Signed-in employer → show the employer dashboard
-  if (currentUser?.user?.role === "employer") {
+  if (currentUser.user.role === "employer") {
     return <EmployerDashboard />;
   }
 
-  // Signed-in student (or loading profile) → show placeholder
+  // Signed-in student → show student view
   return <SignedInView />;
 }
