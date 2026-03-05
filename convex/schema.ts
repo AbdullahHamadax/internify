@@ -77,4 +77,23 @@ export default defineSchema({
     rankLevel: rankLevelValidator, // Must be one of the ranks like "mid" or "manager"
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
+
+  /**
+   * TASKS TABLE
+   * This stores tasks posted by employers.
+   */
+  tasks: defineTable({
+    employerId: v.id("users"), // FK to the posting employer
+    title: v.string(),
+    category: v.string(), // e.g. "Web Development", "Marketing"
+    skillLevel: v.union(v.literal("beginner"), v.literal("intermediate"), v.literal("advanced")),
+    description: v.string(),
+    skills: v.array(v.string()), // Tags like ["React", "TypeScript"]
+    deadline: v.number(), // Unix timestamp
+    status: v.union(v.literal("pending"), v.literal("in_progress"), v.literal("completed")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_employerId", ["employerId"])
+    .index("by_status", ["status"]),
 });

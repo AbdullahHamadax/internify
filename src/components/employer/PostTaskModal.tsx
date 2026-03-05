@@ -12,8 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Task, TaskStatus } from "./TaskManagement";
+import type { TaskStatus } from "./TaskManagement";
 
+export interface PostTaskData {
+  title: string;
+  category: string;
+  skillLevel: "beginner" | "intermediate" | "advanced";
+  description: string;
+  skills: string[];
+  deadline: number;
+}
 const CATEGORIES = [
   "Web Development",
   "Mobile Development",
@@ -36,7 +44,7 @@ const SKILL_LEVELS = [
 interface PostTaskModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (task: Omit<Task, "id" | "applications" | "daysLeft">) => void;
+  onSubmit: (task: PostTaskData) => Promise<void> | void;
 }
 
 export default function PostTaskModal({
@@ -106,11 +114,10 @@ export default function PostTaskModal({
     onSubmit({
       title: title.trim(),
       category,
-      skillLevel:
-        SKILL_LEVELS.find((s) => s.value === skillLevel)?.label ?? skillLevel,
-      status: "pending" as TaskStatus,
-      avgScore: undefined,
-      completedDate: undefined,
+      skillLevel: skillLevel as "beginner" | "intermediate" | "advanced",
+      description: description.trim(),
+      skills,
+      deadline: new Date(deadline).getTime(),
     });
 
     resetForm();

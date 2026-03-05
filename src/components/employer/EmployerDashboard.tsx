@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useClerk } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import {
   Plus,
   Bell,
@@ -34,7 +34,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import StatsCards, { type DashboardStats } from "./StatsCards";
 import TaskManagement, { type Task, type TaskStatus } from "./TaskManagement";
 import AnalyticsPanel from "./AnalyticsPanel";
-import PostTaskModal from "./PostTaskModal";
+import PostTaskModal, { type PostTaskData } from "./PostTaskModal";
 
 import "./employer-dashboard.css";
 
@@ -271,10 +271,25 @@ export default function EmployerDashboard() {
   const { user } = useUser();
   const currentUser = useQuery(api.users.currentUser);
 
+  const employerTasks = useQuery(api.tasks.getEmployerTasks);
+  const employerStats = useQuery(api.tasks.getEmployerStats);
+  const createTask = useMutation(api.tasks.createTask);
+
   const [activeNav, setActiveNav] = useState("dashboard");
   const [modalOpen, setModalOpen] = useState(false);
-  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
-  const [stats, setStats] = useState<DashboardStats>(INITIAL_STATS);
+
+  const tasks: Task[] =
+    employerTasks?.map((t: any) => ({
+      id: t._id,
+      title: t.title,
+      category: t.category,
+      skillLevel: t.skillLevel.charAt(0).toUpperCase() + t.skillLevel.slice(1),
+      status: t.status as TaskStatus,
+      applications: 0,
+      daysLeft: Math.max(0, Math.ceil((t.deadline - Date.now()) / (1000 * 60 * 60 * 24))),
+    })) || [];
+
+  const stats: DashboardStats = employerStats || INITIAL_STATS;
 
   const firstName = currentUser?.user?.firstName || user?.firstName || "there";
 
@@ -283,20 +298,21 @@ export default function EmployerDashboard() {
   }, []);
 
   const handlePostTask = useCallback(
-    (newTask: Omit<Task, "id" | "applications" | "daysLeft">) => {
-      const task: Task = {
-        ...newTask,
-        id: crypto.randomUUID(),
-        applications: 0,
-        daysLeft: 14,
-      };
-      setTasks((prev) => [task, ...prev]);
-      setStats((prev) => ({
-        ...prev,
-        activeTasks: prev.activeTasks + 1,
-      }));
+    async (taskData: PostTaskData) => {
+      try {
+        await createTask({
+          title: taskData.title,
+          category: taskData.category,
+          skillLevel: taskData.skillLevel,
+          description: taskData.description,
+          skills: taskData.skills,
+          deadline: taskData.deadline,
+        });
+      } catch (error) {
+        console.error("Failed to post task:", error);
+      }
     },
-    [],
+    [createTask],
   );
 
   // Get time-aware greeting
