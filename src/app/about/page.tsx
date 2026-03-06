@@ -165,7 +165,7 @@ export default function AboutPage() {
           <AnimateIn delay={0.15}>
             <div className="mt-14 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 backdrop-blur-sm p-8 sm:p-10 shadow-lg">
               <div className="space-y-6 text-gray-600 dark:text-gray-400 leading-relaxed text-base">
-                <p>
+                <Typography variant="p">
                   Internify is a{" "}
                   <strong className="text-gray-900 dark:text-white">
                     two-sided marketplace
@@ -180,8 +180,8 @@ export default function AboutPage() {
                   </strong>{" "}
                   to prove their skills. Think of it as an internship experience
                   condensed into focused, bite-sized tasks.
-                </p>
-                <p>
+                </Typography>
+                <Typography variant="p">
                   Every submission is evaluated by our{" "}
                   <strong className="text-gray-900 dark:text-white">
                     AI-powered engine
@@ -193,8 +193,8 @@ export default function AboutPage() {
                   </strong>{" "}
                   branded by the employer, turning every completed challenge
                   into a concrete portfolio piece.
-                </p>
-                <p>
+                </Typography>
+                <Typography variant="p">
                   For employers, this means access to a{" "}
                   <strong className="text-gray-900 dark:text-white">
                     pre-screened talent pool
@@ -202,7 +202,7 @@ export default function AboutPage() {
                   of candidates who have already demonstrated they can do the
                   work — reducing time-to-hire and eliminating the guesswork
                   from entry-level recruitment.
-                </p>
+                </Typography>
               </div>
             </div>
           </AnimateIn>

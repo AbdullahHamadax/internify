@@ -1,7 +1,23 @@
 "use client";
 
-import { useState, useRef, useEffect, type KeyboardEvent } from "react";
-import { X, Plus, Save, Tag } from "lucide-react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  type KeyboardEvent,
+  type ChangeEvent,
+} from "react";
+import {
+  X,
+  Plus,
+  Save,
+  Tag,
+  Upload,
+  Trash2,
+  ImageIcon,
+  FileText,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +30,9 @@ import {
 } from "@/components/ui/select";
 import type { Task, TaskStatus } from "./TaskManagement";
 import deviconData from "devicon/devicon.json";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { Typography } from "@/components/ui/Typography";
 
 export interface PostTaskData {
   title: string;
@@ -22,6 +41,12 @@ export interface PostTaskData {
   description: string;
   skills: string[];
   deadline: number;
+  imageStorageIds?: string[];
+  attachments?: {
+    storageId: string;
+    name: string;
+    type: string;
+  }[];
 }
 const CATEGORIES = [
   "Web Development",
@@ -63,6 +88,19 @@ export default function PostTaskModal({
   const [skillInput, setSkillInput] = useState("");
   const [deadline, setDeadline] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [imageStorageIds, setImageStorageIds] = useState<string[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<
+    {
+      storageId: string;
+      name: string;
+      type: string;
+      url?: string;
+    }[]
+  >([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
   const skillInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -73,12 +111,15 @@ export default function PostTaskModal({
         setSkillLevel(initialData.skillLevel.toLowerCase());
         setDescription(initialData.description || "");
         setSkills(initialData.skills || []);
-        
+        setImageStorageIds(initialData.imageStorageIds || []);
+        setImageUrls(initialData.imageUrls || []);
+        setAttachments(initialData.resolvedAttachments || []);
+
         if (initialData.deadline) {
           const d = new Date(initialData.deadline);
           const pad = (n: number) => n.toString().padStart(2, "0");
           setDeadline(
-            `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+            `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`,
           );
         } else {
           setDeadline("");
@@ -100,6 +141,10 @@ export default function PostTaskModal({
     setSkillInput("");
     setDeadline("");
     setErrors({});
+    setSelectedFiles([]);
+    setImageStorageIds([]);
+    setImageUrls([]);
+    setAttachments([]);
   };
 
   const normalizeSkill = (skill: string) => {
@@ -145,20 +190,81 @@ export default function PostTaskModal({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setSelectedFiles((prev) => [...prev, ...filesArray]);
+    }
+  };
+
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = (index: number) => {
+    setImageStorageIds((prev) => prev.filter((_, i) => i !== index));
+    setImageUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
     if (!validate()) return;
+    setIsUploading(true);
+    const newStorageIds = [...imageStorageIds];
+    const uploadedAttachments: {
+      storageId: string;
+      name: string;
+      type: string;
+    }[] = [];
 
-    onSubmit({
-      title: title.trim(),
-      category,
-      skillLevel: skillLevel as "beginner" | "intermediate" | "advanced",
-      description: description.trim(),
-      skills,
-      deadline: new Date(deadline).getTime(),
-    });
+    try {
+      for (const file of selectedFiles) {
+        const uploadUrl = await generateUploadUrl();
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        const { storageId } = await result.json();
+        uploadedAttachments.push({
+          storageId,
+          name: file.name,
+          type: file.type,
+        });
+      }
 
-    resetForm();
-    onClose();
+      await onSubmit({
+        title: title.trim(),
+        category,
+        skillLevel: skillLevel as "beginner" | "intermediate" | "advanced",
+        description: description.trim(),
+        skills,
+        deadline: new Date(deadline).getTime(),
+        imageStorageIds: newStorageIds,
+        attachments: [
+          ...attachments.map((a) => ({
+            storageId: a.storageId,
+            name: a.name,
+            type: a.type,
+          })),
+          ...uploadedAttachments,
+        ],
+      });
+
+      resetForm();
+      onClose();
+    } catch (e) {
+      console.error("Failed to upload files:", e);
+      setErrors({
+        ...errors,
+        submit: "Failed to upload files. Please try again.",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   /*
@@ -177,9 +283,9 @@ export default function PostTaskModal({
     <div className="emp-modal-overlay" onClick={onClose}>
       <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
         <div className="emp-modal__header">
-          <h2 className="emp-modal__header-title">
+          <Typography variant="h2" className="emp-modal__header-title">
             {initialData ? "Edit Task" : "Post a New Task"}
-          </h2>
+          </Typography>
           <button
             type="button"
             className="emp-icon-btn"
@@ -289,17 +395,26 @@ export default function PostTaskModal({
             >
               {skills.map((skill) => {
                 // Determine icon for the skill
-                const deviconName = skill.toLowerCase().replace(/[^a-z0-9]/g, "");
-                
+                const deviconName = skill
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, "");
+
                 // Check if the icon exists in devicon standard or altnames
                 const hasIcon = (deviconData as any[]).some(
-                  (icon) => icon.name === deviconName || icon.altnames.includes(deviconName)
+                  (icon) =>
+                    icon.name === deviconName ||
+                    icon.altnames.includes(deviconName),
                 );
-                
+
                 return (
-                  <span key={skill} className="emp-tag flex items-center pr-1 pl-2.5">
+                  <span
+                    key={skill}
+                    className="emp-tag flex items-center pr-1 pl-2.5"
+                  >
                     {hasIcon ? (
-                      <i className={`devicon-${deviconName}-plain colored text-sm mr-1.5 opacity-90`}></i>
+                      <i
+                        className={`devicon-${deviconName}-plain colored text-sm mr-1.5 opacity-90`}
+                      ></i>
                     ) : (
                       <div className="mr-1.5 flex items-center justify-center opacity-70">
                         {/* Fallback generic tag icon */}
@@ -350,17 +465,165 @@ export default function PostTaskModal({
               <span className="emp-modal__error">{errors.deadline}</span>
             )}
           </div>
+
+          {/* Attachments */}
+          <div className="emp-modal__field">
+            <Label>Attachments (Optional)</Label>
+            <div className="mt-1.5 text-sm text-muted-foreground mb-3">
+              Upload images or PDF mockups related to this task.
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {/* Legacy Images */}
+              {imageUrls.map((url, i) => (
+                <div
+                  key={`existing-${i}`}
+                  className="group relative aspect-square rounded-lg border bg-muted overflow-hidden"
+                >
+                  <img
+                    src={url}
+                    alt={`Attachment ${i + 1}`}
+                    className="object-cover w-full h-full"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
+                    <button
+                      type="button"
+                      onClick={() => removeExistingImage(i)}
+                      className="bg-red-500/90 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors shadow-sm"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-2 py-0.5 rounded hover:bg-black/70 transition-colors"
+                    >
+                      View
+                    </a>
+                  </div>
+                </div>
+              ))}
+
+              {/* Resolved Attachments */}
+              {attachments.map((att, i) => {
+                const isImage = att.type.startsWith("image/");
+                return (
+                  <div
+                    key={`attachment-${i}`}
+                    className="group relative aspect-square rounded-lg border bg-muted flex flex-col items-center justify-center p-2 text-center overflow-hidden"
+                  >
+                    {isImage ? (
+                      <img
+                        src={att.url || ""}
+                        alt={att.name}
+                        className="absolute inset-0 object-cover w-full h-full"
+                      />
+                    ) : (
+                      <>
+                        <FileText className="size-8 text-purple-600 mb-2" />
+                        <span className="text-xs truncate w-full px-1 z-10 relative">
+                          {att.name}
+                        </span>
+                      </>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                      <button
+                        type="button"
+                        onClick={() => removeExistingAttachment(i)}
+                        className="bg-red-500/90 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors shadow-sm"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                      {att.url && (
+                        <a
+                          href={att.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute bottom-2 right-2 text-xs text-white bg-black/50 px-2 py-0.5 rounded hover:bg-black/70 transition-colors"
+                        >
+                          View
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Newly Selected Files */}
+              {selectedFiles.map((file, i) => {
+                const isImage = file.type.startsWith("image/");
+                return (
+                  <div
+                    key={`new-${i}`}
+                    className="group relative aspect-square rounded-lg border bg-muted flex flex-col items-center justify-center p-2 text-center overflow-hidden"
+                  >
+                    {isImage ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="absolute inset-0 object-cover w-full h-full"
+                      />
+                    ) : (
+                      <>
+                        <FileText className="size-8 text-purple-600 mb-2" />
+                        <span className="text-xs truncate w-full px-1">
+                          {file.name}
+                        </span>
+                      </>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => removeSelectedFile(i)}
+                        className="bg-red-500/90 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors shadow-sm"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Upload Button Box - Full Width */}
+            <Label className="mt-3 w-full cursor-pointer rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-purple-500 dark:hover:border-purple-500 bg-muted/20 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center text-muted-foreground hover:text-purple-600 dark:hover:text-purple-400 py-8">
+              <Upload className="size-8 mb-3" />
+              <span className="text-sm font-medium">Click to upload files</span>
+              <span className="text-xs mt-1 opacity-70">
+                Images or PDF up to 10MB
+              </span>
+              <input
+                type="file"
+                className="hidden"
+                multiple
+                accept="image/*,application/pdf"
+                onChange={handleFileChange}
+              />
+            </Label>
+            {errors.submit && (
+              <div className="mt-2 text-sm text-red-500 font-medium">
+                {errors.submit}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="emp-modal__footer">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isUploading}>
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
+            disabled={isUploading}
             className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5"
           >
-            {initialData ? (
+            {isUploading ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Uploading...
+              </>
+            ) : initialData ? (
               <>
                 <Save className="size-4" />
                 Save Changes

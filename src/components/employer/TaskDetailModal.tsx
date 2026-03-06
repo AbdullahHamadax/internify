@@ -1,6 +1,16 @@
 "use client";
 
-import { X, CalendarDays, Clock, Users, Trash2, Tag } from "lucide-react";
+import {
+  X,
+  CalendarDays,
+  Clock,
+  Users,
+  Trash2,
+  Tag,
+  FileText,
+} from "lucide-react";
+
+import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/button";
 import type { Task } from "./TaskManagement";
 import deviconData from "devicon/devicon.json";
@@ -23,7 +33,11 @@ export default function TaskDetailModal({
   if (!open || !task) return null;
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this task? This action cannot be undone.")) {
+    if (
+      confirm(
+        "Are you sure you want to delete this task? This action cannot be undone.",
+      )
+    ) {
       onDelete(task.id);
       onClose();
     }
@@ -43,7 +57,9 @@ export default function TaskDetailModal({
     <div className="emp-modal-overlay" onClick={onClose}>
       <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
         <div className="emp-modal__header">
-          <h2 className="emp-modal__header-title">Task Details</h2>
+          <Typography variant="h2" className="emp-modal__header-title">
+            Task Details
+          </Typography>
           <button
             type="button"
             className="emp-icon-btn"
@@ -57,12 +73,16 @@ export default function TaskDetailModal({
         <div className="emp-modal__body space-y-6">
           {/* Header Info */}
           <div>
-            <h3 className="text-xl font-bold mb-2">{task.title}</h3>
+            <Typography variant="h3" className="text-xl font-bold mb-2">
+              {task.title}
+            </Typography>
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span className="emp-cat-tag emp-cat-tag--default">
                 {task.category}
               </span>
-              <span className="font-medium text-foreground">{task.skillLevel}</span>
+              <span className="font-medium text-foreground">
+                {task.skillLevel}
+              </span>
               <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
               <span className="flex items-center gap-1.5">
                 <Users className="size-4" /> {task.applications} applicants
@@ -76,7 +96,9 @@ export default function TaskDetailModal({
 
           {/* Description */}
           <div>
-            <h4 className="font-semibold mb-2">Description</h4>
+            <Typography variant="h4" className="font-semibold mb-2">
+              Description
+            </Typography>
             <div className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
               {task.description || "No description provided."}
             </div>
@@ -85,12 +107,18 @@ export default function TaskDetailModal({
           {/* Skills */}
           {task.skills && task.skills.length > 0 && (
             <div>
-              <h4 className="font-semibold mb-2">Required Skills</h4>
+              <Typography variant="h4" className="font-semibold mb-2">
+                Required Skills
+              </Typography>
               <div className="flex flex-wrap gap-2">
                 {task.skills.map((skill) => {
-                  const deviconName = skill.toLowerCase().replace(/[^a-z0-9]/g, "");
+                  const deviconName = skill
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, "");
                   const hasIcon = (deviconData as any[]).some(
-                    (icon) => icon.name === deviconName || icon.altnames.includes(deviconName)
+                    (icon) =>
+                      icon.name === deviconName ||
+                      icon.altnames.includes(deviconName),
                   );
 
                   return (
@@ -99,7 +127,9 @@ export default function TaskDetailModal({
                       className="emp-tag flex items-center pr-2 pl-2.5"
                     >
                       {hasIcon ? (
-                        <i className={`devicon-${deviconName}-plain colored text-sm mr-1.5 opacity-90`}></i>
+                        <i
+                          className={`devicon-${deviconName}-plain colored text-sm mr-1.5 opacity-90`}
+                        ></i>
                       ) : (
                         <div className="mr-1.5 flex items-center justify-center opacity-70">
                           <Tag className="w-3.5 h-3.5" />
@@ -112,11 +142,100 @@ export default function TaskDetailModal({
               </div>
             </div>
           )}
-          
+
+          {/* Attachments */}
+          {((task.imageUrls && task.imageUrls.length > 0) ||
+            (task.resolvedAttachments &&
+              task.resolvedAttachments.length > 0)) && (
+            <div>
+              <Typography variant="h4" className="font-semibold mb-3">
+                Attachments
+              </Typography>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {/* Legacy simple URLs */}
+                {task.imageUrls?.map((url, i) => (
+                  <a
+                    key={`legacy-attachment-${i}`}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative aspect-square rounded-lg border bg-muted overflow-hidden block focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  >
+                    <img
+                      src={url}
+                      alt={`Task attachment ${i + 1}`}
+                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                        const parent = (e.target as HTMLImageElement)
+                          .parentElement;
+                        if (
+                          parent &&
+                          !parent.querySelector(".emp-fallback-icon")
+                        ) {
+                          const fallback = document.createElement("div");
+                          fallback.className =
+                            "emp-fallback-icon absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-muted";
+                          fallback.innerHTML =
+                            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text mb-2 text-purple-600"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg><span class="text-xs font-medium">Legacy File</span>';
+                          parent.appendChild(fallback);
+                        }
+                      }}
+                    />
+                    {/* Hover Overlay for legacy */}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                      <span className="text-sm font-medium text-white flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                        <FileText className="size-4" /> View File
+                      </span>
+                    </div>
+                  </a>
+                ))}
+
+                {/* Structured Attachments */}
+                {task.resolvedAttachments?.map((att, i) => {
+                  const isImage = att.type.startsWith("image/");
+                  return (
+                    <a
+                      key={`attachment-${i}`}
+                      href={att.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative aspect-square rounded-lg border bg-muted flex flex-col items-center justify-center p-2 text-center overflow-hidden focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    >
+                      {isImage ? (
+                        <img
+                          src={att.url}
+                          alt={att.name}
+                          className="absolute inset-0 object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <>
+                          <FileText className="size-8 text-purple-600 mb-2" />
+                          <span className="text-xs truncate w-full px-1 z-10 relative font-medium text-muted-foreground">
+                            {att.name}
+                          </span>
+                        </>
+                      )}
+
+                      {/* Hover Overlay */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                        <span className="text-sm font-medium text-white flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                          <FileText className="size-4" /> View File
+                        </span>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Status info */}
           <div className="bg-muted/50 rounded-lg p-4 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground mb-1">Current Status</span>
+              <span className="text-sm text-muted-foreground mb-1">
+                Current Status
+              </span>
               <span className={`emp-badge emp-badge--${task.status}`}>
                 <span className="emp-badge__dot" />
                 {task.status.replace("_", " ")}
@@ -124,7 +243,9 @@ export default function TaskDetailModal({
             </div>
             {task.status === "completed" && task.avgScore !== undefined && (
               <div className="flex flex-col items-end">
-                <span className="text-sm text-muted-foreground mb-1">Avg Score</span>
+                <span className="text-sm text-muted-foreground mb-1">
+                  Avg Score
+                </span>
                 <span className="font-semibold">{task.avgScore}%</span>
               </div>
             )}
@@ -144,7 +265,7 @@ export default function TaskDetailModal({
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
-            <Button 
+            <Button
               className="bg-purple-600 hover:bg-purple-700 text-white"
               onClick={onEdit}
             >
