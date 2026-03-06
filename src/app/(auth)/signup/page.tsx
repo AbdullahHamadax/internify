@@ -871,7 +871,7 @@ export default function SignUpPage() {
                     data-cl-size="flexible"
                   />
 
-                  <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
+                  <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -884,11 +884,9 @@ export default function SignUpPage() {
                     <Button
                       type="submit"
                       disabled={isSubmitting || !isLoaded}
-                      className={`text-white font-semibold text-sm whitespace-normal ${theme.primaryBtn}`}
+                      className={`text-white font-semibold text-xs min-[375px]:text-sm whitespace-nowrap ${theme.primaryBtn}`}
                     >
-                      {isSubmitting
-                        ? "Creating account..."
-                        : "Complete Registration"}
+                      {isSubmitting ? "Creating account..." : "Create Account"}
                     </Button>
                   </div>
 
@@ -1022,7 +1020,7 @@ export default function SignUpPage() {
                     data-cl-size="flexible"
                   />
 
-                  <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
+                  <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -1035,11 +1033,9 @@ export default function SignUpPage() {
                     <Button
                       type="submit"
                       disabled={isSubmitting || !isLoaded}
-                      className={`text-white font-semibold text-sm whitespace-normal ${theme.primaryBtn}`}
+                      className={`text-white font-semibold text-xs min-[375px]:text-sm whitespace-nowrap ${theme.primaryBtn}`}
                     >
-                      {isSubmitting
-                        ? "Creating account..."
-                        : "Complete Registration"}
+                      {isSubmitting ? "Creating account..." : "Create Account"}
                     </Button>
                   </div>
 
