@@ -82,7 +82,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 border-t border-white/10 pt-8">
+        <div className="mt-12 border-t border-white/10 pt-8 flex justify-center">
           <Typography variant="span" color="muted" className="text-center">
             &copy; 2026 Internify Platform. All rights reserved.
           </Typography>
