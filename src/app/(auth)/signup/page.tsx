@@ -34,6 +34,7 @@ import { Progress } from "@/components/ui/progress";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordRequirements } from "@/components/ui/password-requirements";
 import {
   Select,
   SelectContent,
@@ -123,6 +124,7 @@ export default function SignUpPage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [pendingSignupPayload, setPendingSignupPayload] =
     useState<PendingSignupPayload | null>(null);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   // CV file (student only, optional)
   const [cvFile, setCvFile] = useState<File | null>(null);
@@ -704,17 +706,22 @@ export default function SignUpPage() {
                     id="password"
                     placeholder="••••••••"
                     {...step1Form.register("password")}
+                    onFocus={() => setPasswordFocused(true)}
+                    onBlur={(e) => {
+                      step1Form.register("password").onBlur(e);
+                      setPasswordFocused(false);
+                    }}
                     aria-invalid={!!step1Form.formState.errors.password}
                   />
-                  {step1Form.formState.errors.password ? (
+                  {step1Form.formState.errors.password && (
                     <p className="text-xs text-red-500">
                       {step1Form.formState.errors.password.message}
                     </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Min 8 characters, one uppercase, one lowercase, one number
-                    </p>
                   )}
+                  <PasswordRequirements
+                    password={step1Form.watch("password")}
+                    isFocused={passwordFocused}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">

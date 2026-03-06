@@ -196,6 +196,10 @@ function StepContentWrapper({
 }: StepContentWrapperProps) {
   const [parentHeight, setParentHeight] = useState<number>(0);
 
+  const handleHeightReady = React.useCallback((h: number) => {
+    setParentHeight(h);
+  }, []);
+
   return (
     <motion.div
       style={{ position: "relative", overflow: "hidden" }}
@@ -208,7 +212,7 @@ function StepContentWrapper({
           <SlideTransition
             key={currentStep}
             direction={direction}
-            onHeightReady={(h) => setParentHeight(h)}
+            onHeightReady={handleHeightReady}
           >
             {children}
           </SlideTransition>
@@ -232,10 +236,24 @@ function SlideTransition({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
-    if (containerRef.current) {
-      onHeightReady(containerRef.current.offsetHeight);
-    }
-  }, [children, onHeightReady]);
+    const el = containerRef.current;
+    if (!el) return;
+
+    onHeightReady(el.offsetHeight);
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const target = entry.target as HTMLElement;
+        onHeightReady(target.offsetHeight);
+      }
+    });
+
+    resizeObserver.observe(el);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [onHeightReady]);
 
   return (
     <motion.div

@@ -159,6 +159,21 @@ input[type="reset"] {
   animation: card-tilt 2.5s ease-in-out infinite;
 }
 
+@keyframes checkmark-draw {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-checkmark-draw {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: checkmark-draw 0.35s ease-out forwards;
+}
+
 /* ── Atmospheric texture overlays ── */
 
 .noise-overlay {
