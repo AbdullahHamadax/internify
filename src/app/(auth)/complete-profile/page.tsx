@@ -340,9 +340,12 @@ export default function CompleteProfilePage() {
 
       <CardContent className="px-4 sm:px-8 pb-8 space-y-6">
         {submitError && (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+          <Typography
+            variant="p"
+            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400"
+          >
             {submitError}
-          </p>
+          </Typography>
         )}
 
         {/* ── Student Profile ── */}
@@ -392,9 +395,9 @@ export default function CompleteProfilePage() {
                 aria-invalid={!!studentForm.formState.errors.fieldOfStudy}
               />
               {studentForm.formState.errors.fieldOfStudy && (
-                <p className="text-xs text-red-500">
+                <Typography variant="p" className="text-xs text-red-500">
                   {studentForm.formState.errors.fieldOfStudy.message}
-                </p>
+                </Typography>
               )}
             </div>
 
@@ -471,9 +474,9 @@ export default function CompleteProfilePage() {
                 aria-invalid={!!employerForm.formState.errors.companyName}
               />
               {employerForm.formState.errors.companyName && (
-                <p className="text-xs text-red-500">
+                <Typography variant="p" className="text-xs text-red-500">
                   {employerForm.formState.errors.companyName.message}
-                </p>
+                </Typography>
               )}
             </div>
 
@@ -486,9 +489,9 @@ export default function CompleteProfilePage() {
                 aria-invalid={!!employerForm.formState.errors.position}
               />
               {employerForm.formState.errors.position && (
-                <p className="text-xs text-red-500">
+                <Typography variant="p" className="text-xs text-red-500">
                   {employerForm.formState.errors.position.message}
-                </p>
+                </Typography>
               )}
             </div>
 
@@ -549,9 +552,9 @@ export default function CompleteProfilePage() {
                 </SelectContent>
               </Select>
               {employerForm.formState.errors.rankLevel && (
-                <p className="text-xs text-red-500">
+                <Typography variant="p" className="text-xs text-red-500">
                   {employerForm.formState.errors.rankLevel.message}
-                </p>
+                </Typography>
               )}
             </div>
 

@@ -29,10 +29,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
 import ThemeToggle from "@/components/ThemeToggle";
 
 import StatsCards, { type DashboardStats } from "./StatsCards";
 import TaskManagement, { type Task, type TaskStatus } from "./TaskManagement";
+import { Typography } from "@/components/ui/Typography";
 import AnalyticsPanel from "./AnalyticsPanel";
 import PostTaskModal, { type PostTaskData } from "./PostTaskModal";
 import TaskDetailModal from "./TaskDetailModal";
@@ -291,10 +293,16 @@ export default function EmployerDashboard() {
       skillLevel: t.skillLevel.charAt(0).toUpperCase() + t.skillLevel.slice(1),
       status: t.status as TaskStatus,
       applications: 0,
-      daysLeft: Math.max(0, Math.ceil((t.deadline - Date.now()) / (1000 * 60 * 60 * 24))),
+      daysLeft: Math.max(
+        0,
+        Math.ceil((t.deadline - Date.now()) / (1000 * 60 * 60 * 24)),
+      ),
       deadline: t.deadline,
       description: t.description,
       skills: t.skills,
+      imageStorageIds: t.imageStorageIds,
+      imageUrls: t.imageUrls,
+      resolvedAttachments: t.resolvedAttachments,
     })) || [];
 
   const stats: DashboardStats = employerStats || INITIAL_STATS;
@@ -332,6 +340,10 @@ export default function EmployerDashboard() {
             description: taskData.description,
             skills: taskData.skills,
             deadline: taskData.deadline,
+            imageStorageIds: taskData.imageStorageIds as
+              | Id<"_storage">[]
+              | undefined,
+            attachments: taskData.attachments as any,
           });
           setEditingTask(null);
         } else {
@@ -342,6 +354,10 @@ export default function EmployerDashboard() {
             description: taskData.description,
             skills: taskData.skills,
             deadline: taskData.deadline,
+            imageStorageIds: taskData.imageStorageIds as
+              | Id<"_storage">[]
+              | undefined,
+            attachments: taskData.attachments as any,
           });
         }
         setModalOpen(false);
@@ -371,11 +387,13 @@ export default function EmployerDashboard() {
             <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-6">
               <Search className="size-8 text-purple-600 dark:text-purple-400" />
             </div>
-            <h2 className="text-2xl font-semibold mb-3">Talent Search</h2>
-            <p className="text-muted-foreground max-w-md">
+            <Typography variant="h2" className="text-2xl font-semibold mb-3">
+              Talent Search
+            </Typography>
+            <Typography variant="p" className="text-muted-foreground max-w-md">
               Browse top verified students, filter by skills, and invite them
               directly to your tasks. (Coming soon)
-            </p>
+            </Typography>
           </div>
         )}
 
@@ -384,11 +402,13 @@ export default function EmployerDashboard() {
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6">
               <MessageSquare className="size-8 text-blue-600 dark:text-blue-400" />
             </div>
-            <h2 className="text-2xl font-semibold mb-3">Messages & Inbox</h2>
-            <p className="text-muted-foreground max-w-md">
+            <Typography variant="h2" className="text-2xl font-semibold mb-3">
+              Messages & Inbox
+            </Typography>
+            <Typography variant="p" className="text-muted-foreground max-w-md">
               Communicate with task applicants, share files, and negotiate terms
               all in one place. (Coming soon)
-            </p>
+            </Typography>
           </div>
         )}
 
@@ -397,16 +417,16 @@ export default function EmployerDashboard() {
             {/* Hero header with personality */}
             <div className="emp-hero">
               <div className="emp-hero__text">
-                <h1>
+                <Typography variant="h1">
                   {timeGreeting},{" "}
                   <span className="emp-hero__accent">{firstName}</span> 👋
-                </h1>
-                <p>
+                </Typography>
+                <Typography variant="p">
                   Your tasks have received{" "}
                   <strong>{stats.totalSubmissions} submissions</strong> this
                   month. {stats.activeTasks} tasks are actively seeking talented
                   students.
-                </p>
+                </Typography>
               </div>
               <button
                 type="button"

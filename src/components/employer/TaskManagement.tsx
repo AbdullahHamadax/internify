@@ -25,6 +25,14 @@ export interface Task {
   skills?: string[];
   completedDate?: string;
   avgScore?: number;
+  imageStorageIds?: string[];
+  imageUrls?: string[];
+  resolvedAttachments?: {
+    storageId: string;
+    name: string;
+    type: string;
+    url: string;
+  }[];
 }
 
 interface TaskManagementProps {
@@ -64,7 +72,13 @@ function getCategoryClass(category: string): string {
   return "emp-cat-tag--default";
 }
 
-function TaskRow({ task, onView }: { task: Task; onView: (task: Task) => void }) {
+function TaskRow({
+  task,
+  onView,
+}: {
+  task: Task;
+  onView: (task: Task) => void;
+}) {
   return (
     <div className="emp-task-row">
       <div className="emp-task-row__info">
@@ -106,19 +120,21 @@ function TaskRow({ task, onView }: { task: Task; onView: (task: Task) => void })
                     })}
                   </span>
                 </>
-              ) : task.daysLeft !== undefined && (
-                <>
-                  <span className="emp-task-row__meta-sep" />
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.25rem",
-                    }}
-                  >
-                    <Clock className="size-3.5" /> {task.daysLeft}d left
-                  </span>
-                </>
+              ) : (
+                task.daysLeft !== undefined && (
+                  <>
+                    <span className="emp-task-row__meta-sep" />
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.25rem",
+                      }}
+                    >
+                      <Clock className="size-3.5" /> {task.daysLeft}d left
+                    </span>
+                  </>
+                )
               )}
             </>
           )}
@@ -155,7 +171,11 @@ function TaskRow({ task, onView }: { task: Task; onView: (task: Task) => void })
           <span className="emp-badge__dot" />
           {STATUS_LABEL[task.status]}
         </span>
-        <button type="button" className="emp-task-row__link" onClick={() => onView(task)}>
+        <button
+          type="button"
+          className="emp-task-row__link"
+          onClick={() => onView(task)}
+        >
           {task.status === "completed" ? "Results" : "View"}
         </button>
       </div>
@@ -163,7 +183,10 @@ function TaskRow({ task, onView }: { task: Task; onView: (task: Task) => void })
   );
 }
 
-export default function TaskManagement({ tasks, onViewTask }: TaskManagementProps) {
+export default function TaskManagement({
+  tasks,
+  onViewTask,
+}: TaskManagementProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
 

@@ -643,9 +643,12 @@ export default function SignUpPage() {
                 </CardDescription>
               </div>
               {submitError && step === 1 && (
-                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+                <Typography
+                  variant="p"
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400"
+                >
                   {submitError}
-                </p>
+                </Typography>
               )}
               <form
                 onSubmit={step1Form.handleSubmit(onStep1Submit)}
@@ -661,9 +664,9 @@ export default function SignUpPage() {
                       {...step1Form.register("firstName")}
                     />
                     {step1Form.formState.errors.firstName && (
-                      <p className="text-xs text-red-500">
+                      <Typography variant="p" className="text-xs text-red-500">
                         {step1Form.formState.errors.firstName.message}
-                      </p>
+                      </Typography>
                     )}
                   </div>
 
@@ -675,9 +678,9 @@ export default function SignUpPage() {
                       {...step1Form.register("lastName")}
                     />
                     {step1Form.formState.errors.lastName && (
-                      <p className="text-xs text-red-500">
+                      <Typography variant="p" className="text-xs text-red-500">
                         {step1Form.formState.errors.lastName.message}
-                      </p>
+                      </Typography>
                     )}
                   </div>
                 </div>
@@ -694,9 +697,9 @@ export default function SignUpPage() {
                     aria-invalid={!!step1Form.formState.errors.email}
                   />
                   {step1Form.formState.errors.email && (
-                    <p className="text-xs text-red-500">
+                    <Typography variant="p" className="text-xs text-red-500">
                       {step1Form.formState.errors.email.message}
-                    </p>
+                    </Typography>
                   )}
                 </div>
 
@@ -714,9 +717,9 @@ export default function SignUpPage() {
                     aria-invalid={!!step1Form.formState.errors.password}
                   />
                   {step1Form.formState.errors.password && (
-                    <p className="text-xs text-red-500">
+                    <Typography variant="p" className="text-xs text-red-500">
                       {step1Form.formState.errors.password.message}
-                    </p>
+                    </Typography>
                   )}
                   <PasswordRequirements
                     password={step1Form.watch("password")}
@@ -768,9 +771,12 @@ export default function SignUpPage() {
                 <CardDescription>Tell us more about yourself</CardDescription>
               </div>
               {submitError && step === 2 && (
-                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+                <Typography
+                  variant="p"
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400"
+                >
                   {submitError}
-                </p>
+                </Typography>
               )}
               {!isEmployer ? (
                 <form
@@ -822,9 +828,9 @@ export default function SignUpPage() {
                       }
                     />
                     {studentStep2Form.formState.errors.fieldOfStudy && (
-                      <p className="text-xs text-red-500">
+                      <Typography variant="p" className="text-xs text-red-500">
                         {studentStep2Form.formState.errors.fieldOfStudy.message}
-                      </p>
+                      </Typography>
                     )}
                   </div>
 
@@ -927,9 +933,9 @@ export default function SignUpPage() {
                       }
                     />
                     {employerStep2Form.formState.errors.companyName && (
-                      <p className="text-xs text-red-500">
+                      <Typography variant="p" className="text-xs text-red-500">
                         {employerStep2Form.formState.errors.companyName.message}
-                      </p>
+                      </Typography>
                     )}
                   </div>
 
@@ -944,9 +950,9 @@ export default function SignUpPage() {
                       }
                     />
                     {employerStep2Form.formState.errors.position && (
-                      <p className="text-xs text-red-500">
+                      <Typography variant="p" className="text-xs text-red-500">
                         {employerStep2Form.formState.errors.position.message}
-                      </p>
+                      </Typography>
                     )}
                   </div>
 
@@ -1007,9 +1013,9 @@ export default function SignUpPage() {
                       </SelectContent>
                     </Select>
                     {employerStep2Form.formState.errors.rankLevel && (
-                      <p className="text-xs text-red-500">
+                      <Typography variant="p" className="text-xs text-red-500">
                         {employerStep2Form.formState.errors.rankLevel.message}
-                      </p>
+                      </Typography>
                     )}
                   </div>
 
@@ -1072,9 +1078,12 @@ export default function SignUpPage() {
                   </CardDescription>
                 </div>
                 {submitError && step === 3 && (
-                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+                  <Typography
+                    variant="p"
+                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400"
+                  >
                     {submitError}
-                  </p>
+                  </Typography>
                 )}
                 <form
                   onSubmit={onVerifyEmailCodeSubmit}
@@ -1092,10 +1101,13 @@ export default function SignUpPage() {
                       placeholder="Enter the code from your email"
                       autoComplete="one-time-code"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <Typography
+                      variant="p"
+                      className="text-xs text-muted-foreground"
+                    >
                       We sent a one-time code to{" "}
                       <strong>{step1Data?.email}</strong>.
-                    </p>
+                    </Typography>
                   </div>
 
                   <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">

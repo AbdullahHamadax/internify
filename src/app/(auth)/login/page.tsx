@@ -352,7 +352,9 @@ export default function LoginPage() {
               aria-invalid={!!errors.email}
             />
             {errors.email && (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
+              <Typography variant="p" className="text-xs text-red-500">
+                {errors.email.message}
+              </Typography>
             )}
           </div>
 
@@ -373,12 +375,19 @@ export default function LoginPage() {
               aria-invalid={!!errors.password}
             />
             {errors.password && (
-              <p className="text-xs text-red-500">{errors.password.message}</p>
+              <Typography variant="p" className="text-xs text-red-500">
+                {errors.password.message}
+              </Typography>
             )}
           </div>
 
           {submitError && (
-            <p className="text-sm text-red-500 text-center">{submitError}</p>
+            <Typography
+              variant="p"
+              className="text-sm text-red-500 text-center"
+            >
+              {submitError}
+            </Typography>
           )}
 
           <Button

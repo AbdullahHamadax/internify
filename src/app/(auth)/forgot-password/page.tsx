@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -187,16 +188,19 @@ export default function ForgotPasswordPage() {
                 aria-invalid={!!emailForm.formState.errors.email}
               />
               {emailForm.formState.errors.email && (
-                <p className="text-xs text-red-500">
+                <Typography variant="p" className="text-xs text-red-500">
                   {emailForm.formState.errors.email.message}
-                </p>
+                </Typography>
               )}
             </div>
 
             {submitError && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+              <Typography
+                variant="p"
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400"
+              >
                 {submitError}
-              </p>
+              </Typography>
             )}
 
             <Button
@@ -275,9 +279,9 @@ export default function ForgotPasswordPage() {
                 aria-invalid={!!resetForm.formState.errors.code}
               />
               {resetForm.formState.errors.code && (
-                <p className="text-xs text-red-500">
+                <Typography variant="p" className="text-xs text-red-500">
                   {resetForm.formState.errors.code.message}
-                </p>
+                </Typography>
               )}
             </div>
 
@@ -291,13 +295,16 @@ export default function ForgotPasswordPage() {
                 aria-invalid={!!resetForm.formState.errors.password}
               />
               {resetForm.formState.errors.password ? (
-                <p className="text-xs text-red-500">
+                <Typography variant="p" className="text-xs text-red-500">
                   {resetForm.formState.errors.password.message}
-                </p>
+                </Typography>
               ) : (
-                <p className="text-xs text-muted-foreground">
+                <Typography
+                  variant="p"
+                  className="text-xs text-muted-foreground"
+                >
                   Min 8 characters, one uppercase, one lowercase, one number
-                </p>
+                </Typography>
               )}
             </div>
 
@@ -311,16 +318,19 @@ export default function ForgotPasswordPage() {
                 aria-invalid={!!resetForm.formState.errors.confirmPassword}
               />
               {resetForm.formState.errors.confirmPassword && (
-                <p className="text-xs text-red-500">
+                <Typography variant="p" className="text-xs text-red-500">
                   {resetForm.formState.errors.confirmPassword.message}
-                </p>
+                </Typography>
               )}
             </div>
 
             {submitError && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+              <Typography
+                variant="p"
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400"
+              >
                 {submitError}
-              </p>
+              </Typography>
             )}
 
             <Button
