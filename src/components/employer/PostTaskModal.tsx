@@ -4,6 +4,7 @@ import {
   useState,
   useRef,
   useEffect,
+  useMemo,
   type KeyboardEvent,
   type ChangeEvent,
 } from "react";
@@ -11,7 +12,6 @@ import {
   X,
   Plus,
   Save,
-  Tag,
   Upload,
   Trash2,
   ImageIcon,
@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Task, TaskStatus } from "./TaskManagement";
-import deviconData from "devicon/devicon.json";
+import SkillPicker from "./SkillPicker";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Typography } from "@/components/ui/Typography";
@@ -85,7 +85,6 @@ export default function PostTaskModal({
   const [skillLevel, setSkillLevel] = useState("");
   const [description, setDescription] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
-  const [skillInput, setSkillInput] = useState("");
   const [deadline, setDeadline] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -101,7 +100,6 @@ export default function PostTaskModal({
   >([]);
   const [isUploading, setIsUploading] = useState(false);
   const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
-  const skillInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -130,6 +128,19 @@ export default function PostTaskModal({
     }
   }, [open, initialData]);
 
+  // Generate stable blob preview URLs and revoke them on cleanup
+  const previewUrls = useMemo(() => {
+    const urls = selectedFiles.map((file) => URL.createObjectURL(file));
+    return urls;
+  }, [selectedFiles]);
+
+  // Revoke blob URLs when they change or component unmounts
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
+
   if (!open) return null;
 
   const resetForm = () => {
@@ -138,7 +149,6 @@ export default function PostTaskModal({
     setSkillLevel("");
     setDescription("");
     setSkills([]);
-    setSkillInput("");
     setDeadline("");
     setErrors({});
     setSelectedFiles([]);
@@ -154,31 +164,6 @@ export default function PostTaskModal({
     });
   };
 
-  const addSkill = () => {
-    const normalized = normalizeSkill(skillInput);
-    if (normalized && !skills.includes(normalized)) {
-      setSkills([...skills, normalized]);
-      setSkillInput("");
-    } else if (normalized) {
-      // Already exists, just clear input
-      setSkillInput("");
-    }
-  };
-
-  const removeSkill = (skill: string) => {
-    setSkills(skills.filter((s) => s !== skill));
-  };
-
-  const handleSkillKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addSkill();
-    }
-    if (e.key === "Backspace" && !skillInput && skills.length > 0) {
-      setSkills(skills.slice(0, -1));
-    }
-  };
-
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!title.trim()) newErrors.title = "Title is required";
@@ -190,11 +175,23 @@ export default function PostTaskModal({
     return Object.keys(newErrors).length === 0;
   };
 
+  const MAX_ATTACHMENTS = 10;
+
+  const totalAttachments =
+    imageUrls.length + attachments.length + selectedFiles.length;
+  const isAtLimit = totalAttachments >= MAX_ATTACHMENTS;
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
-      setSelectedFiles((prev) => [...prev, ...filesArray]);
+      const remaining = MAX_ATTACHMENTS - totalAttachments;
+      const toAdd = filesArray.slice(0, Math.max(0, remaining));
+      if (toAdd.length > 0) {
+        setSelectedFiles((prev) => [...prev, ...toAdd]);
+      }
     }
+    // Reset the input value so the same file can be re-selected if removed
+    e.target.value = "";
   };
 
   const removeSelectedFile = (index: number) => {
@@ -386,69 +383,10 @@ export default function PostTaskModal({
             )}
           </div>
 
-          {/* Skills tag input */}
+          {/* Skills picker */}
           <div className="emp-modal__field">
             <Label>Required Skills</Label>
-            <div
-              className="emp-tags"
-              onClick={() => skillInputRef.current?.focus()}
-            >
-              {skills.map((skill) => {
-                // Determine icon for the skill
-                const deviconName = skill
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]/g, "");
-
-                // Check if the icon exists in devicon standard or altnames
-                const hasIcon = (deviconData as any[]).some(
-                  (icon) =>
-                    icon.name === deviconName ||
-                    icon.altnames.includes(deviconName),
-                );
-
-                return (
-                  <span
-                    key={skill}
-                    className="emp-tag flex items-center pr-1 pl-2.5"
-                  >
-                    {hasIcon ? (
-                      <i
-                        className={`devicon-${deviconName}-plain colored text-sm mr-1.5 opacity-90`}
-                      ></i>
-                    ) : (
-                      <div className="mr-1.5 flex items-center justify-center opacity-70">
-                        {/* Fallback generic tag icon */}
-                        <Tag className="w-3.5 h-3.5" />
-                      </div>
-                    )}
-                    {skill}
-                    <button
-                      type="button"
-                      className="emp-tag__remove ml-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeSkill(skill);
-                      }}
-                      aria-label={`Remove ${skill}`}
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </span>
-                );
-              })}
-              <input
-                ref={skillInputRef}
-                type="text"
-                className="emp-tags__input"
-                placeholder={
-                  skills.length === 0 ? "Type a skill and press Enter…" : ""
-                }
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={handleSkillKeyDown}
-                onBlur={addSkill}
-              />
-            </div>
+            <SkillPicker skills={skills} onChange={setSkills} />
           </div>
 
           {/* Deadline */}
@@ -560,7 +498,7 @@ export default function PostTaskModal({
                   >
                     {isImage ? (
                       <img
-                        src={URL.createObjectURL(file)}
+                        src={previewUrls[i]}
                         alt={file.name}
                         className="absolute inset-0 object-cover w-full h-full"
                       />
@@ -587,18 +525,41 @@ export default function PostTaskModal({
             </div>
 
             {/* Upload Button Box - Full Width */}
-            <Label className="mt-3 w-full cursor-pointer rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-purple-500 dark:hover:border-purple-500 bg-muted/20 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center text-muted-foreground hover:text-purple-600 dark:hover:text-purple-400 py-8">
+            <Label
+              className={`mt-3 w-full cursor-pointer rounded-lg border-2 border-dashed transition-colors flex flex-col items-center justify-center py-8 ${
+                isAtLimit
+                  ? "border-red-500 bg-red-500/5 text-red-500 dark:border-red-400 dark:text-red-400 cursor-not-allowed"
+                  : "border-muted-foreground/25 hover:border-purple-500 dark:hover:border-purple-500 bg-muted/20 hover:bg-muted/50 text-muted-foreground hover:text-purple-600 dark:hover:text-purple-400"
+              }`}
+            >
               <Upload className="size-8 mb-3" />
-              <span className="text-sm font-medium">Click to upload files</span>
-              <span className="text-xs mt-1 opacity-70">
-                Images or PDF up to 10MB
-              </span>
+              {isAtLimit ? (
+                <>
+                  <span className="text-sm font-semibold">
+                    Maximum of 10 attachments per task reached
+                  </span>
+                  <span className="text-xs mt-1 opacity-70">
+                    Remove an existing attachment to add a new one
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm font-medium">
+                    Click to upload files
+                  </span>
+                  <span className="text-xs mt-1 opacity-70">
+                    Images or PDF · {totalAttachments}/{MAX_ATTACHMENTS}{" "}
+                    attachments
+                  </span>
+                </>
+              )}
               <input
                 type="file"
                 className="hidden"
                 multiple
                 accept="image/*,application/pdf"
                 onChange={handleFileChange}
+                disabled={isAtLimit}
               />
             </Label>
             {errors.submit && (

@@ -6,14 +6,17 @@ import { v } from "convex/values";
  * This acts like a "Gatekeeper." It ensures the 'role' field is only one of these two words.
  * Example: If you try to save "admin", it will fail. It only accepts "student" or "employer".
  */
-const roleValidator = v.union(v.literal("student"), v.literal("employer"));
+export const roleValidator = v.union(
+  v.literal("student"),
+  v.literal("employer"),
+);
 
 /**
  * ACADEMIC STATUS VALIDATOR
  * This limits the choice of education level.
  * Example: A user can be an "undergraduate" or a "graduate", but not a "highschooler".
  */
-const academicStatusValidator = v.union(
+export const academicStatusValidator = v.union(
   v.literal("undergraduate"),
   v.literal("graduate"),
 );
@@ -23,13 +26,24 @@ const academicStatusValidator = v.union(
  * This defines the seniority level for employers.
  * Example: Valid values include "mid" or "executive". If you type "junior", it won't work.
  */
-const rankLevelValidator = v.union(
+export const rankLevelValidator = v.union(
   v.literal("mid"),
   v.literal("senior"),
   v.literal("lead"),
   v.literal("manager"),
   v.literal("director"),
   v.literal("executive"),
+);
+
+/**
+ * SKILL LEVEL VALIDATOR
+ * This defines the difficulty level for tasks.
+ * Example: Valid values are "beginner", "intermediate", or "advanced".
+ */
+export const skillLevelValidator = v.union(
+  v.literal("beginner"),
+  v.literal("intermediate"),
+  v.literal("advanced"),
 );
 
 export default defineSchema({
@@ -86,11 +100,7 @@ export default defineSchema({
     employerId: v.id("users"), // FK to the posting employer
     title: v.string(),
     category: v.string(), // e.g. "Web Development", "Marketing"
-    skillLevel: v.union(
-      v.literal("beginner"),
-      v.literal("intermediate"),
-      v.literal("advanced"),
-    ),
+    skillLevel: skillLevelValidator,
     description: v.string(),
     skills: v.array(v.string()), // Tags like ["React", "TypeScript"]
     deadline: v.number(), // Unix timestamp

@@ -21,6 +21,7 @@ export interface Task {
   applications: number;
   daysLeft?: number;
   deadline?: number;
+  createdAt?: number;
   description?: string;
   skills?: string[];
   completedDate?: string;
@@ -242,20 +243,23 @@ export default function TaskManagement({
         </TabsList>
 
         {(["pending", "in_progress", "completed"] as TaskStatus[]).map(
-          (status) => (
-            <TabsContent key={status} value={status}>
-              {filterTasks(status).length === 0 ? (
-                <div className="emp-task-empty">
-                  No {STATUS_LABEL[status].toLowerCase()} tasks
-                  {query ? ` matching "${query}"` : ""}
-                </div>
-              ) : (
-                filterTasks(status).map((task) => (
-                  <TaskRow key={task.id} task={task} onView={onViewTask} />
-                ))
-              )}
-            </TabsContent>
-          ),
+          (status) => {
+            const filtered = filterTasks(status);
+            return (
+              <TabsContent key={status} value={status}>
+                {filtered.length === 0 ? (
+                  <div className="emp-task-empty">
+                    No {STATUS_LABEL[status].toLowerCase()} tasks
+                    {query ? ` matching "${query}"` : ""}
+                  </div>
+                ) : (
+                  filtered.map((task) => (
+                    <TaskRow key={task.id} task={task} onView={onViewTask} />
+                  ))
+                )}
+              </TabsContent>
+            );
+          },
         )}
       </Tabs>
     </div>
