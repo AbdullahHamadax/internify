@@ -1,7 +1,54 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { skillLevelValidator } from "./schema";
+
+/**
+ * Attachment validator — reused across createTask and updateTask.
+ */
+const attachmentValidator = v.array(
+  v.object({
+    storageId: v.id("_storage"),
+    name: v.string(),
+    type: v.string(),
+  }),
+);
+
+/** Maximum number of attachments allowed per task. */
+const MAX_ATTACHMENTS = 10;
+
+/** Allowed MIME-type prefixes for attachments. */
+const ALLOWED_MIME_PREFIXES = ["image/", "application/pdf"];
+
+/**
+ * Validates attachment constraints server-side.
+ * Throws if too many attachments or if a file type is disallowed.
+ */
+function validateAttachments(
+  attachments: { storageId: string; name: string; type: string }[] | undefined,
+) {
+  if (!attachments) return;
+
+  if (attachments.length > MAX_ATTACHMENTS) {
+    throw new Error(`Maximum ${MAX_ATTACHMENTS} attachments allowed per task.`);
+  }
+
+  for (const att of attachments) {
+    const isAllowed = ALLOWED_MIME_PREFIXES.some((prefix) =>
+      att.type.startsWith(prefix),
+    );
+    if (!isAllowed) {
+      throw new Error(
+        `File type "${att.type}" is not allowed. Only images and PDFs are accepted.`,
+      );
+    }
+  }
+}
 
 export const generateUploadUrl = mutation(async (ctx) => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error("Unauthorized");
+  }
   return await ctx.storage.generateUploadUrl();
 });
 
@@ -9,24 +56,12 @@ export const createTask = mutation({
   args: {
     title: v.string(),
     category: v.string(),
-    skillLevel: v.union(
-      v.literal("beginner"),
-      v.literal("intermediate"),
-      v.literal("advanced"),
-    ),
+    skillLevel: skillLevelValidator,
     description: v.string(),
     skills: v.array(v.string()),
     deadline: v.number(),
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
-    attachments: v.optional(
-      v.array(
-        v.object({
-          storageId: v.id("_storage"),
-          name: v.string(),
-          type: v.string(),
-        }),
-      ),
-    ),
+    attachments: v.optional(attachmentValidator),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -44,6 +79,9 @@ export const createTask = mutation({
     if (!user || user.role !== "employer") {
       throw new Error("Unauthorized: Only employers can create tasks");
     }
+
+    // Server-side attachment validation
+    validateAttachments(args.attachments);
 
     const now = Date.now();
 
@@ -123,7 +161,6 @@ export const getEmployerTasks = query({
           const mappedAttachments = await Promise.all(
             task.attachments.map(async (att) => {
               const url = await ctx.storage.getUrl(att.storageId);
-              // Ensure storageId is explicitly cast to string if needed, or rely on Convex's Id type being compatible
               return url
                 ? {
                     storageId: att.storageId.toString(),
@@ -201,9 +238,9 @@ export const getEmployerStats = query({
 
     const completedTasks = tasks.filter((t) => t.status === "completed").length;
 
-    // Simulated data as per instructions
-    const totalSubmissions = 0; // simulated value
-    const avgQualityScore = 0; // simulated value
+    // Placeholder values — wire these up once the submissions feature is built
+    const totalSubmissions = 0;
+    const avgQualityScore = 0;
 
     return {
       activeTasks,
@@ -244,6 +281,14 @@ export const deleteTask = mutation({
       throw new Error("Unauthorized: You can only delete your own tasks");
     }
 
+    // Clean up stored files before deleting the task document
+    for (const id of task.imageStorageIds ?? []) {
+      await ctx.storage.delete(id);
+    }
+    for (const att of task.attachments ?? []) {
+      await ctx.storage.delete(att.storageId);
+    }
+
     await ctx.db.delete(args.taskId);
   },
 });
@@ -253,24 +298,12 @@ export const updateTask = mutation({
     taskId: v.id("tasks"),
     title: v.string(),
     category: v.string(),
-    skillLevel: v.union(
-      v.literal("beginner"),
-      v.literal("intermediate"),
-      v.literal("advanced"),
-    ),
+    skillLevel: skillLevelValidator,
     description: v.string(),
     skills: v.array(v.string()),
     deadline: v.number(),
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
-    attachments: v.optional(
-      v.array(
-        v.object({
-          storageId: v.id("_storage"),
-          name: v.string(),
-          type: v.string(),
-        }),
-      ),
-    ),
+    attachments: v.optional(attachmentValidator),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -296,6 +329,29 @@ export const updateTask = mutation({
 
     if (task.employerId !== user._id) {
       throw new Error("Unauthorized: You can only edit your own tasks");
+    }
+
+    // Server-side attachment validation
+    validateAttachments(args.attachments);
+
+    // Clean up removed legacy image storage IDs
+    const newLegacySet = new Set(
+      (args.imageStorageIds ?? []).map((id) => id.toString()),
+    );
+    for (const oldId of task.imageStorageIds ?? []) {
+      if (!newLegacySet.has(oldId.toString())) {
+        await ctx.storage.delete(oldId);
+      }
+    }
+
+    // Clean up removed attachments
+    const newAttachmentSet = new Set(
+      (args.attachments ?? []).map((a) => a.storageId.toString()),
+    );
+    for (const oldAtt of task.attachments ?? []) {
+      if (!newAttachmentSet.has(oldAtt.storageId.toString())) {
+        await ctx.storage.delete(oldAtt.storageId);
+      }
     }
 
     await ctx.db.patch(args.taskId, {

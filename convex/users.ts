@@ -1,29 +1,10 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-
-/**
- * VALIDATORS (The Rules)
- * These ensure the data sent from the frontend is correct.
- */
-
-// Example: Only allows "student" or "employer".
-const roleValidator = v.union(v.literal("student"), v.literal("employer"));
-
-// Example: Only allows "undergraduate" or "graduate".
-const academicStatusValidator = v.union(
-  v.literal("undergraduate"),
-  v.literal("graduate"),
-);
-
-// Example: Only allows levels like "mid", "manager", or "executive".
-const rankLevelValidator = v.union(
-  v.literal("mid"),
-  v.literal("senior"),
-  v.literal("lead"),
-  v.literal("manager"),
-  v.literal("director"),
-  v.literal("executive"),
-);
+import {
+  roleValidator,
+  academicStatusValidator,
+  rankLevelValidator,
+} from "./schema";
 
 /**
  * QUERY: currentUser
@@ -135,12 +116,18 @@ export const upsertCurrentUser = mutation({
     // If they already exist, UPDATE their info (Patch).
     // Example: User changed their email address in settings.
     if (existingUser) {
+      // Role is immutable once set — prevents students from becoming employers (and vice versa).
+      if (existingUser.role !== args.role) {
+        throw new Error(
+          `Role cannot be changed. This account is registered as a "${existingUser.role}".`,
+        );
+      }
+
       await ctx.db.patch(userId, {
         clerkUserId: identity.subject,
         email,
         firstName: args.firstName ?? identity.givenName,
         lastName: args.lastName ?? identity.familyName,
-        role: args.role,
         updatedAt: now,
       });
     }

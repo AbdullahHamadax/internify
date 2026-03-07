@@ -1,0 +1,285 @@
+/* ── Talent Spotlight Showcase ── */
+
+.emp-showcase {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+
+/* ── Header ── */
+
+.emp-showcase__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.emp-showcase__title-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.emp-showcase__icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, hsl(263 70% 50%), hsl(290 84% 60%));
+  color: white;
+  box-shadow: 0 4px 14px 0 hsl(263 70% 50% / 0.3);
+  flex-shrink: 0;
+}
+
+.emp-showcase__title {
+  margin-bottom: 0.25rem;
+  background: linear-gradient(
+    to right,
+    var(--foreground),
+    var(--muted-foreground)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.emp-showcase__view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.emp-showcase__view-all:hover {
+  background: hsl(263 70% 50% / 0.1);
+  color: hsl(263 70% 50%);
+  border-color: hsl(263 70% 50% / 0.3);
+}
+
+.dark .emp-showcase__view-all:hover {
+  background: hsl(290 84% 60% / 0.15);
+  color: hsl(290 84% 75%);
+  border-color: hsl(290 84% 60% / 0.3);
+}
+
+.emp-showcase__view-all:hover svg {
+  transform: translateX(3px);
+  transition: transform 0.2s ease;
+}
+
+/* ── Grid ── */
+
+.emp-showcase__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ── Talent Card ── */
+
+.emp-talent-card {
+  --card-theme-base: 263 70% 50%; /* Default purple */
+  --card-theme-light: 290 84% 60%;
+
+  position: relative;
+  border-radius: 1rem;
+  padding: 1px; /* space for gradient border */
+  background: linear-gradient(to bottom right, var(--border), transparent 50%);
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.emp-talent-card:hover {
+  transform: translateY(-4px);
+  background: linear-gradient(
+    to bottom right,
+    hsl(var(--card-theme-base) / 0.5),
+    transparent 60%
+  );
+}
+
+/* Theme Variations */
+.emp-talent-card--purple {
+  --card-theme-base: 263 70% 50%;
+  --card-theme-light: 290 84% 60%;
+}
+.emp-talent-card--amber {
+  --card-theme-base: 38 92% 50%;
+  --card-theme-light: 45 93% 60%;
+}
+.emp-talent-card--emerald {
+  --card-theme-base: 160 84% 39%;
+  --card-theme-light: 150 70% 50%;
+}
+.emp-talent-card--blue {
+  --card-theme-base: 221 83% 53%;
+  --card-theme-light: 210 90% 65%;
+}
+
+/* Inner card body to create the 1px border effect */
+.emp-talent-card__inner {
+  position: relative;
+  z-index: 2;
+  background: var(--card);
+  border-radius: calc(1rem - 1px);
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.dark .emp-talent-card__inner {
+  background: hsl(0 0% 10% / 0.8);
+  backdrop-filter: blur(12px);
+  box-shadow: none;
+}
+
+/* Hover glow effect behind inner card */
+.emp-talent-card__glow {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(
+    circle at top right,
+    hsl(var(--card-theme-base) / 0.15),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.emp-talent-card:hover .emp-talent-card__glow {
+  opacity: 1;
+}
+
+/* ── Card Contents ── */
+
+.emp-talent-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.emp-talent-card__avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--card-theme-base)),
+    hsl(var(--card-theme-light))
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.125rem;
+  box-shadow: 0 4px 10px 0 hsl(var(--card-theme-base) / 0.3);
+}
+
+.emp-talent-card__match {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background: hsl(var(--card-theme-base) / 0.1);
+  color: hsl(var(--card-theme-light));
+  border: 1px solid hsl(var(--card-theme-base) / 0.2);
+}
+
+.emp-talent-card__details {
+  flex-grow: 1;
+}
+
+.emp-talent-card__name {
+  margin-bottom: 0.25rem;
+}
+
+.emp-talent-card__role-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+}
+
+.emp-talent-card__role-icon {
+  color: hsl(var(--card-theme-light));
+}
+
+.emp-talent-card__uni {
+  display: block;
+  margin-bottom: 1.25rem;
+}
+
+/* ── Bottom Section ── */
+
+.emp-talent-card__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  gap: 1rem;
+}
+
+.emp-talent-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.emp-talent-card__badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+}
+
+.emp-talent-card__badge--more {
+  background: transparent;
+  border-style: dashed;
+}
+
+.emp-talent-card__invite {
+  padding: 0.375rem 1rem;
+  border-radius: 9999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dark .emp-talent-card__invite {
+  background: white;
+  color: black;
+}
+
+.emp-talent-card__invite:hover {
+  background: hsl(var(--card-theme-base));
+  color: white;
+  box-shadow: 0 0 10px 0 hsl(var(--card-theme-base) / 0.5);
+}
