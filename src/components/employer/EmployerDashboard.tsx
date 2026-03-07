@@ -36,71 +36,15 @@ import StatsCards, { type DashboardStats } from "./StatsCards";
 import TaskManagement, { type Task, type TaskStatus } from "./TaskManagement";
 import { Typography } from "@/components/ui/Typography";
 import AnalyticsPanel from "./AnalyticsPanel";
+import TopStudentsShowcase from "./TopStudentsShowcase";
 import PostTaskModal, { type PostTaskData } from "./PostTaskModal";
 import TaskDetailModal from "./TaskDetailModal";
 
 import "./employer-dashboard.css";
 
-/* ── Mock data ── */
-
-const MOCK_TASKS: Task[] = [
-  {
-    id: "1",
-    title: "Build a Responsive Landing Page",
-    category: "Web Development",
-    skillLevel: "Intermediate",
-    status: "pending",
-    applications: 23,
-    daysLeft: 5,
-  },
-  {
-    id: "2",
-    title: "Social Media Marketing Strategy",
-    category: "Marketing",
-    skillLevel: "Beginner",
-    status: "pending",
-    applications: 15,
-    daysLeft: 7,
-  },
-  {
-    id: "3",
-    title: "Mobile App Prototype",
-    category: "Mobile Development",
-    skillLevel: "Advanced",
-    status: "in_progress",
-    applications: 8,
-    daysLeft: 12,
-  },
-  {
-    id: "4",
-    title: "Content Writing Campaign",
-    category: "Content Writing",
-    skillLevel: "Beginner",
-    status: "completed",
-    applications: 12,
-    avgScore: 89,
-    completedDate: "Nov 15, 2025",
-  },
-  {
-    id: "5",
-    title: "E-commerce Platform Development",
-    category: "Web Development",
-    skillLevel: "Advanced",
-    status: "completed",
-    applications: 6,
-    avgScore: 92,
-    completedDate: "Nov 10, 2025",
-  },
-];
-
-const INITIAL_STATS: DashboardStats = {
-  activeTasks: 8,
-  totalSubmissions: 124,
-  completedTasks: 45,
-  avgQualityScore: 87,
-};
-
 /* ── Nav Links ── */
+
+/* ── Top Navbar ── */
 
 const NAV_LINKS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -161,16 +105,19 @@ function EmployerNavbar({
       </div>
 
       <div className="emp-navbar__right">
-        <ThemeToggle />
+        {/* Hidden on mobile, shown on md screens */}
+        <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle />
 
-        <button
-          type="button"
-          className="emp-navbar__icon-btn"
-          aria-label="Notifications"
-        >
-          <Bell className="size-4" />
-          <span className="emp-navbar__notif-dot" />
-        </button>
+          <button
+            type="button"
+            className="emp-navbar__icon-btn"
+            aria-label="Notifications"
+          >
+            <Bell className="size-4" />
+            <span className="emp-navbar__notif-dot" />
+          </button>
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -223,11 +170,35 @@ function EmployerNavbar({
             left: 0,
             right: 0,
             background: "var(--card)",
-            borderBottom: "1px solid var(--border)",
-            padding: "0.5rem 1rem 1rem",
+            padding: "1rem",
             zIndex: 50,
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
           }}
         >
+          {/* Mobile Actions: Theme & Notifications */}
+          <div className="flex items-center justify-between mb-2 pb-3 border-b border-border md:hidden">
+            <span className="text-sm font-medium text-muted-foreground">
+              Appearance
+            </span>
+            <ThemeToggle />
+          </div>
+
+          <div className="flex items-center justify-between mb-2 pb-3 border-b border-border md:hidden">
+            <span className="text-sm font-medium text-muted-foreground">
+              Notifications
+            </span>
+            <button
+              type="button"
+              className="emp-navbar__icon-btn"
+              aria-label="Notifications"
+            >
+              <Bell className="size-4" />
+              <span className="emp-navbar__notif-dot" />
+            </button>
+          </div>
+
           {NAV_LINKS.map((link) => (
             <button
               key={link.id}
@@ -298,6 +269,7 @@ export default function EmployerDashboard() {
         Math.ceil((t.deadline - Date.now()) / (1000 * 60 * 60 * 24)),
       ),
       deadline: t.deadline,
+      createdAt: t.createdAt,
       description: t.description,
       skills: t.skills,
       imageStorageIds: t.imageStorageIds,
@@ -305,7 +277,12 @@ export default function EmployerDashboard() {
       resolvedAttachments: t.resolvedAttachments,
     })) || [];
 
-  const stats: DashboardStats = employerStats || INITIAL_STATS;
+  const stats: DashboardStats = employerStats || {
+    activeTasks: 0,
+    totalSubmissions: 0,
+    completedTasks: 0,
+    avgQualityScore: 0,
+  };
 
   const firstName = currentUser?.user?.firstName || user?.firstName || "there";
 
@@ -320,7 +297,7 @@ export default function EmployerDashboard() {
   const handleDeleteTask = useCallback(
     async (taskId: string) => {
       try {
-        await deleteTask({ taskId: taskId as any });
+        await deleteTask({ taskId: taskId as Id<"tasks"> });
       } catch (error) {
         console.error("Failed to delete task:", error);
       }
@@ -333,7 +310,7 @@ export default function EmployerDashboard() {
       try {
         if (editingTask) {
           await updateTask({
-            taskId: editingTask.id as any,
+            taskId: editingTask.id as Id<"tasks">,
             title: taskData.title,
             category: taskData.category,
             skillLevel: taskData.skillLevel,
@@ -343,7 +320,13 @@ export default function EmployerDashboard() {
             imageStorageIds: taskData.imageStorageIds as
               | Id<"_storage">[]
               | undefined,
-            attachments: taskData.attachments as any,
+            attachments: taskData.attachments as
+              | {
+                  storageId: Id<"_storage">;
+                  name: string;
+                  type: string;
+                }[]
+              | undefined,
           });
           setEditingTask(null);
         } else {
@@ -357,7 +340,13 @@ export default function EmployerDashboard() {
             imageStorageIds: taskData.imageStorageIds as
               | Id<"_storage">[]
               | undefined,
-            attachments: taskData.attachments as any,
+            attachments: taskData.attachments as
+              | {
+                  storageId: Id<"_storage">;
+                  name: string;
+                  type: string;
+                }[]
+              | undefined,
           });
         }
         setModalOpen(false);
@@ -439,13 +428,16 @@ export default function EmployerDashboard() {
             </div>
 
             {/* Stats Row */}
-            <StatsCards stats={stats} />
+            <StatsCards stats={stats} tasks={tasks} />
 
             {/* Body: Task Management + Analytics */}
             <div className="emp-body">
               <TaskManagement tasks={tasks} onViewTask={handleViewTask} />
-              <AnalyticsPanel />
+              <AnalyticsPanel tasks={tasks} />
             </div>
+
+            {/* Showcase */}
+            <TopStudentsShowcase />
           </>
         )}
       </main>
