@@ -522,7 +522,7 @@ export default function SignUpPage() {
     const loginHref = role ? `/login?role=${role}` : "/login";
 
     return (
-      <Card className="rounded-3xl border shadow-sm border-r-3 border-b-3 border-black dark:border-white">
+      <Card className="rounded-3xl border-2 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
         <CardHeader className="text-center space-y-2 px-4 sm:px-8 pt-8">
           <CardTitle className="text-2xl">Join Internify</CardTitle>
           <CardDescription>
@@ -602,7 +602,7 @@ export default function SignUpPage() {
   const loginHref = role ? `/login?role=${role}` : "/login";
 
   return (
-    <Card className="rounded-3xl border shadow-sm border-r-3 border-b-3 border-black dark:border-white">
+    <Card className="rounded-3xl border-2 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
       <CardHeader className="px-4 sm:px-8 pt-8">
         {/* ── Role label ── */}
         <div className="flex justify-center mb-1">
@@ -663,11 +663,16 @@ export default function SignUpPage() {
                       placeholder="John"
                       {...step1Form.register("firstName")}
                     />
-                    {step1Form.formState.errors.firstName && (
-                      <Typography variant="p" className="text-xs text-red-500">
-                        {step1Form.formState.errors.firstName.message}
-                      </Typography>
-                    )}
+                    <div className="min-h-[1.25rem]">
+                      {step1Form.formState.errors.firstName && (
+                        <Typography
+                          variant="p"
+                          className="text-xs text-red-500"
+                        >
+                          {step1Form.formState.errors.firstName.message}
+                        </Typography>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid gap-2">
@@ -677,11 +682,16 @@ export default function SignUpPage() {
                       placeholder="Doe"
                       {...step1Form.register("lastName")}
                     />
-                    {step1Form.formState.errors.lastName && (
-                      <Typography variant="p" className="text-xs text-red-500">
-                        {step1Form.formState.errors.lastName.message}
-                      </Typography>
-                    )}
+                    <div className="min-h-[1.25rem]">
+                      {step1Form.formState.errors.lastName && (
+                        <Typography
+                          variant="p"
+                          className="text-xs text-red-500"
+                        >
+                          {step1Form.formState.errors.lastName.message}
+                        </Typography>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -696,11 +706,13 @@ export default function SignUpPage() {
                     {...step1Form.register("email")}
                     aria-invalid={!!step1Form.formState.errors.email}
                   />
-                  {step1Form.formState.errors.email && (
-                    <Typography variant="p" className="text-xs text-red-500">
-                      {step1Form.formState.errors.email.message}
-                    </Typography>
-                  )}
+                  <div className="min-h-[1.25rem]">
+                    {step1Form.formState.errors.email && (
+                      <Typography variant="p" className="text-xs text-red-500">
+                        {step1Form.formState.errors.email.message}
+                      </Typography>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid gap-2">
@@ -716,11 +728,6 @@ export default function SignUpPage() {
                     }}
                     aria-invalid={!!step1Form.formState.errors.password}
                   />
-                  {step1Form.formState.errors.password && (
-                    <Typography variant="p" className="text-xs text-red-500">
-                      {step1Form.formState.errors.password.message}
-                    </Typography>
-                  )}
                   <PasswordRequirements
                     password={step1Form.watch("password")}
                     isFocused={passwordFocused}
