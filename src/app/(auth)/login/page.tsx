@@ -4,7 +4,7 @@ import type { OAuthStrategy } from "@clerk/types";
 import { Briefcase, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Typography } from "@/components/ui/Typography";
 
 import { useClerk, useSignIn, useUser } from "@clerk/nextjs";
@@ -55,6 +55,7 @@ export default function LoginPage() {
   const isEmployer = role === "employer";
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const {
     register,
@@ -71,6 +72,8 @@ export default function LoginPage() {
   // instead of letting them sit on the login page or get a cryptic error.
   useEffect(() => {
     if (!isUserLoaded || !isSignedIn) return;
+    // Don't interfere while the login form's onSubmit is still running
+    if (isSubmittingRef.current) return;
 
     // currentUser is undefined while loading, null if no Convex record exists
     if (currentUser === undefined) {
@@ -198,6 +201,7 @@ export default function LoginPage() {
 
     setSubmitError(null);
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
 
     // TRACKER: Did they actually make it past the Clerk password check?
     let sessionActivated = false;
@@ -284,6 +288,7 @@ export default function LoginPage() {
       }
     } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   }
 
