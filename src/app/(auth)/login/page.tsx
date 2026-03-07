@@ -293,7 +293,7 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="rounded-3xl shadow-sm border border-r-3 border-b-3 border-black dark:border-white">
+    <Card className="rounded-3xl border-2 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
       <CardHeader className="text-center space-y-2 px-8 pt-8">
         <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>
