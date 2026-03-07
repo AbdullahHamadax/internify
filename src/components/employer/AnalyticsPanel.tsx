@@ -1,47 +1,61 @@
 "use client";
 
-import { BarChart3 } from "lucide-react";
+import { useMemo } from "react";
+import { BarChart3, Inbox } from "lucide-react";
+import type { Task } from "./TaskManagement";
 
-const METRICS = [
-  {
-    label: "Task Completion Rate",
-    value: 84,
-    barColor: "emp-metric__fill--red",
-  },
-  { label: "Avg Task Quality", value: 87, barColor: "emp-metric__fill--blue" },
-  { label: "Response Rate", value: 92, barColor: "emp-metric__fill--violet" },
-];
+interface AnalyticsPanelProps {
+  tasks: Task[];
+}
 
-const TOP_STUDENTS = [
-  {
-    initials: "S",
-    name: "Sarah Johnson",
-    field: "Web Development",
-    tasks: 15,
-    avg: 94,
-    color: "emp-student-avatar--purple",
-  },
-  {
-    initials: "M",
-    name: "Michael Chen",
-    field: "Data Science",
-    tasks: 12,
-    avg: 91,
-    color: "emp-student-avatar--indigo",
-  },
-  {
-    initials: "E",
-    name: "Emma Williams",
-    field: "Design",
-    tasks: 18,
-    avg: 89,
-    color: "emp-student-avatar--teal",
-  },
-];
+export default function AnalyticsPanel({ tasks }: AnalyticsPanelProps) {
+  const metrics = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter((t) => t.status === "completed").length;
+    const inProgress = tasks.filter((t) => t.status === "in_progress").length;
+    const pending = tasks.filter((t) => t.status === "pending").length;
 
-export default function AnalyticsPanel() {
+    const completionRate =
+      total > 0 ? Math.round((completed / total) * 100) : 0;
+    const inProgressRate =
+      total > 0 ? Math.round((inProgress / total) * 100) : 0;
+    const pendingRate = total > 0 ? Math.round((pending / total) * 100) : 0;
+
+    return [
+      {
+        label: "Task Completion Rate",
+        value: completionRate,
+        barColor: "emp-metric__fill--green",
+      },
+      {
+        label: "In Progress",
+        value: inProgressRate,
+        barColor: "emp-metric__fill--blue",
+      },
+      {
+        label: "Pending Tasks",
+        value: pendingRate,
+        barColor: "emp-metric__fill--violet",
+      },
+    ];
+  }, [tasks]);
+
+  /* ── Category breakdown ── */
+  const categoryBreakdown = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const t of tasks) {
+      counts[t.category] = (counts[t.category] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+  }, [tasks]);
+
+  const maxCategoryCount = Math.max(...categoryBreakdown.map(([, c]) => c), 1);
+
   return (
     <aside className="emp-analytics">
+      {/* Analytics metrics */}
       <div className="emp-analytics-card">
         <div className="emp-analytics-card__title">
           <div className="emp-analytics-card__icon">
@@ -50,43 +64,60 @@ export default function AnalyticsPanel() {
           Analytics
         </div>
 
-        {METRICS.map((m) => (
-          <div key={m.label} className="emp-metric">
-            <div className="emp-metric__head">
-              <span className="emp-metric__label">{m.label}</span>
-              <span className="emp-metric__value">{m.value}%</span>
-            </div>
-            <div className="emp-metric__bar">
-              <div
-                className={`emp-metric__fill ${m.barColor}`}
-                style={{ width: `${m.value}%` }}
-              />
-            </div>
+        {tasks.length === 0 ? (
+          <div className="emp-analytics-empty">
+            <Inbox
+              className="size-8 mx-auto mb-2 opacity-40"
+              strokeWidth={1.5}
+            />
+            <p className="text-sm text-muted-foreground text-center">
+              Post your first task to see analytics
+            </p>
           </div>
-        ))}
+        ) : (
+          metrics.map((m) => (
+            <div key={m.label} className="emp-metric">
+              <div className="emp-metric__head">
+                <span className="emp-metric__label">{m.label}</span>
+                <span className="emp-metric__value">{m.value}%</span>
+              </div>
+              <div className="emp-metric__bar">
+                <div
+                  className={`emp-metric__fill ${m.barColor}`}
+                  style={{ width: `${m.value}%` }}
+                />
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
+      {/* Category breakdown — real data */}
       <div className="emp-analytics-card">
-        <div className="emp-analytics-card__title">Top Performing Students</div>
+        <div className="emp-analytics-card__title">Task Categories</div>
 
-        {TOP_STUDENTS.map((s) => (
-          <div key={s.name} className="emp-student-row">
-            <div className={`emp-student-avatar ${s.color}`}>{s.initials}</div>
-            <div className="emp-student-info">
-              <div className="emp-student-name">{s.name}</div>
-              <div className="emp-student-field">{s.field}</div>
+        {categoryBreakdown.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No tasks yet
+          </p>
+        ) : (
+          categoryBreakdown.map(([category, count]) => (
+            <div key={category} className="emp-metric">
+              <div className="emp-metric__head">
+                <span className="emp-metric__label">{category}</span>
+                <span className="emp-metric__value">{count}</span>
+              </div>
+              <div className="emp-metric__bar">
+                <div
+                  className="emp-metric__fill emp-metric__fill--violet"
+                  style={{
+                    width: `${(count / maxCategoryCount) * 100}%`,
+                  }}
+                />
+              </div>
             </div>
-            <div className="emp-student-score">
-              {s.tasks} tasks · <strong>{s.avg}%</strong>
-            </div>
-          </div>
-        ))}
-
-        <div className="emp-find-more">
-          <button type="button" className="emp-find-more__link">
-            Find More Students
-          </button>
-        </div>
+          ))
+        )}
       </div>
     </aside>
   );

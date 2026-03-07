@@ -17,8 +17,8 @@
 /* ── Top Navbar ── */
 
 .emp-navbar {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: 0 2.5rem;
   height: 4rem;
@@ -34,6 +34,8 @@
   .emp-navbar {
     padding: 0 1rem;
     height: 3.5rem;
+    display: flex;
+    justify-content: space-between;
   }
 }
 
@@ -79,6 +81,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 @media (max-width: 768px) {
@@ -306,6 +311,20 @@
 
 .emp-post-btn:active {
   transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .emp-hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+    padding: 1.5rem;
+  }
+
+  .emp-post-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ── Stats Row ── */
@@ -1135,6 +1154,154 @@
 
 .emp-tags__input::placeholder {
   color: var(--muted-foreground);
+}
+
+/* ── Skill Picker ── */
+
+.emp-skill-picker {
+  border: 1px solid var(--input);
+  border-radius: 0.5rem;
+  background: var(--card);
+  overflow: hidden;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.dark .emp-skill-picker {
+  background: hsl(217 33% 17% / 0.3);
+}
+
+.emp-skill-picker:focus-within {
+  border-color: hsl(263 70% 50%);
+  box-shadow: 0 0 0 3px hsl(263 70% 50% / 0.12);
+}
+
+.emp-skill-picker__selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0.5rem 0.625rem 0.25rem;
+}
+
+.emp-skill-picker__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.emp-skill-picker__search-icon {
+  position: absolute;
+  left: 0.75rem;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.emp-skill-picker__input {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  font-family: inherit;
+}
+
+.emp-skill-picker__input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.emp-skill-picker__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0.5rem 0.625rem 0.625rem;
+  max-height: 180px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+}
+
+.emp-skill-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.emp-skill-option:hover {
+  border-color: hsl(263 70% 50% / 0.5);
+  background: hsl(263 70% 50% / 0.06);
+}
+
+.dark .emp-skill-option:hover {
+  border-color: hsl(290 70% 60% / 0.5);
+  background: hsl(290 70% 60% / 0.1);
+}
+
+.emp-skill-option--selected {
+  background: hsl(263 70% 50% / 0.12);
+  color: hsl(263 70% 50%);
+  border-color: hsl(263 70% 50% / 0.35);
+  font-weight: 600;
+}
+
+.dark .emp-skill-option--selected {
+  background: hsl(290 70% 60% / 0.18);
+  color: hsl(290 70% 72%);
+  border-color: hsl(290 70% 60% / 0.35);
+}
+
+.emp-skill-option--selected:hover {
+  background: hsl(263 70% 50% / 0.18);
+  border-color: hsl(263 70% 50% / 0.5);
+}
+
+.dark .emp-skill-option--selected:hover {
+  background: hsl(290 70% 60% / 0.25);
+  border-color: hsl(290 70% 60% / 0.5);
+}
+
+.emp-skill-option--custom {
+  border-style: dashed;
+  border-color: hsl(263 70% 50% / 0.4);
+  color: hsl(263 70% 50%);
+  font-weight: 600;
+}
+
+.dark .emp-skill-option--custom {
+  border-color: hsl(290 70% 60% / 0.4);
+  color: hsl(290 70% 65%);
+}
+
+.emp-skill-option--custom:hover {
+  background: hsl(263 70% 50% / 0.1);
+  border-color: hsl(263 70% 50%);
+}
+
+.dark .emp-skill-option--custom:hover {
+  background: hsl(290 70% 60% / 0.15);
+  border-color: hsl(290 70% 60%);
+}
+
+.emp-skill-picker__empty {
+  width: 100%;
+  text-align: center;
+  padding: 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
 }
 
 /* ── Force selects inside modal to render ABOVE the overlay ── */

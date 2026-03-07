@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { Clock, Users, CheckCircle2, BarChart3 } from "lucide-react";
+import type { Task } from "./TaskManagement";
 
 export interface DashboardStats {
   activeTasks: number;
@@ -11,12 +13,38 @@ export interface DashboardStats {
 
 interface StatsCardsProps {
   stats: DashboardStats;
+  tasks: Task[];
 }
 
-/* Mini SVG sparkline — provides visual movement without a charting library */
+/* ── Mini SVG sparkline ── */
 function Sparkline({ points, color }: { points: number[]; color: string }) {
   const width = 64;
   const height = 24;
+
+  if (points.length < 2) {
+    // Not enough data — flat line
+    return (
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        fill="none"
+        className="emp-stat-card__spark"
+      >
+        <line
+          x1="0"
+          y1={height / 2}
+          x2={width}
+          y2={height / 2}
+          stroke={color}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeOpacity="0.35"
+        />
+      </svg>
+    );
+  }
+
   const max = Math.max(...points);
   const min = Math.min(...points);
   const range = max - min || 1;
@@ -49,6 +77,48 @@ function Sparkline({ points, color }: { points: number[]; color: string }) {
   );
 }
 
+/**
+ * Build a sparkline array from tasks by binning them into N buckets across
+ * the full time range (earliest createdAt → now). Each bucket value is the
+ * cumulative count of tasks that match the `filter` up to that bucket's end.
+ */
+function buildSparkline(
+  tasks: Task[],
+  buckets: number,
+  filter?: (t: Task) => boolean,
+): number[] {
+  const filtered = filter ? tasks.filter(filter) : tasks;
+  if (filtered.length === 0) return [0];
+
+  const timestamps = filtered
+    .map((t) => t.createdAt ?? 0)
+    .filter((ts) => ts > 0)
+    .sort((a, b) => a - b);
+
+  if (timestamps.length === 0) return [0];
+
+  const minTime = timestamps[0];
+  const maxTime = Math.max(Date.now(), timestamps[timestamps.length - 1]);
+  const span = maxTime - minTime || 1;
+
+  const result: number[] = new Array(buckets).fill(0);
+
+  for (const ts of timestamps) {
+    const bucket = Math.min(
+      Math.floor(((ts - minTime) / span) * buckets),
+      buckets - 1,
+    );
+    result[bucket]++;
+  }
+
+  // Make cumulative
+  for (let i = 1; i < result.length; i++) {
+    result[i] += result[i - 1];
+  }
+
+  return result;
+}
+
 const STAT_CONFIG = [
   {
     key: "activeTasks" as const,
@@ -57,7 +127,6 @@ const STAT_CONFIG = [
     colorClass: "emp-stat-card__icon--blue",
     accentClass: "emp-stat-card--blue",
     sparkColor: "hsl(221 83% 53%)",
-    sparkData: [3, 5, 4, 7, 6, 8],
   },
   {
     key: "totalSubmissions" as const,
@@ -66,7 +135,6 @@ const STAT_CONFIG = [
     colorClass: "emp-stat-card__icon--amber",
     accentClass: "emp-stat-card--amber",
     sparkColor: "hsl(38 92% 50%)",
-    sparkData: [60, 75, 90, 85, 110, 124],
   },
   {
     key: "completedTasks" as const,
@@ -75,7 +143,6 @@ const STAT_CONFIG = [
     colorClass: "emp-stat-card__icon--emerald",
     accentClass: "emp-stat-card--emerald",
     sparkColor: "hsl(160 84% 39%)",
-    sparkData: [20, 28, 32, 35, 40, 45],
   },
   {
     key: "avgQualityScore" as const,
@@ -85,11 +152,28 @@ const STAT_CONFIG = [
     accentClass: "emp-stat-card--violet",
     suffix: "%",
     sparkColor: "hsl(263 70% 50%)",
-    sparkData: [78, 82, 80, 85, 84, 87],
   },
 ];
 
-export default function StatsCards({ stats }: StatsCardsProps) {
+export default function StatsCards({ stats, tasks }: StatsCardsProps) {
+  const sparklines = useMemo(() => {
+    const BUCKETS = 7;
+    return {
+      activeTasks: buildSparkline(
+        tasks,
+        BUCKETS,
+        (t) => t.status === "pending" || t.status === "in_progress",
+      ),
+      totalSubmissions: buildSparkline(tasks, BUCKETS), // All tasks as proxy
+      completedTasks: buildSparkline(
+        tasks,
+        BUCKETS,
+        (t) => t.status === "completed",
+      ),
+      avgQualityScore: buildSparkline(tasks, BUCKETS), // All tasks as proxy
+    };
+  }, [tasks]);
+
   return (
     <div className="emp-stats">
       {STAT_CONFIG.map(
@@ -101,7 +185,6 @@ export default function StatsCards({ stats }: StatsCardsProps) {
           accentClass,
           suffix,
           sparkColor,
-          sparkData,
         }) => (
           <div key={key} className={`emp-stat-card ${accentClass}`}>
             <div className="emp-stat-card__info">
@@ -110,7 +193,7 @@ export default function StatsCards({ stats }: StatsCardsProps) {
                 {stats[key]}
                 {suffix ?? ""}
               </div>
-              <Sparkline points={sparkData} color={sparkColor} />
+              <Sparkline points={sparklines[key]} color={sparkColor} />
             </div>
             <div className={`emp-stat-card__icon ${colorClass}`}>
               <Icon className="size-5" strokeWidth={1.75} />
