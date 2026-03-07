@@ -133,7 +133,7 @@ export default function CompleteProfilePage() {
   }, [isLoaded, user, currentUser, router]);
 
   // ── Loading ──
-  if (!isLoaded) {
+  if (!isLoaded || currentUser === undefined) {
     return (
       <div className="flex min-h-[300px] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -312,7 +312,7 @@ export default function CompleteProfilePage() {
   // ── Step 1: Profile form ──
 
   return (
-    <Card className="rounded-3xl border shadow-sm">
+    <Card className="rounded-3xl border-2 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
       <CardHeader className="px-4 sm:px-8 pt-8">
         {/* Role badge */}
         <div className="flex justify-center mb-1">
