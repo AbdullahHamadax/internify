@@ -9,13 +9,18 @@ export default function ThemeToggle() {
   useEffect(() => {
     // On mount, check localStorage or system preference
     const stored = localStorage.getItem("theme");
-    if (
+    const isDark =
       stored === "dark" ||
-      (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches)
-    ) {
-      setDark(true);
+      (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+    if (isDark) {
       document.documentElement.classList.add("dark");
     }
+
+    // Defer state update to avoid React Compiler warning about synchronous setState in effect
+    requestAnimationFrame(() => {
+      setDark(isDark);
+    });
   }, []);
 
   const toggle = () => {

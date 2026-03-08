@@ -20,6 +20,7 @@ import deviconData from "devicon/devicon.json";
 
 function getDeviconClass(skill: string): string | null {
   const normalized = skill.toLowerCase().replace(/[^a-z0-9]/g, "");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const match = (deviconData as any[]).find(
     (icon) => icon.name === normalized || icon.altnames?.includes(normalized),
   );
@@ -123,14 +124,6 @@ export default function TalentSearch() {
   const toggleSkill = (skill: string) => {
     setSelectedSkills((prev) =>
       prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
-    );
-  };
-
-  const toggleStatus = (status: string) => {
-    setSelectedStatuses((prev) =>
-      prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status],
     );
   };
 
@@ -372,7 +365,7 @@ export default function TalentSearch() {
                   variant="p"
                   className="text-sm text-foreground/80 line-clamp-2 m-0 mb-4"
                 >
-                  "{talent.bio}"
+                  &quot;{talent.bio}&quot;
                 </Typography>
 
                 {/* Stats Row */}
