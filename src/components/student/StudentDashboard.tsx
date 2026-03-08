@@ -213,7 +213,7 @@ export default function StudentDashboard() {
       />
 
       <main className="stu-main">
-        {activeNav === "dashboard" && <StudentOverview />}
+        {activeNav === "dashboard" && <StudentOverview onNavigate={(id) => setActiveNav(id)} />}
         {activeNav === "explore" && <StudentExplore />}
         {activeNav === "messages" && (
           <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground">

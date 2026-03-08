@@ -22,7 +22,7 @@ import {
   TrendingUp,
   ArrowRight,
   Star,
-  Zap,
+  Eye,
 } from "lucide-react";
 
 import { Typography } from "@/components/ui/Typography";
@@ -31,7 +31,7 @@ const MOCK_STATS = {
   activeApplications: 3,
   completedTasks: 12,
   successRate: "94%",
-  xpEarned: "1,250", // Changed from budget to XP/Points
+  profileViews: 48,
 };
 
 const MOCK_RECOMMENDATIONS = [
@@ -98,7 +98,7 @@ const itemVariants: Variants = {
   },
 };
 
-export default function StudentOverview() {
+export default function StudentOverview({ onNavigate }: { onNavigate?: (id: string) => void }) {
   const { user } = useUser();
   const firstName = user?.firstName || "there";
 
@@ -183,17 +183,17 @@ export default function StudentOverview() {
         <div className="stu-stat-card stu-stat-card--indigo">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
             <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
-              <Zap className="w-5 h-5" />
+              <Eye className="w-5 h-5" />
             </div>
             <Typography
               variant="span"
               className="font-semibold uppercase tracking-wider"
             >
-              XP Earned
+              Views
             </Typography>
           </div>
           <Typography variant="h2" className="tracking-tighter">
-            {MOCK_STATS.xpEarned}
+            {MOCK_STATS.profileViews}
           </Typography>
         </div>
       </motion.div>
@@ -322,7 +322,7 @@ export default function StudentOverview() {
             ))}
           </div>
 
-          <button className="w-full group py-3 mt-4 flex items-center justify-center gap-2 bg-card border border-border rounded-xl hover:bg-muted hover:text-foreground transition-all font-bold text-sm uppercase tracking-wider">
+          <button onClick={() => onNavigate?.("explore")} className="w-full group py-3 mt-4 flex items-center justify-center gap-2 bg-card border border-border rounded-xl hover:bg-muted hover:text-foreground transition-all font-bold text-sm uppercase tracking-wider">
             Explore All Tasks
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>

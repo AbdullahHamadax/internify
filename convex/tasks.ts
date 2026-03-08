@@ -105,6 +105,45 @@ export const createTask = mutation({
   },
 });
 
+/**
+ * Public query: returns all pending tasks for the student marketplace.
+ * Joins with employerProfiles to surface the company name.
+ */
+export const browseTasks = query({
+  args: {},
+  handler: async (ctx) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .order("desc")
+      .collect();
+
+    const enriched = await Promise.all(
+      tasks.map(async (task) => {
+        // Resolve the employer's company name
+        const employerProfile = await ctx.db
+          .query("employerProfiles")
+          .withIndex("by_userId", (q) => q.eq("userId", task.employerId))
+          .unique();
+
+        return {
+          _id: task._id,
+          title: task.title,
+          description: task.description,
+          category: task.category,
+          skillLevel: task.skillLevel,
+          skills: task.skills,
+          deadline: task.deadline,
+          createdAt: task.createdAt,
+          companyName: employerProfile?.companyName ?? "Unknown Company",
+        };
+      }),
+    );
+
+    return enriched;
+  },
+});
+
 export const getEmployerTasks = query({
   args: {},
   handler: async (ctx) => {
