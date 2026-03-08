@@ -180,9 +180,9 @@ export default function StudentOverview() {
           </Typography>
         </div>
 
-        <div className="stu-stat-card stu-stat-card--violet">
+        <div className="stu-stat-card stu-stat-card--indigo">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
-            <div className="p-2 rounded-lg bg-violet-500/10 text-violet-500">
+            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
               <Zap className="w-5 h-5" />
             </div>
             <Typography

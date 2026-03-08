@@ -250,8 +250,8 @@ export default function StudentExplore() {
                   </div>
 
                   <div className="flex flex-row sm:flex-col items-center sm:items-end gap-4 sm:gap-2 shrink-0">
-                    <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold text-lg">
-                      <Zap className="w-5 h-5 fill-amber-600/20" />
+                    <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold text-lg">
+                      <Zap className="w-5 h-5 fill-indigo-600/20" />
                       {task.xpReward} XP
                     </div>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground font-medium">
