@@ -1,5 +1,18 @@
 "use client";
 
+import deviconData from "devicon/devicon.json";
+
+function getDeviconClass(skillName: string) {
+  const match = (
+    deviconData as Array<{ name: string; altnames: string[] }>
+  ).find(
+    (icon) =>
+      icon.name === skillName.toLowerCase() ||
+      icon.altnames.includes(skillName.toLowerCase()),
+  );
+  return match ? `devicon-${match.name}-plain colored` : null;
+}
+
 import { useUser } from "@clerk/nextjs";
 import { motion, Variants } from "framer-motion";
 import {
@@ -18,7 +31,7 @@ const MOCK_STATS = {
   activeApplications: 3,
   completedTasks: 12,
   successRate: "94%",
-  xpEarned: "1,250", // Changed from budget to XP/Points 
+  xpEarned: "1,250", // Changed from budget to XP/Points
 };
 
 const MOCK_RECOMMENDATIONS = [
@@ -78,7 +91,11 @@ const containerVariants: Variants = {
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 15 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 300, damping: 24 },
+  },
 };
 
 export default function StudentOverview() {
@@ -86,9 +103,9 @@ export default function StudentOverview() {
   const firstName = user?.firstName || "there";
 
   return (
-    <motion.div 
-      initial="hidden" 
-      animate="show" 
+    <motion.div
+      initial="hidden"
+      animate="show"
       variants={containerVariants}
       className="space-y-8"
     >
@@ -99,21 +116,28 @@ export default function StudentOverview() {
             Hello, <span className="stu-hero__accent">{firstName}</span> 👋
           </Typography>
           <Typography variant="p">
-            Here is your command center. You have {MOCK_STATS.activeApplications}{" "}
-            active applications and {MOCK_RECOMMENDATIONS.length} new high-match
-            opportunities waiting for you today.
+            Here is your command center. You have{" "}
+            {MOCK_STATS.activeApplications} active applications and{" "}
+            {MOCK_RECOMMENDATIONS.length} new high-match opportunities waiting
+            for you today.
           </Typography>
         </div>
       </motion.div>
 
       {/* STATS WIDGETS */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+      >
+        <div className="stu-stat-card stu-stat-card--blue">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
             <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
               <Briefcase className="w-5 h-5" />
             </div>
-            <Typography variant="span" className="font-semibold uppercase tracking-wider">
+            <Typography
+              variant="span"
+              className="font-semibold uppercase tracking-wider"
+            >
               Active
             </Typography>
           </div>
@@ -122,12 +146,15 @@ export default function StudentOverview() {
           </Typography>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="stu-stat-card stu-stat-card--emerald">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
               <CheckCircle2 className="w-5 h-5" />
             </div>
-            <Typography variant="span" className="font-semibold uppercase tracking-wider">
+            <Typography
+              variant="span"
+              className="font-semibold uppercase tracking-wider"
+            >
               Done
             </Typography>
           </div>
@@ -136,12 +163,15 @@ export default function StudentOverview() {
           </Typography>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="stu-stat-card stu-stat-card--amber">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
             <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
               <TrendingUp className="w-5 h-5" />
             </div>
-            <Typography variant="span" className="font-semibold uppercase tracking-wider">
+            <Typography
+              variant="span"
+              className="font-semibold uppercase tracking-wider"
+            >
               Success
             </Typography>
           </div>
@@ -150,12 +180,15 @@ export default function StudentOverview() {
           </Typography>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+        <div className="stu-stat-card stu-stat-card--violet">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
-            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
+            <div className="p-2 rounded-lg bg-violet-500/10 text-violet-500">
               <Zap className="w-5 h-5" />
             </div>
-            <Typography variant="span" className="font-semibold uppercase tracking-wider">
+            <Typography
+              variant="span"
+              className="font-semibold uppercase tracking-wider"
+            >
               XP Earned
             </Typography>
           </div>
@@ -166,8 +199,10 @@ export default function StudentOverview() {
       </motion.div>
 
       {/* MAIN OVERVIEW SPLIT */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
-        
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10"
+      >
         {/* LEFT: Active Pipeline (2/3) */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between mb-4">
@@ -181,7 +216,10 @@ export default function StudentOverview() {
                 className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-card border border-border rounded-xl shadow-sm hover:shadow-md transition-all"
               >
                 <div className="flex-1 space-y-1 mb-4 sm:mb-0">
-                  <Typography variant="h4" className="group-hover:text-blue-500 transition-colors">
+                  <Typography
+                    variant="h4"
+                    className="group-hover:text-blue-500 transition-colors"
+                  >
                     {item.title}
                   </Typography>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -202,7 +240,9 @@ export default function StudentOverview() {
                         : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400"
                     }`}
                   >
-                    {item.status === "in_progress" ? "In Progress" : "Under Review"}
+                    {item.status === "in_progress"
+                      ? "In Progress"
+                      : "Under Review"}
                   </span>
                   <div className="w-full sm:w-32 h-2 bg-secondary rounded-full overflow-hidden">
                     <div
@@ -218,12 +258,12 @@ export default function StudentOverview() {
               </div>
             ))}
           </div>
-          
+
           {MOCK_ACTIVE_PIPELINE.length === 0 && (
             <div className="p-8 text-center bg-card rounded-xl border border-dashed border-border">
-               <Typography variant="p" color="muted">
-                 No active tasks. Time to explore!
-               </Typography>
+              <Typography variant="p" color="muted">
+                No active tasks. Time to explore!
+              </Typography>
             </div>
           )}
         </div>
@@ -248,30 +288,41 @@ export default function StudentOverview() {
                     {rec.matchScore}% Match
                   </span>
                 </div>
-                
-                <Typography variant="h4" className="mb-1 leading-tight group-hover:text-blue-500 transition-colors">
+
+                <Typography
+                  variant="h4"
+                  className="mb-1 leading-tight group-hover:text-blue-500 transition-colors"
+                >
                   {rec.title}
                 </Typography>
-                
-                <Typography variant="span" color="muted" className="flex items-center gap-2 mb-3">
+
+                <Typography
+                  variant="span"
+                  color="muted"
+                  className="flex items-center gap-2 mb-3"
+                >
                   {rec.company} • {rec.duration}
                 </Typography>
-                
+
                 <div className="flex flex-wrap gap-2">
-                  {rec.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded bg-secondary text-secondary-foreground"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                  {rec.tags.map((tag) => {
+                    const devicon = getDeviconClass(tag);
+                    return (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/80 dark:bg-muted/40"
+                      >
+                        {devicon && <i className={`${devicon} text-[14px]`} />}
+                        {tag}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             ))}
           </div>
 
-          <button className="w-full group py-3 mt-4 flex items-center justify-center gap-2 bg-card border border-border rounded-xl hover:bg-secondary hover:text-foreground transition-all font-bold text-sm uppercase tracking-wider">
+          <button className="w-full group py-3 mt-4 flex items-center justify-center gap-2 bg-card border border-border rounded-xl hover:bg-muted hover:text-foreground transition-all font-bold text-sm uppercase tracking-wider">
             Explore All Tasks
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
