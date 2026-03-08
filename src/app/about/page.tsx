@@ -8,9 +8,7 @@ import {
   Handshake,
   GraduationCap,
   Briefcase,
-  ArrowRight,
 } from "lucide-react";
-import Link from "next/link";
 import AnimateIn from "@/components/AnimateIn";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";

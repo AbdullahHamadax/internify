@@ -1,15 +1,8 @@
 "use client";
 
-import {
-  X,
-  CalendarDays,
-  Clock,
-  Users,
-  Trash2,
-  Tag,
-  FileText,
-} from "lucide-react";
+import { X, CalendarDays, Users, Trash2, Tag, FileText } from "lucide-react";
 
+import Image from "next/image";
 import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/button";
 import type { Task } from "./TaskManagement";
@@ -115,7 +108,9 @@ export default function TaskDetailModal({
                   const deviconName = skill
                     .toLowerCase()
                     .replace(/[^a-z0-9]/g, "");
-                  const hasIcon = (deviconData as any[]).some(
+                  const hasIcon = (
+                    deviconData as Array<{ name: string; altnames: string[] }>
+                  ).some(
                     (icon) =>
                       icon.name === deviconName ||
                       icon.altnames.includes(deviconName),
@@ -161,10 +156,12 @@ export default function TaskDetailModal({
                     rel="noopener noreferrer"
                     className="group relative aspect-square rounded-lg border bg-muted overflow-hidden block focus:ring-2 focus:ring-purple-500 focus:outline-none"
                   >
-                    <img
+                    <Image
                       src={url}
                       alt={`Task attachment ${i + 1}`}
-                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                      fill
+                      unoptimized
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                         const parent = (e.target as HTMLImageElement)
@@ -203,10 +200,12 @@ export default function TaskDetailModal({
                       className="group relative aspect-square rounded-lg border bg-muted flex flex-col items-center justify-center p-2 text-center overflow-hidden focus:ring-2 focus:ring-purple-500 focus:outline-none"
                     >
                       {isImage ? (
-                        <img
+                        <Image
                           src={att.url}
                           alt={att.name}
-                          className="absolute inset-0 object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                          fill
+                          unoptimized
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (
                         <>

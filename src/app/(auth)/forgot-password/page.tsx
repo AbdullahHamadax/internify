@@ -3,9 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useClerk, useSignIn } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
-import { KeyRound, Mail, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Mail, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -59,7 +59,6 @@ type ResetFormData = z.infer<typeof resetSchema>;
 export default function ForgotPasswordPage() {
   const { isLoaded, signIn } = useSignIn();
   const { signOut } = useClerk();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const role = searchParams.get("role") ?? "student";
   const isEmployer = role === "employer";
