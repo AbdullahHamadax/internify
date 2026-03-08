@@ -57,7 +57,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, hsl(200 80% 50%) 0%, hsl(240 80% 60%) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(200 80% 50%) 0%,
+    hsl(240 80% 60%) 100%
+  );
   color: white;
   box-shadow: 0 2px 8px hsl(200 80% 50% / 0.25);
 }
@@ -152,14 +156,20 @@
   font-size: 0.8125rem;
   font-weight: 700;
   color: white;
-  background: linear-gradient(135deg, hsl(200 80% 50%) 0%, hsl(240 80% 60%) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(200 80% 50%) 0%,
+    hsl(240 80% 60%) 100%
+  );
   cursor: pointer;
   flex-shrink: 0;
   transition: box-shadow 0.15s ease;
 }
 
 .stu-navbar__avatar:hover {
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px hsl(200 80% 50% / 0.3);
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px hsl(200 80% 50% / 0.3);
 }
 
 .stu-mobile-toggle {
@@ -196,14 +206,22 @@
   padding: 1.75rem 2rem;
   margin-bottom: 2rem;
   border-radius: 1rem;
-  background: linear-gradient(135deg, hsl(220 80% 50% / 0.06) 0%, hsl(240 80% 60% / 0.04) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(220 80% 50% / 0.06) 0%,
+    hsl(240 80% 60% / 0.04) 100%
+  );
   border: 1px solid hsl(220 80% 50% / 0.1);
   position: relative;
   overflow: hidden;
 }
 
 .dark .stu-hero {
-  background: linear-gradient(135deg, hsl(220 80% 50% / 0.1) 0%, hsl(240 80% 60% / 0.06) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(220 80% 50% / 0.1) 0%,
+    hsl(240 80% 60% / 0.06) 100%
+  );
   border-color: hsl(220 80% 50% / 0.15);
 }
 
@@ -222,8 +240,67 @@
 }
 
 .stu-hero__accent {
-  background: linear-gradient(135deg, hsl(200 80% 50%) 0%, hsl(240 80% 60%) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(200 80% 50%) 0%,
+    hsl(240 80% 60%) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ── Stats Row ── */
+
+.stu-stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
+}
+
+.stu-stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.stu-stat-card:hover {
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
+  transform: translateY(-3px);
+}
+
+.dark .stu-stat-card:hover {
+  box-shadow: 0 6px 24px hsl(220 80% 50% / 0.08); /* slight blueish tint in dark mode */
+}
+
+.stu-stat-card:hover::before {
+  opacity: 1;
+}
+
+/* Per-card accent gradients */
+.stu-stat-card--blue::before {
+  background: linear-gradient(90deg, hsl(221 83% 53%), hsl(200 95% 55%));
+}
+.stu-stat-card--amber::before {
+  background: linear-gradient(90deg, hsl(38 92% 50%), hsl(25 95% 55%));
+}
+.stu-stat-card--emerald::before {
+  background: linear-gradient(90deg, hsl(160 84% 39%), hsl(140 70% 42%));
+}
+.stu-stat-card--violet::before {
+  background: linear-gradient(90deg, hsl(263 70% 50%), hsl(290 84% 60%));
 }
