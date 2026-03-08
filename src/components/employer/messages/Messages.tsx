@@ -1,16 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Search,
-  MoreVertical,
-  Phone,
-  Video,
-  Info,
-  Send,
-  Smile,
-  MessageSquare,
-} from "lucide-react";
+import { Search, Send, Smile, MessageSquare } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
 
 const DUMMY_CHATS = [

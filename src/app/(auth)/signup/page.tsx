@@ -29,8 +29,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import { PasswordInput } from "@/components/ui/password-input";
@@ -154,18 +152,6 @@ export default function SignUpPage() {
   }, [isEmployer]);
 
   const totalSteps = step === 3 ? 3 : 2;
-  const progressValue =
-    step === 1
-      ? totalSteps === 3
-        ? 33
-        : 50
-      : step === 2
-        ? totalSteps === 3
-          ? 67
-          : 100
-        : step === 3
-          ? 100
-          : 0;
 
   // ── Step 1 form ──
 

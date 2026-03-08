@@ -31,6 +31,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
 
 function CardTitle({
   className,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   color,
   ...props
 }: React.ComponentProps<"div">) {
@@ -47,6 +48,7 @@ function CardTitle({
 
 function CardDescription({
   className,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   color,
   ...props
 }: React.ComponentProps<"div">) {

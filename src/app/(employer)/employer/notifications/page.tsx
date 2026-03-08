@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Bell,
   Check,
-  Filter,
   MessageSquare,
   Briefcase,
   UserPlus,
@@ -215,7 +214,7 @@ export default function NotificationsPage() {
                 variant="h3"
                 className="text-lg font-medium text-foreground mb-1"
               >
-                You're all caught up!
+                You&apos;re all caught up!
               </Typography>
               <Typography variant="p" className="text-muted-foreground text-sm">
                 Check back later for new notifications.
