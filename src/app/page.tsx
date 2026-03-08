@@ -15,7 +15,7 @@ import AudienceSection from "@/components/landing/AudienceSection";
 import PartnerLogos from "@/components/landing/PartnerLogos";
 import CtaSection from "@/components/landing/CtaSection";
 import Footer from "@/components/landing/Footer";
-import SignedInView from "@/components/SignedInView";
+import StudentDashboard from "@/components/student/StudentDashboard";
 import EmployerDashboard from "@/components/employer/EmployerDashboard";
 
 /* ═══════════════════════════════════════════════════════════
@@ -87,5 +87,5 @@ export default function Home() {
   }
 
   // Signed-in student → show student view
-  return <SignedInView />;
+  return <StudentDashboard />;
 }
