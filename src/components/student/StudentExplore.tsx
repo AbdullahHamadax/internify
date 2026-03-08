@@ -14,72 +14,43 @@ function getDeviconClass(skillName: string) {
 }
 
 import { useState } from "react";
-import { Search, Filter, Clock, ChevronDown, Zap } from "lucide-react";
+import { Search, Filter, Clock, ChevronDown, Loader2, Inbox } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
 import { motion, Variants } from "framer-motion";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
-const MOCK_MARKETPLACE_TASKS = [
-  {
-    id: "t1",
-    title: "Full Stack Next.js & Supabase MVP",
-    company: "BuildFast Inc",
-    duration: "4 weeks",
-    xpReward: "1200",
-    tags: ["Next.js", "Supabase", "Tailwind"],
-    description:
-      "Looking for an ambitious student to help build the V1 of our analytics dashboard. You will own the full stack implementation from wireframes.",
-    skillLevel: "Advanced",
-    postedAt: "2 hours ago",
-  },
-  {
-    id: "t2",
-    title: "Figma UI/UX Restyle",
-    company: "DesignStudio",
-    duration: "1 week",
-    xpReward: "300",
-    tags: ["Figma", "UI/UX", "Prototyping"],
-    description:
-      "We need a fresh set of eyes on our mobile app wireframes. Redesign 5 core screens following our new brand guidelines.",
-    skillLevel: "Intermediate",
-    postedAt: "5 hours ago",
-  },
-  {
-    id: "t3",
-    title: "Python Data Scraping Script",
-    company: "DataMetrics",
-    duration: "3 days",
-    xpReward: "150",
-    tags: ["Python", "BeautifulSoup", "Data"],
-    description:
-      "Write a reliable web scraper to collect public real estate market data and output it to a clean CSV format daily.",
-    skillLevel: "Beginner",
-    postedAt: "1 day ago",
-  },
-  {
-    id: "t4",
-    title: "React Native Payment Integration",
-    company: "FinApp",
-    duration: "2 weeks",
-    xpReward: "800",
-    tags: ["React Native", "Stripe", "iOS/Android"],
-    description:
-      "Integrate Stripe payment sheets into our existing React Native application. Must handle 3D secure authentication.",
-    skillLevel: "Advanced",
-    postedAt: "2 days ago",
-  },
-  {
-    id: "t5",
-    title: "Technical Documentation Writer",
-    company: "OpenSourceLabs",
-    duration: "1 week",
-    xpReward: "200",
-    tags: ["Markdown", "API Design", "Writing"],
-    description:
-      "Review our Node.js API and write comprehensive API documentation using Swagger/OpenAPI spec.",
-    skillLevel: "Beginner",
-    postedAt: "3 days ago",
-  },
-];
+// ── Helpers ──
+
+function timeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  return `${weeks}w ago`;
+}
+
+function deadlineToDuration(deadline: number): string {
+  const diff = deadline - Date.now();
+  if (diff <= 0) return "Expired";
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  if (days < 7) return `${days} day${days !== 1 ? "s" : ""}`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks} week${weeks !== 1 ? "s" : ""}`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months !== 1 ? "s" : ""}`;
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ── Animations ──
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -100,9 +71,55 @@ const itemVariants: Variants = {
 
 export default function StudentExplore() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeSkillLevels, setActiveSkillLevels] = useState<string[]>([]);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
-  const filters = ["All", "Development", "Design", "Data", "Writing"];
+  const tasks = useQuery(api.tasks.browseTasks);
+
+  // Category filter groups — each maps to one or more DB categories
+  const categoryFilters: { label: string; match: string[] }[] = [
+    { label: "All", match: [] },
+    { label: "Development", match: ["Web Development", "Mobile Development", "DevOps"] },
+    { label: "Design", match: ["UI/UX Design"] },
+    { label: "Data & AI", match: ["Data Science", "Machine Learning"] },
+    { label: "Writing", match: ["Content Writing", "Marketing"] },
+    { label: "Cloud & Security", match: ["Cloud Computing", "Cybersecurity"] },
+  ];
+
+  const toggleSkillLevel = (level: string) => {
+    setActiveSkillLevels((prev) =>
+      prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level],
+    );
+  };
+
+  // Apply client-side filtering + sorting
+  const filteredTasks = (tasks ?? [])
+    .filter((task) => {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        !searchQuery ||
+        task.title.toLowerCase().includes(q) ||
+        task.description.toLowerCase().includes(q) ||
+        task.skills.some((s) => s.toLowerCase().includes(q)) ||
+        task.companyName.toLowerCase().includes(q);
+
+      const activeCat = categoryFilters.find((f) => f.label === activeCategory);
+      const matchesCategory =
+        activeCategory === "All" ||
+        (activeCat?.match ?? []).some(
+          (m) => task.category.toLowerCase() === m.toLowerCase(),
+        );
+
+      const matchesSkillLevel =
+        activeSkillLevels.length === 0 ||
+        activeSkillLevels.includes(task.skillLevel);
+
+      return matchesSearch && matchesCategory && matchesSkillLevel;
+    })
+    .sort((a, b) =>
+      sortOrder === "newest" ? b.createdAt - a.createdAt : a.createdAt - b.createdAt,
+    );
 
   return (
     <motion.div
@@ -152,20 +169,20 @@ export default function StudentExplore() {
               variant="label"
               className="uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2"
             >
-              <Filter className="w-4 h-4" /> Filters
+              <Filter className="w-4 h-4" /> Category
             </Typography>
-            <div className="space-y-2 mt-4">
-              {filters.map((f) => (
+            <div className="space-y-1 mt-4">
+              {categoryFilters.map((f) => (
                 <button
-                  key={f}
-                  onClick={() => setActiveFilter(f)}
-                  className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors rounded-lg ${
-                    activeFilter === f
+                  key={f.label}
+                  onClick={() => setActiveCategory(f.label)}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors rounded-lg ${
+                    activeCategory === f.label
                       ? "bg-emerald-50 text-emerald-900 border border-emerald-200 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
                       : "border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700"
                   }`}
                 >
-                  {f}
+                  {f.label}
                 </button>
               ))}
             </div>
@@ -179,19 +196,33 @@ export default function StudentExplore() {
               Skill Level
             </Typography>
             <div className="space-y-3 mt-4">
-              {["Beginner", "Intermediate", "Advanced"].map((level) => (
-                <label
-                  key={level}
-                  className="flex items-center gap-3 cursor-pointer group"
-                >
-                  <div className="w-5 h-5 border-2 border-muted-foreground rounded group-hover:border-emerald-500 transition-colors flex items-center justify-center">
-                    {/* Fake Checkbox styling */}
-                  </div>
-                  <span className="text-sm group-hover:text-foreground transition-colors">
-                    {level}
-                  </span>
-                </label>
-              ))}
+              {(["beginner", "intermediate", "advanced"] as const).map((level) => {
+                const isChecked = activeSkillLevels.includes(level);
+                return (
+                  <button
+                    key={level}
+                    onClick={() => toggleSkillLevel(level)}
+                    className="flex items-center gap-3 cursor-pointer group w-full text-left"
+                  >
+                    <div
+                      className={`w-5 h-5 border-2 rounded transition-colors flex items-center justify-center ${
+                        isChecked
+                          ? "bg-emerald-500 border-emerald-500 text-white"
+                          : "border-muted-foreground group-hover:border-emerald-500"
+                      }`}
+                    >
+                      {isChecked && (
+                        <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm group-hover:text-foreground transition-colors capitalize">
+                      {level}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </motion.div>
@@ -203,18 +234,57 @@ export default function StudentExplore() {
             className="flex items-center justify-between mb-2"
           >
             <Typography variant="span" color="muted">
-              Showing {MOCK_MARKETPLACE_TASKS.length} tasks
+              {tasks === undefined
+                ? "Loading tasks…"
+                : `Showing ${filteredTasks.length} task${filteredTasks.length !== 1 ? "s" : ""}`}
             </Typography>
-            <button className="text-sm font-bold flex items-center gap-1 hover:text-emerald-500 transition-colors">
-              Sort by: Newest <ChevronDown className="w-4 h-4" />
+            <button
+              onClick={() => setSortOrder((o) => (o === "newest" ? "oldest" : "newest"))}
+              className="text-sm font-bold flex items-center gap-1 hover:text-emerald-500 transition-colors"
+            >
+              Sort by: {sortOrder === "newest" ? "Newest" : "Oldest"} <ChevronDown className={`w-4 h-4 transition-transform ${sortOrder === "oldest" ? "rotate-180" : ""}`} />
             </button>
           </motion.div>
 
+          {/* Loading State */}
+          {tasks === undefined && (
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-col items-center justify-center py-20 text-muted-foreground"
+            >
+              <Loader2 className="w-8 h-8 animate-spin mb-4" />
+              <Typography variant="p" color="muted">
+                Loading available tasks…
+              </Typography>
+            </motion.div>
+          )}
+
+          {/* Empty State */}
+          {tasks !== undefined && filteredTasks.length === 0 && (
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-card border border-border rounded-xl"
+            >
+              <Inbox className="w-12 h-12 mb-4 opacity-40" />
+              <Typography variant="h3" className="mb-2">
+                No tasks available
+              </Typography>
+              <Typography variant="p" color="muted">
+                {searchQuery || activeCategory !== "All" || activeSkillLevels.length > 0
+                  ? "Try adjusting your search or filters."
+                  : "Check back later — new tasks are posted regularly."}
+              </Typography>
+            </motion.div>
+          )}
+
+          {/* Task Cards */}
           <div className="grid grid-cols-1 gap-4">
-            {MOCK_MARKETPLACE_TASKS.map((task) => (
+            {filteredTasks.map((task, index) => (
               <motion.div
-                variants={itemVariants}
-                key={task.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 24, delay: index * 0.08 }}
+                key={task._id}
                 className="group bg-card border border-border rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer shadow-sm hover:shadow-md"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
@@ -222,17 +292,17 @@ export default function StudentExplore() {
                     <div className="flex items-center gap-2 mb-2">
                       <span
                         className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded ${
-                          task.skillLevel === "Advanced"
+                          task.skillLevel === "advanced"
                             ? "bg-red-600/10 text-red-700 dark:bg-red-500/20 dark:text-red-500"
-                            : task.skillLevel === "Intermediate"
+                            : task.skillLevel === "intermediate"
                               ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
                               : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                         }`}
                       >
-                        {task.skillLevel}
+                        {capitalize(task.skillLevel)}
                       </span>
                       <span className="text-xs font-medium text-muted-foreground">
-                        Posted {task.postedAt}
+                        Posted {timeAgo(task.createdAt)}
                       </span>
                     </div>
                     <Typography
@@ -245,18 +315,20 @@ export default function StudentExplore() {
                       variant="span"
                       className="font-medium mt-1 inline-block"
                     >
-                      {task.company}
+                      {task.companyName}
                     </Typography>
                   </div>
 
                   <div className="flex flex-row sm:flex-col items-center sm:items-end gap-4 sm:gap-2 shrink-0">
-                    <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold text-lg">
-                      <Zap className="w-5 h-5 fill-indigo-600/20" />
-                      {task.xpReward} XP
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground font-medium">
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                      {task.category}
+                    </span>
+                    <div
+                      className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium cursor-default"
+                      title={`Deadline: ${new Date(task.deadline).toLocaleString()}`}
+                    >
                       <Clock className="w-4 h-4" />
-                      {task.duration}
+                      {deadlineToDuration(task.deadline)}
                     </div>
                   </div>
                 </div>
@@ -271,7 +343,7 @@ export default function StudentExplore() {
 
                 <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/50 pt-4">
                   <div className="flex flex-wrap gap-2">
-                    {task.tags.map((tag) => {
+                    {task.skills.map((tag) => {
                       const devicon = getDeviconClass(tag);
                       return (
                         <span
