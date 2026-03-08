@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
@@ -39,6 +40,8 @@ import AnalyticsPanel from "./AnalyticsPanel";
 import TopStudentsShowcase from "./TopStudentsShowcase";
 import PostTaskModal, { type PostTaskData } from "./PostTaskModal";
 import TaskDetailModal from "./TaskDetailModal";
+import TalentSearch from "./talent-search/TalentSearch";
+import Messages from "./messages/Messages";
 
 import "./employer-dashboard.css";
 
@@ -64,6 +67,7 @@ function EmployerNavbar({
   onNavigate: (id: string) => void;
   onPostTask: () => void;
 }) {
+  const router = useRouter();
   const { signOut } = useClerk();
   const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -113,6 +117,7 @@ function EmployerNavbar({
             type="button"
             className="emp-navbar__icon-btn"
             aria-label="Notifications"
+            onClick={() => router.push("/employer/notifications")}
           >
             <Bell className="size-4" />
             <span className="emp-navbar__notif-dot" />
@@ -193,6 +198,10 @@ function EmployerNavbar({
               type="button"
               className="emp-navbar__icon-btn"
               aria-label="Notifications"
+              onClick={() => {
+                router.push("/employer/notifications");
+                setMobileOpen(false);
+              }}
             >
               <Bell className="size-4" />
               <span className="emp-navbar__notif-dot" />
@@ -372,33 +381,11 @@ export default function EmployerDashboard() {
 
       <main className="emp-main">
         {activeNav === "talent-search" && (
-          <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500">
-            <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-6">
-              <Search className="size-8 text-purple-600 dark:text-purple-400" />
-            </div>
-            <Typography variant="h2" className="text-2xl font-semibold mb-3">
-              Talent Search
-            </Typography>
-            <Typography variant="p" className="text-muted-foreground max-w-md">
-              Browse top verified students, filter by skills, and invite them
-              directly to your tasks. (Coming soon)
-            </Typography>
-          </div>
+          <TalentSearch />
         )}
 
         {activeNav === "messages" && (
-          <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6">
-              <MessageSquare className="size-8 text-blue-600 dark:text-blue-400" />
-            </div>
-            <Typography variant="h2" className="text-2xl font-semibold mb-3">
-              Messages & Inbox
-            </Typography>
-            <Typography variant="p" className="text-muted-foreground max-w-md">
-              Communicate with task applicants, share files, and negotiate terms
-              all in one place. (Coming soon)
-            </Typography>
-          </div>
+          <Messages />
         )}
 
         {activeNav === "dashboard" && (

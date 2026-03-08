@@ -1,23 +1,8 @@
 "use client";
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  useMemo,
-  type KeyboardEvent,
-  type ChangeEvent,
-} from "react";
-import {
-  X,
-  Plus,
-  Save,
-  Upload,
-  Trash2,
-  ImageIcon,
-  FileText,
-  Loader2,
-} from "lucide-react";
+import Image from "next/image";
+import { useState, useEffect, useMemo, type ChangeEvent } from "react";
+import { X, Plus, Save, Upload, Trash2, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Task, TaskStatus } from "./TaskManagement";
+import type { Task } from "./TaskManagement";
 import SkillPicker from "./SkillPicker";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -155,13 +140,6 @@ export default function PostTaskModal({
     setImageStorageIds([]);
     setImageUrls([]);
     setAttachments([]);
-  };
-
-  const normalizeSkill = (skill: string) => {
-    const cleaned = skill.trim().replace(/[^a-zA-Z0-9 ]/g, "");
-    return cleaned.replace(/\w\S*/g, (txt) => {
-      return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
-    });
   };
 
   const validate = (): boolean => {
@@ -418,10 +396,12 @@ export default function PostTaskModal({
                   key={`existing-${i}`}
                   className="group relative aspect-square rounded-lg border bg-muted overflow-hidden"
                 >
-                  <img
+                  <Image
                     src={url}
                     alt={`Attachment ${i + 1}`}
-                    className="object-cover w-full h-full"
+                    fill
+                    className="object-cover"
+                    unoptimized
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
                     <button
@@ -452,10 +432,12 @@ export default function PostTaskModal({
                     className="group relative aspect-square rounded-lg border bg-muted flex flex-col items-center justify-center p-2 text-center overflow-hidden"
                   >
                     {isImage ? (
-                      <img
+                      <Image
                         src={att.url || ""}
                         alt={att.name}
-                        className="absolute inset-0 object-cover w-full h-full"
+                        fill
+                        className="object-cover"
+                        unoptimized
                       />
                     ) : (
                       <>
@@ -497,10 +479,12 @@ export default function PostTaskModal({
                     className="group relative aspect-square rounded-lg border bg-muted flex flex-col items-center justify-center p-2 text-center overflow-hidden"
                   >
                     {isImage ? (
-                      <img
+                      <Image
                         src={previewUrls[i]}
                         alt={file.name}
-                        className="absolute inset-0 object-cover w-full h-full"
+                        fill
+                        className="object-cover"
+                        unoptimized
                       />
                     ) : (
                       <>
