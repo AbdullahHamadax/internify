@@ -1,0 +1,229 @@
+/* ═══════════════════════════════════════════════════════════
+   STUDENT DASHBOARD — V2
+   Clean, professional style matching Employer Dashboard
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Dashboard Shell ── */
+.stu-dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* ── Top Navbar ── */
+.stu-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2.5rem;
+  height: 4rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(12px);
+}
+
+@media (max-width: 768px) {
+  .stu-navbar {
+    padding: 0 1rem;
+    height: 3.5rem;
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+.stu-navbar__left {
+  display: flex;
+  align-items: center;
+}
+
+.stu-navbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  text-decoration: none;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.stu-navbar__brand-icon {
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 0.5625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, hsl(200 80% 50%) 0%, hsl(240 80% 60%) 100%);
+  color: white;
+  box-shadow: 0 2px 8px hsl(200 80% 50% / 0.25);
+}
+
+.stu-navbar__brand-text {
+  font-family: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.1875rem;
+  letter-spacing: -0.01em;
+}
+
+.stu-navbar__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 768px) {
+  .stu-navbar__nav {
+    display: none;
+  }
+}
+
+.stu-navbar__link {
+  padding: 0.4375rem 0.875rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: all 0.15s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.stu-navbar__link:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.stu-navbar__link--active {
+  color: hsl(220 80% 50%);
+  background: hsl(220 80% 50% / 0.08);
+  font-weight: 600;
+}
+
+.dark .stu-navbar__link--active {
+  color: hsl(220 80% 70%);
+  background: hsl(220 80% 60% / 0.12);
+}
+
+.stu-navbar__right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stu-navbar__icon-btn {
+  position: relative;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.stu-navbar__icon-btn:hover {
+  background: var(--muted);
+  color: var(--foreground);
+  border-color: transparent;
+}
+
+.stu-navbar__avatar {
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, hsl(200 80% 50%) 0%, hsl(240 80% 60%) 100%);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: box-shadow 0.15s ease;
+}
+
+.stu-navbar__avatar:hover {
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px hsl(200 80% 50% / 0.3);
+}
+
+.stu-mobile-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .stu-mobile-toggle {
+    display: flex;
+  }
+}
+
+/* ── Main Content ── */
+.stu-main {
+  flex: 1;
+  padding: 2rem 2.5rem 3rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .stu-main {
+    padding: 1.25rem 1rem 2rem;
+  }
+}
+
+/* ── General Component Adjustments (e.g. Hero, Stats) ── */
+.stu-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.75rem 2rem;
+  margin-bottom: 2rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, hsl(220 80% 50% / 0.06) 0%, hsl(240 80% 60% / 0.04) 100%);
+  border: 1px solid hsl(220 80% 50% / 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dark .stu-hero {
+  background: linear-gradient(135deg, hsl(220 80% 50% / 0.1) 0%, hsl(240 80% 60% / 0.06) 100%);
+  border-color: hsl(220 80% 50% / 0.15);
+}
+
+.stu-hero__text h1 {
+  font-family: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.625rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.375rem;
+}
+
+.stu-hero__text p {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.stu-hero__accent {
+  background: linear-gradient(135deg, hsl(200 80% 50%) 0%, hsl(240 80% 60%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
