@@ -8,6 +8,14 @@ import { Button } from "@/components/ui/button";
 import type { Task } from "./TaskManagement";
 import deviconData from "devicon/devicon.json";
 
+const ICON_MAPPINGS: Record<string, string> = {
+  "Vue": "vuejs",
+  "HTML": "html5",
+  "CSS": "css3",
+  "Express": "express",
+  "TensorFlow": "tensorFlow",
+};
+
 interface TaskDetailModalProps {
   task: Task | null;
   open: boolean;
@@ -92,7 +100,7 @@ export default function TaskDetailModal({
             <Typography variant="h4" className="font-semibold mb-2">
               Description
             </Typography>
-            <div className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+            <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">
               {task.description || "No description provided."}
             </div>
           </div>
@@ -105,16 +113,20 @@ export default function TaskDetailModal({
               </Typography>
               <div className="flex flex-wrap gap-2">
                 {task.skills.map((skill) => {
-                  const deviconName = skill
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]/g, "");
-                  const hasIcon = (
-                    deviconData as Array<{ name: string; altnames: string[] }>
-                  ).some(
-                    (icon) =>
-                      icon.name === deviconName ||
-                      icon.altnames.includes(deviconName),
-                  );
+                  const mappedKey = ICON_MAPPINGS[skill];
+                  let deviconName = mappedKey;
+                  let hasIcon = !!mappedKey;
+
+                  if (!hasIcon) {
+                    deviconName = skill.toLowerCase().replace(/[^a-z0-9]/g, "");
+                    hasIcon = (
+                      deviconData as Array<{ name: string; altnames: string[] }>
+                    ).some(
+                      (icon) =>
+                        icon.name === deviconName ||
+                        icon.altnames.includes(deviconName!),
+                    );
+                  }
 
                   return (
                     <span

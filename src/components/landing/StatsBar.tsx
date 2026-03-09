@@ -48,7 +48,7 @@ export default function StatsBar() {
       {/* Floating gradient accent — sits behind the cards */}
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Asymmetric grid — first card spans 2 cols on large screens for visual weight */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
           {stats.map((stat, i) => {
             const Icon = stat.icon;
             // Alternate vertical offsets for asymmetry on desktop

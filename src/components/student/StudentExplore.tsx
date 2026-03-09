@@ -1,8 +1,21 @@
 "use client";
 
+import Image from "next/image";
+
 import deviconData from "devicon/devicon.json";
 
+const ICON_MAPPINGS: Record<string, string> = {
+  Vue: "vuejs",
+  HTML: "html5",
+  CSS: "css3",
+  Express: "express",
+  TensorFlow: "tensorFlow",
+};
+
 function getDeviconClass(skillName: string) {
+  if (ICON_MAPPINGS[skillName]) {
+    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
+  }
   const match = (
     deviconData as Array<{ name: string; altnames: string[] }>
   ).find(
@@ -14,11 +27,22 @@ function getDeviconClass(skillName: string) {
 }
 
 import { useState } from "react";
-import { Search, Filter, Clock, ChevronDown, Loader2, Inbox } from "lucide-react";
+import {
+  Search,
+  Filter,
+  Clock,
+  ChevronDown,
+  Loader2,
+  Inbox,
+  X,
+  UploadCloud,
+  FileText,
+} from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
-import { motion, Variants } from "framer-motion";
+import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 
 // ── Helpers ──
 
@@ -74,13 +98,20 @@ export default function StudentExplore() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeSkillLevels, setActiveSkillLevels] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
+
+  const { user } = useUser();
 
   const tasks = useQuery(api.tasks.browseTasks);
 
   // Category filter groups — each maps to one or more DB categories
   const categoryFilters: { label: string; match: string[] }[] = [
     { label: "All", match: [] },
-    { label: "Development", match: ["Web Development", "Mobile Development", "DevOps"] },
+    {
+      label: "Development",
+      match: ["Web Development", "Mobile Development", "DevOps"],
+    },
     { label: "Design", match: ["UI/UX Design"] },
     { label: "Data & AI", match: ["Data Science", "Machine Learning"] },
     { label: "Writing", match: ["Content Writing", "Marketing"] },
@@ -118,7 +149,9 @@ export default function StudentExplore() {
       return matchesSearch && matchesCategory && matchesSkillLevel;
     })
     .sort((a, b) =>
-      sortOrder === "newest" ? b.createdAt - a.createdAt : a.createdAt - b.createdAt,
+      sortOrder === "newest"
+        ? b.createdAt - a.createdAt
+        : a.createdAt - b.createdAt,
     );
 
   return (
@@ -196,33 +229,45 @@ export default function StudentExplore() {
               Skill Level
             </Typography>
             <div className="space-y-3 mt-4">
-              {(["beginner", "intermediate", "advanced"] as const).map((level) => {
-                const isChecked = activeSkillLevels.includes(level);
-                return (
-                  <button
-                    key={level}
-                    onClick={() => toggleSkillLevel(level)}
-                    className="flex items-center gap-3 cursor-pointer group w-full text-left"
-                  >
-                    <div
-                      className={`w-5 h-5 border-2 rounded transition-colors flex items-center justify-center ${
-                        isChecked
-                          ? "bg-emerald-500 border-emerald-500 text-white"
-                          : "border-muted-foreground group-hover:border-emerald-500"
-                      }`}
+              {(["beginner", "intermediate", "advanced"] as const).map(
+                (level) => {
+                  const isChecked = activeSkillLevels.includes(level);
+                  return (
+                    <button
+                      key={level}
+                      onClick={() => toggleSkillLevel(level)}
+                      className="flex items-center gap-3 cursor-pointer group w-full text-left"
                     >
-                      {isChecked && (
-                        <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-                          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </div>
-                    <span className="text-sm group-hover:text-foreground transition-colors capitalize">
-                      {level}
-                    </span>
-                  </button>
-                );
-              })}
+                      <div
+                        className={`w-5 h-5 border-2 rounded transition-colors flex items-center justify-center ${
+                          isChecked
+                            ? "bg-emerald-500 border-emerald-500 text-white"
+                            : "border-muted-foreground group-hover:border-emerald-500"
+                        }`}
+                      >
+                        {isChecked && (
+                          <svg
+                            className="w-3 h-3"
+                            viewBox="0 0 12 12"
+                            fill="none"
+                          >
+                            <path
+                              d="M2.5 6L5 8.5L9.5 3.5"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm group-hover:text-foreground transition-colors capitalize">
+                        {level}
+                      </span>
+                    </button>
+                  );
+                },
+              )}
             </div>
           </div>
         </motion.div>
@@ -239,10 +284,15 @@ export default function StudentExplore() {
                 : `Showing ${filteredTasks.length} task${filteredTasks.length !== 1 ? "s" : ""}`}
             </Typography>
             <button
-              onClick={() => setSortOrder((o) => (o === "newest" ? "oldest" : "newest"))}
+              onClick={() =>
+                setSortOrder((o) => (o === "newest" ? "oldest" : "newest"))
+              }
               className="text-sm font-bold flex items-center gap-1 hover:text-emerald-500 transition-colors"
             >
-              Sort by: {sortOrder === "newest" ? "Newest" : "Oldest"} <ChevronDown className={`w-4 h-4 transition-transform ${sortOrder === "oldest" ? "rotate-180" : ""}`} />
+              Sort by: {sortOrder === "newest" ? "Newest" : "Oldest"}{" "}
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${sortOrder === "oldest" ? "rotate-180" : ""}`}
+              />
             </button>
           </motion.div>
 
@@ -270,7 +320,9 @@ export default function StudentExplore() {
                 No tasks available
               </Typography>
               <Typography variant="p" color="muted">
-                {searchQuery || activeCategory !== "All" || activeSkillLevels.length > 0
+                {searchQuery ||
+                activeCategory !== "All" ||
+                activeSkillLevels.length > 0
                   ? "Try adjusting your search or filters."
                   : "Check back later — new tasks are posted regularly."}
               </Typography>
@@ -283,9 +335,15 @@ export default function StudentExplore() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 24, delay: index * 0.08 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 24,
+                  delay: index * 0.08,
+                }}
                 key={task._id}
-                className="group bg-card border border-border rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer shadow-sm hover:shadow-md"
+                onClick={() => setSelectedTask(task)}
+                className="group bg-card border border-border rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-1 block"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
                   <div>
@@ -341,14 +399,14 @@ export default function StudentExplore() {
                   {task.description}
                 </Typography>
 
-                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/50 pt-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/50 pt-4 mt-auto">
                   <div className="flex flex-wrap gap-2">
-                    {task.skills.map((tag) => {
+                    {task.skills.slice(0, 3).map((tag: string) => {
                       const devicon = getDeviconClass(tag);
                       return (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/80 dark:bg-muted/40 transition-colors hover:bg-muted/80 hover:border-foreground/20"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/80 dark:bg-muted/40 transition-colors group-hover:bg-muted/80 group-hover:border-foreground/20"
                         >
                           {devicon && (
                             <i className={`${devicon} text-[14px]`} />
@@ -357,8 +415,19 @@ export default function StudentExplore() {
                         </span>
                       );
                     })}
+                    {task.skills.length > 3 && (
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/60 dark:bg-muted/40 transition-colors">
+                        +{task.skills.length - 3} skills
+                      </span>
+                    )}
                   </div>
-                  <button className="px-6 py-2 bg-foreground text-background rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-emerald-500 hover:text-black transition-colors">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedTask(task);
+                    }}
+                    className="px-6 py-2 bg-foreground text-background rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-emerald-500 hover:text-black transition-colors"
+                  >
                     View & Apply
                   </button>
                 </div>
@@ -367,6 +436,169 @@ export default function StudentExplore() {
           </div>
         </div>
       </div>
+
+      {/* View & Apply Drawer */}
+      <AnimatePresence>
+        {selectedTask && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedTask(null)}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]"
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-full w-full max-w-xl bg-background border-l border-border z-[101] flex flex-col shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-border bg-card">
+                <div>
+                  <Typography variant="h3" className="mb-1">
+                    {selectedTask.title}
+                  </Typography>
+                  <Typography variant="p" color="muted" className="text-sm m-0">
+                    {selectedTask.companyName} •{" "}
+                    {capitalize(selectedTask.skillLevel)}
+                  </Typography>
+                </div>
+                <button
+                  onClick={() => setSelectedTask(null)}
+                  className="p-2 hover:bg-muted rounded-full transition-colors shrink-0"
+                >
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                {/* Details */}
+                <section>
+                  <Typography variant="h4" className="mb-3">
+                    About the Task
+                  </Typography>
+                  <Typography
+                    variant="p"
+                    className="text-sm whitespace-pre-wrap break-words leading-relaxed text-foreground/80"
+                  >
+                    {selectedTask.description}
+                  </Typography>
+                </section>
+
+                <section>
+                  <Typography variant="h4" className="mb-3">
+                    Required Skills
+                  </Typography>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTask.skills.map((tag: string) => {
+                      const devicon = getDeviconClass(tag);
+                      return (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-muted/30 text-sm font-medium"
+                        >
+                          {devicon && <i className={`${devicon} text-base`} />}
+                          {tag}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <hr className="border-border/50" />
+
+                {/* Apply Section */}
+                <section className="bg-muted/10 border border-border rounded-xl p-5 shadow-sm">
+                  <Typography
+                    variant="h4"
+                    className="mb-4 text-emerald-600 dark:text-emerald-400"
+                  >
+                    Your Application
+                  </Typography>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg shadow-sm">
+                      <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                        {user?.imageUrl ? (
+                          <Image
+                            src={user.imageUrl}
+                            alt="Profile"
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-full object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="text-emerald-600 font-bold">
+                            {user?.firstName?.[0] || "S"}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <Typography
+                          variant="p"
+                          className="font-semibold text-sm m-0"
+                        >
+                          {user?.fullName || "Student User"}
+                        </Typography>
+                        <Typography
+                          variant="p"
+                          className="text-xs text-muted-foreground m-0"
+                        >
+                          {user?.primaryEmailAddress?.emailAddress ||
+                            "student@university.edu"}
+                        </Typography>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Typography
+                        variant="label"
+                        className="block text-sm font-medium mb-1.5 text-foreground/80"
+                      >
+                        CV / Resume (Optional)
+                      </Typography>
+                      <button className="w-full flex items-center justify-center gap-2 py-4 border-2 border-dashed border-border hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-lg text-sm transition-colors text-muted-foreground hover:text-emerald-600">
+                        <UploadCloud className="w-5 h-5" />
+                        Upload PDF or Word Document
+                      </button>
+                    </div>
+
+                    <div>
+                      <Typography
+                        variant="label"
+                        className="block text-sm font-medium mb-1.5 text-foreground/80"
+                      >
+                        Message to Employer (Optional)
+                      </Typography>
+                      <textarea
+                        rows={3}
+                        className="w-full p-3 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-shadow"
+                        placeholder="Why are you a great fit for this task?"
+                      ></textarea>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div className="p-6 border-t border-border bg-card">
+                <button
+                  onClick={() => {
+                    alert("Application submitted! (Mock)");
+                    setSelectedTask(null);
+                  }}
+                  className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
+                >
+                  <FileText className="w-4 h-4" />
+                  Submit Application
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
