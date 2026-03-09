@@ -301,6 +301,6 @@
 .stu-stat-card--emerald::before {
   background: linear-gradient(90deg, hsl(160 84% 39%), hsl(140 70% 42%));
 }
-.stu-stat-card--violet::before {
+.stu-stat-card--indigo::before {
   background: linear-gradient(90deg, hsl(263 70% 50%), hsl(290 84% 60%));
 }

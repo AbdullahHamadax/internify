@@ -18,7 +18,18 @@ import {
 import { Typography } from "@/components/ui/Typography";
 import deviconData from "devicon/devicon.json";
 
+const ICON_MAPPINGS: Record<string, string> = {
+  "Vue": "vuejs",
+  "HTML": "html5",
+  "CSS": "css3",
+  "Express": "express",
+  "TensorFlow": "tensorFlow",
+};
+
 function getDeviconClass(skill: string): string | null {
+  if (ICON_MAPPINGS[skill]) {
+    return `devicon-${ICON_MAPPINGS[skill]}-plain colored`;
+  }
   const normalized = skill.toLowerCase().replace(/[^a-z0-9]/g, "");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const match = (deviconData as any[]).find(

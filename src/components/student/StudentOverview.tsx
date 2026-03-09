@@ -2,7 +2,18 @@
 
 import deviconData from "devicon/devicon.json";
 
+const ICON_MAPPINGS: Record<string, string> = {
+  "Vue": "vuejs",
+  "HTML": "html5",
+  "CSS": "css3",
+  "Express": "express",
+  "TensorFlow": "tensorFlow",
+};
+
 function getDeviconClass(skillName: string) {
+  if (ICON_MAPPINGS[skillName]) {
+    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
+  }
   const match = (
     deviconData as Array<{ name: string; altnames: string[] }>
   ).find(
@@ -305,18 +316,23 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
                 </Typography>
 
                 <div className="flex flex-wrap gap-2">
-                  {rec.tags.map((tag) => {
+                  {rec.tags.slice(0, 3).map((tag) => {
                     const devicon = getDeviconClass(tag);
                     return (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/80 dark:bg-muted/40"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/80 dark:bg-muted/40 transition-colors group-hover:bg-muted/80 group-hover:border-foreground/20"
                       >
                         {devicon && <i className={`${devicon} text-[14px]`} />}
                         {tag}
                       </span>
                     );
                   })}
+                  {rec.tags.length > 3 && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/60 dark:bg-muted/40 transition-colors">
+                      +{rec.tags.length - 3}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
