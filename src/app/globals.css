@@ -27,7 +27,7 @@ h6 {
   --secondary: hsl(290 84% 60%);
   --secondary-foreground: hsl(210 40% 98%);
 
-  --accent: hsl(190 90% 50%);
+  --accent: hsl(217 91% 60%);
   --accent-foreground: hsl(222.2 47.4% 11.2%);
 
   --muted: hsl(210 40% 96.1%);
@@ -48,7 +48,11 @@ h6 {
   --surface-alt: hsl(210 20% 96%);
 
   --logo-fade: #ffffff;
-  --radius: 0.75rem;
+  --radius: 0rem;
+  
+  --brutal-shadow-sm: 2px 2px 0 0 #000;
+  --brutal-shadow-md: 4px 4px 0 0 #000;
+  --brutal-shadow-lg: 8px 8px 0 0 #000;
 }
 
 .dark {
@@ -63,7 +67,7 @@ h6 {
   --secondary: hsl(290 84% 60%);
   --secondary-foreground: hsl(210 40% 98%);
 
-  --accent: hsl(190 90% 50%);
+  --accent: hsl(217 91% 60%);
   --accent-foreground: hsl(210 40% 98%);
 
   --muted: hsl(217 33% 17%);
@@ -82,6 +86,10 @@ h6 {
 
   --surface: hsl(222 47% 8%);
   --surface-alt: hsl(217 33% 12%);
+  
+  --brutal-shadow-sm: 2px 2px 0 0 #fff;
+  --brutal-shadow-md: 4px 4px 0 0 #fff;
+  --brutal-shadow-lg: 8px 8px 0 0 #fff;
 }
 
 @theme inline {
@@ -108,7 +116,7 @@ h6 {
 
   --image-gradient: linear-gradient(
     135deg,
-    hsl(190 90% 50%) 0%,
+    hsl(217 91% 60%) 0%,
     hsl(221 83% 53%) 50%,
     hsl(290 84% 60%) 100%
   );

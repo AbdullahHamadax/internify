@@ -248,11 +248,11 @@ export default function PostTaskModal({
    * The SelectContent z-index must be above the modal overlay (z-100) → z-[200].
    */
   const selectTriggerClass =
-    "h-11 w-full rounded-lg bg-white cursor-pointer transition-colors hover:bg-slate-50 dark:bg-gray-800 dark:hover:bg-gray-700";
+    "h-11 w-full rounded-none border-2 border-border bg-white cursor-pointer transition-all focus:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:bg-black dark:focus:shadow-[4px_4px_0_0_hsl(290,70%,70%)] shadow-[4px_4px_0_0_var(--border)] data-[state=open]:translate-x-[2px] data-[state=open]:translate-y-[2px] data-[state=open]:shadow-[2px_2px_0_0_var(--border)]";
   const selectContentClass =
-    "z-[200] bg-white shadow-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700";
+    "z-[200] bg-white border-2 border-border shadow-[4px_4px_0_0_var(--border)] dark:bg-black rounded-none";
   const selectItemClass =
-    "cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700";
+    "cursor-pointer focus:bg-border focus:text-card rounded-none font-bold tracking-wide";
 
   return (
     <div className="emp-modal-overlay" onClick={onClose}>
@@ -281,6 +281,7 @@ export default function PostTaskModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               aria-invalid={!!errors.title}
+              className="rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
             />
             {errors.title && (
               <span className="emp-modal__error">{errors.title}</span>
@@ -376,6 +377,7 @@ export default function PostTaskModal({
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
               aria-invalid={!!errors.deadline}
+              className="rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
             />
             {errors.deadline && (
               <span className="emp-modal__error">{errors.deadline}</span>
@@ -510,10 +512,10 @@ export default function PostTaskModal({
 
             {/* Upload Button Box - Full Width */}
             <Label
-              className={`mt-3 w-full cursor-pointer rounded-lg border-2 border-dashed transition-colors flex flex-col items-center justify-center py-8 ${
+              className={`mt-3 w-full cursor-pointer rounded-none border-2 transition-all flex flex-col items-center justify-center py-8 ${
                 isAtLimit
-                  ? "border-red-500 bg-red-500/5 text-red-500 dark:border-red-400 dark:text-red-400 cursor-not-allowed"
-                  : "border-muted-foreground/25 hover:border-purple-500 dark:hover:border-purple-500 bg-muted/20 hover:bg-muted/50 text-muted-foreground hover:text-purple-600 dark:hover:text-purple-400"
+                  ? "border-red-500 bg-red-500/5 text-red-500 dark:border-red-400 dark:text-red-400 cursor-not-allowed shadow-[4px_4px_0_0_#ef4444]"
+                  : "border-border shadow-[4px_4px_0_0_var(--border)] focus-within:shadow-[4px_4px_0_0_hsl(263,70%,50%)] hover:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:hover:shadow-[4px_4px_0_0_hsl(290,70%,70%)] bg-card hover:-translate-x-[2px] hover:-translate-y-[2px] text-foreground"
               }`}
             >
               <Upload className="size-8 mb-3" />
@@ -555,13 +557,13 @@ export default function PostTaskModal({
         </div>
 
         <div className="emp-modal__footer">
-          <Button variant="outline" onClick={onClose} disabled={isUploading}>
+          <Button variant="outline" onClick={onClose} disabled={isUploading} className="rounded-none border-2 border-border hover:bg-border hover:text-card shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isUploading}
-            className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5"
+            className="rounded-none bg-foreground text-card border-2 border-border shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all gap-1.5"
           >
             {isUploading ? (
               <>

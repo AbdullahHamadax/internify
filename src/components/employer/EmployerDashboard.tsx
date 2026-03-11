@@ -265,6 +265,8 @@ export default function EmployerDashboard() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
+  const [now] = useState(() => Date.now());
+
   const tasks: Task[] =
     employerTasks?.map((t: any) => ({
       id: t._id,
@@ -275,7 +277,7 @@ export default function EmployerDashboard() {
       applications: 0,
       daysLeft: Math.max(
         0,
-        Math.ceil((t.deadline - Date.now()) / (1000 * 60 * 60 * 24)),
+        Math.ceil((t.deadline - now) / (1000 * 60 * 60 * 24)),
       ),
       deadline: t.deadline,
       createdAt: t.createdAt,
@@ -397,11 +399,16 @@ export default function EmployerDashboard() {
                   {timeGreeting},{" "}
                   <span className="emp-hero__accent">{firstName}</span> 👋
                 </Typography>
-                <Typography variant="p">
+                <Typography variant="p" className="text-white opacity-90 text-sm md:text-base leading-relaxed mt-2">
                   Your tasks have received{" "}
-                  <strong>{stats.totalSubmissions} submissions</strong> this
-                  month. {stats.activeTasks} tasks are actively seeking talented
-                  students.
+                  <span className="inline-flex items-center justify-center font-black text-black bg-white px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] -rotate-2 text-xl md:text-2xl">
+                    {stats.totalSubmissions} submissions
+                  </span>{" "}
+                  this month.{" "}
+                  <span className="inline-flex items-center justify-center font-black text-black bg-[#FCD34D] px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] rotate-2 text-xl md:text-2xl">
+                    {stats.activeTasks}
+                  </span>{" "}
+                  tasks are actively seeking talented students.
                 </Typography>
               </div>
               <button

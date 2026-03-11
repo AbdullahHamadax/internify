@@ -120,8 +120,8 @@ export default function TopStudentsShowcase() {
                   </div>
 
                   <div className="emp-talent-card__match">
-                    <Star className="size-3.5 fill-current" />
-                    <Typography variant="caption" weight="bold">
+                    <Star className="size-3.5 fill-current text-white" />
+                    <Typography variant="caption" weight="bold" className="text-white dark:text-white">
                       {student.matchScore}% Match
                     </Typography>
                   </div>
