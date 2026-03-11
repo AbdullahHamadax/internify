@@ -216,8 +216,14 @@ export default function StudentDashboard() {
         {activeNav === "dashboard" && <StudentOverview onNavigate={(id) => setActiveNav(id)} />}
         {activeNav === "explore" && <StudentExplore />}
         {activeNav === "messages" && (
-          <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground">
-            Messages feature coming soon.
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center p-10 bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] max-w-md">
+              <MessageSquare className="w-12 h-12 mx-auto mb-4 text-blue-500" />
+              <h2 className="font-black text-xl uppercase tracking-widest mb-2">Messages</h2>
+              <p className="text-muted-foreground font-bold text-sm">
+                Direct messaging is on the way. You&apos;ll be able to chat with employers about tasks right here.
+              </p>
+            </div>
           </div>
         )}
       </main>

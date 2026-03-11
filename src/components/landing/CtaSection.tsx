@@ -7,33 +7,33 @@ import { Typography } from "@/components/ui/Typography";
 
 export default function CtaSection() {
   return (
-    <section className="noise-overlay relative bg-[#0F172A] py-20 sm:py-28 overflow-hidden">
-      {/* Accent gradient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-[#00BCD4]/15 via-[#1565C0]/10 to-[#7B1FA2]/15 rounded-full blur-3xl" />
+    <section className="noise-overlay relative bg-black dark:bg-[#3B82F6] py-20 sm:py-28 overflow-hidden border-y-8 border-black dark:border-white">
+      {/* Accent box instead of gradient glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[400px] bg-[#AB47BC] rounded-none border-8 border-white dark:border-black transform -rotate-2 -z-10" />
 
-      <AnimateIn className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
-        <Zap className="mx-auto h-10 w-10 text-[#00BCD4] mb-6" />
-        <Typography variant="h2" color="white">
+      <AnimateIn className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center bg-white dark:bg-black border-4 border-black dark:border-white p-12 shadow-[16px_16px_0_0_#3B82F6] dark:shadow-[16px_16px_0_0_#AB47BC] transform rotate-1">
+        <Zap className="mx-auto h-10 w-10 text-[#3B82F6] mb-6" />
+        <Typography variant="h2" color="default" className="text-black dark:text-white">
           Ready to start building your career?
         </Typography>
         <Typography
           variant="p"
-          color="muted"
-          className="mt-4 text-lg max-w-xl mx-auto"
+          color="default"
+          className="mt-6 text-xl max-w-xl mx-auto font-bold"
         >
           Join thousands of students completing real tasks and getting hired.
         </Typography>
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link
             href="/signup"
-            className="bg-brand-gradient inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/25"
+            className="bg-[#3B82F6] text-white border-4 border-black inline-flex items-center gap-2 rounded-none px-8 py-4 text-sm font-black uppercase tracking-widest shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
           >
             Browse Tasks
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </Link>
           <Link
             href="#how-it-works"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-7 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-white/35 hover:bg-white/10"
+            className="bg-white text-black dark:bg-black dark:text-white border-4 border-black dark:border-white inline-flex items-center gap-2 rounded-none px-8 py-4 text-sm font-black uppercase tracking-widest shadow-[8px_8px_0_0_#AB47BC] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
           >
             Learn More
           </Link>

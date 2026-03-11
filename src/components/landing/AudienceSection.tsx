@@ -28,22 +28,22 @@ export default function AudienceSection() {
           <AnimateIn direction="left" delay={0.1}>
             <div
               id="for-students"
-              className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 sm:p-10 scroll-mt-20"
+              className="rounded-none border-4 border-black dark:border-white bg-[#3B82F6] dark:bg-gray-900 p-8 sm:p-10 shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#3B82F6] scroll-mt-20"
             >
-              <span className="inline-block rounded-full bg-blue-50 dark:bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
+              <span className="inline-block rounded-none border-2 border-black dark:border-white bg-white dark:bg-black px-4 py-1.5 text-xs font-black text-black dark:text-white uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
                 For Students
               </span>
-              <Typography variant="h3" className="mt-5">
+              <Typography variant="h3" className="mt-5 text-white">
                 Turn Learning Into a Career
               </Typography>
               <ul className="mt-6 space-y-4">
                 {studentBullets.map((item) => (
                   <li key={item} className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#00BCD4]" />
+                    <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-white dark:text-[#3B82F6]" />
                     <Typography
                       variant="span"
-                      color="muted"
-                      className="leading-relaxed"
+                      color="default"
+                      className="leading-relaxed font-bold text-white dark:text-white"
                     >
                       {item}
                     </Typography>
@@ -52,10 +52,10 @@ export default function AudienceSection() {
               </ul>
               <Link
                 href="/signup"
-                className="mt-8 inline-flex items-center gap-2 bg-brand-gradient rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/20"
+                className="mt-8 inline-flex items-center gap-2 bg-black text-white dark:bg-[#3B82F6] dark:text-black border-4 border-black dark:border-white rounded-none px-6 py-3 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#AB47BC] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
                 Start Learning Free
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
           </AnimateIn>
@@ -64,22 +64,22 @@ export default function AudienceSection() {
           <AnimateIn direction="right" delay={0.15}>
             <div
               id="for-employers"
-              className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 sm:p-10 scroll-mt-20"
+              className="rounded-none border-4 border-black dark:border-white bg-[#AB47BC] dark:bg-gray-900 p-8 sm:p-10 shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#AB47BC] scroll-mt-20"
             >
-              <span className="inline-block rounded-full bg-purple-50 dark:bg-purple-500/10 px-4 py-1.5 text-xs font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wide">
+              <span className="inline-block rounded-none border-2 border-black dark:border-white bg-white dark:bg-black px-4 py-1.5 text-xs font-black text-black dark:text-white uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
                 For Employers
               </span>
-              <Typography variant="h3" className="mt-5">
+              <Typography variant="h3" className="mt-5 text-white">
                 Find Talent Before Anyone Else
               </Typography>
               <ul className="mt-6 space-y-4">
                 {employerBullets.map((item) => (
                   <li key={item} className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#7B1FA2]" />
+                    <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-white dark:text-[#AB47BC]" />
                     <Typography
                       variant="span"
-                      color="muted"
-                      className="leading-relaxed"
+                      color="default"
+                      className="leading-relaxed font-bold text-white dark:text-white"
                     >
                       {item}
                     </Typography>
@@ -88,10 +88,10 @@ export default function AudienceSection() {
               </ul>
               <Link
                 href="/signup"
-                className="mt-8 inline-flex items-center gap-2 rounded-xl border-2 border-[#7B1FA2] bg-white px-6 py-3 text-sm font-semibold text-[#7B1FA2] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#7B1FA2] hover:text-white hover:shadow-lg hover:shadow-purple-500/20 dark:bg-transparent dark:text-purple-400 dark:hover:bg-[#7B1FA2]/20 dark:hover:text-purple-200"
+                className="mt-8 inline-flex items-center gap-2 bg-black text-white dark:bg-[#AB47BC] dark:text-white border-4 border-black dark:border-white rounded-none px-6 py-3 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#3B82F6] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
                 Post a Challenge
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
           </AnimateIn>

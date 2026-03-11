@@ -49,16 +49,16 @@ export default function Navbar() {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/95 dark:bg-gray-950/95 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800"
-          : "bg-white dark:bg-gray-950"
+          ? "bg-white dark:bg-black shadow-[0_4px_0_0_#000] dark:shadow-[0_4px_0_0_#fff] border-b-4 border-black dark:border-white"
+          : "bg-white dark:bg-black border-b-4 border-transparent dark:border-transparent"
       }`}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="bg-brand-gradient rounded-lg p-1.5">
-              <GraduationCap className="h-5 w-5 text-white" />
+            <div className="bg-[#3B82F6] rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] p-1.5">
+              <GraduationCap className="h-6 w-6 text-black" />
             </div>
             <Typography
               variant="span"
@@ -76,7 +76,15 @@ export default function Navbar() {
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="rounded-md px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                className={`rounded-none px-4 py-2 text-sm font-black uppercase tracking-widest transition-all border-2 border-transparent hover:border-black dark:hover:border-white hover:bg-[#AB47BC] hover:text-white hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 ${
+                  pathname === link.href ||
+                  (pathname === "/" &&
+                    link.href.startsWith("/#") &&
+                    typeof window !== "undefined" &&
+                    window.location.hash === link.href.slice(1))
+                    ? "bg-[#3B82F6] text-white border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] -translate-y-1 -translate-x-1"
+                    : "text-black dark:text-white"
+                }`}
               >
                 {link.label}
               </a>
@@ -88,13 +96,13 @@ export default function Navbar() {
             <ThemeToggle />
             <Link
               href="/login"
-              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="bg-white text-black dark:bg-black dark:text-white border-2 border-black dark:border-white px-5 py-2.5 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
             >
               Log In
             </Link>
             <Link
               href="/signup"
-              className="bg-brand-gradient rounded-lg px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              className="bg-[#3B82F6] text-white border-2 border-black dark:border-white px-5 py-2.5 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
             >
               Get Started
             </Link>
@@ -105,7 +113,7 @@ export default function Navbar() {
             <ThemeToggle />
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
+              className="rounded-none border-2 border-black dark:border-white p-2 text-black dark:text-white bg-white dark:bg-black transition-all shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:-translate-y-px hover:-translate-x-px hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff]"
               aria-label="Toggle menu"
             >
               {mobileOpen ? (
@@ -120,28 +128,36 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 pb-4">
-          <div className="flex flex-col gap-2 pt-3">
+        <div className="md:hidden border-b-4 border-black dark:border-white bg-white dark:bg-black px-4 pb-6 shadow-[0_8px_0_0_#000] dark:shadow-[0_8px_0_0_#fff]">
+          <div className="flex flex-col gap-3 pt-3">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                className={`rounded-none border-2 border-black dark:border-white px-4 py-3 text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] ${
+                  pathname === link.href ||
+                  (pathname === "/" &&
+                    link.href.startsWith("/#") &&
+                    typeof window !== "undefined" &&
+                    window.location.hash === link.href.slice(1))
+                    ? "bg-[#3B82F6] text-white"
+                    : "bg-white text-black dark:bg-black dark:text-white hover:bg-[#AB47BC] hover:text-white"
+                }`}
               >
                 {link.label}
               </a>
             ))}
-            <div className="mt-3 flex flex-col gap-2">
+            <div className="mt-4 flex flex-col gap-3">
               <Link
                 href="/login"
-                className="rounded-lg border border-gray-200 px-4 py-2.5 text-center text-sm font-semibold text-gray-700 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="bg-white text-black dark:bg-black dark:text-white border-2 border-black dark:border-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
                 Log In
               </Link>
               <Link
                 href="/signup"
-                className="bg-brand-gradient rounded-lg px-5 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-md"
+                className="bg-[#3B82F6] text-white border-2 border-black dark:border-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
                 Get Started
               </Link>

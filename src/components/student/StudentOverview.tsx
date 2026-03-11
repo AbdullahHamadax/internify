@@ -3,11 +3,11 @@
 import deviconData from "devicon/devicon.json";
 
 const ICON_MAPPINGS: Record<string, string> = {
-  "Vue": "vuejs",
-  "HTML": "html5",
-  "CSS": "css3",
-  "Express": "express",
-  "TensorFlow": "tensorFlow",
+  Vue: "vuejs",
+  HTML: "html5",
+  CSS: "css3",
+  Express: "express",
+  TensorFlow: "tensorFlow",
 };
 
 function getDeviconClass(skillName: string) {
@@ -109,7 +109,11 @@ const itemVariants: Variants = {
   },
 };
 
-export default function StudentOverview({ onNavigate }: { onNavigate?: (id: string) => void }) {
+export default function StudentOverview({
+  onNavigate,
+}: {
+  onNavigate?: (id: string) => void;
+}) {
   const { user } = useUser();
   const firstName = user?.firstName || "there";
 
@@ -123,14 +127,19 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
       {/* Hero Section */}
       <motion.div variants={itemVariants} className="stu-hero">
         <div className="stu-hero__text">
-          <Typography variant="h1">
+          <Typography variant="h1" className="text-white">
             Hello, <span className="stu-hero__accent">{firstName}</span> 👋
           </Typography>
-          <Typography variant="p">
+          <Typography variant="p" className="text-white opacity-90 text-sm md:text-base leading-relaxed mt-2">
             Here is your command center. You have{" "}
-            {MOCK_STATS.activeApplications} active applications and{" "}
-            {MOCK_RECOMMENDATIONS.length} new high-match opportunities waiting
-            for you today.
+            <span className="inline-flex items-center justify-center font-black text-black bg-white px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] -rotate-2 text-xl md:text-2xl">
+              {MOCK_STATS.activeApplications}
+            </span>{" "}
+            active applications and{" "}
+            <span className="inline-flex items-center justify-center font-black text-black bg-[#FCD34D] px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] rotate-2 text-xl md:text-2xl">
+              {MOCK_RECOMMENDATIONS.length}
+            </span>{" "}
+            new high-match opportunities waiting for you today.
           </Typography>
         </div>
       </motion.div>
@@ -142,8 +151,8 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
       >
         <div className="stu-stat-card stu-stat-card--blue">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
-            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
-              <Briefcase className="w-5 h-5" />
+            <div className="p-2 border-2 border-black dark:border-white bg-[#BFDBFE] dark:bg-[#1E3A8A] text-[#1D4ED8] dark:text-[#93C5FD] shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
+              <Briefcase className="w-5 h-5" strokeWidth={2.5} />
             </div>
             <Typography
               variant="span"
@@ -159,8 +168,8 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
 
         <div className="stu-stat-card stu-stat-card--emerald">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="p-2 border-2 border-black dark:border-white bg-[#A7F3D0] dark:bg-[#064E3B] text-[#047857] dark:text-[#A7F3D0] shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
+              <CheckCircle2 className="w-5 h-5" strokeWidth={2.5} />
             </div>
             <Typography
               variant="span"
@@ -176,8 +185,8 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
 
         <div className="stu-stat-card stu-stat-card--amber">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
-            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
-              <TrendingUp className="w-5 h-5" />
+            <div className="p-2 border-2 border-black dark:border-white bg-[#FDE68A] dark:bg-[#78350F] text-[#B45309] dark:text-[#FDE68A] shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
+              <TrendingUp className="w-5 h-5" strokeWidth={2.5} />
             </div>
             <Typography
               variant="span"
@@ -193,8 +202,8 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
 
         <div className="stu-stat-card stu-stat-card--indigo">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
-            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
-              <Eye className="w-5 h-5" />
+            <div className="p-2 border-2 border-black dark:border-white bg-[#E9D5FF] dark:bg-[#4C1D95] text-[#6D28D9] dark:text-[#E9D5FF] shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
+              <Eye className="w-5 h-5" strokeWidth={2.5} />
             </div>
             <Typography
               variant="span"
@@ -212,10 +221,10 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
       {/* MAIN OVERVIEW SPLIT */}
       <motion.div
         variants={itemVariants}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-10"
       >
         {/* LEFT: Active Pipeline (2/3) */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4">
           <div className="flex items-center justify-between mb-4">
             <Typography variant="h3">Active Pipeline</Typography>
           </div>
@@ -224,7 +233,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
             {MOCK_ACTIVE_PIPELINE.map((item) => (
               <div
                 key={item.id}
-                className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-card border border-border rounded-xl shadow-sm hover:shadow-md transition-all"
+                className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-card border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none min-h-[100px]"
               >
                 <div className="flex-1 space-y-1 mb-4 sm:mb-0">
                   <Typography
@@ -245,23 +254,19 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
 
                 <div className="w-full sm:w-auto flex flex-col items-end gap-2 shrink-0">
                   <span
-                    className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${
+                    className={`text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white px-3 py-1 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
                       item.status === "in_progress"
-                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
-                        : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400"
+                        ? "bg-[#1E40AF] text-white"
+                        : "bg-[#3B82F6] text-white"
                     }`}
                   >
                     {item.status === "in_progress"
                       ? "In Progress"
                       : "Under Review"}
                   </span>
-                  <div className="w-full sm:w-32 h-2 bg-secondary rounded-full overflow-hidden">
+                  <div className="w-full sm:w-32 h-2 bg-muted border border-black dark:border-white overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-1000 ${
-                        item.status === "in_progress"
-                          ? "bg-amber-500"
-                          : "bg-blue-500"
-                      }`}
+                      className="h-full bg-blue-500 transition-all duration-1000"
                       style={{ width: `${item.progress}%` }}
                     />
                   </div>
@@ -271,8 +276,12 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
           </div>
 
           {MOCK_ACTIVE_PIPELINE.length === 0 && (
-            <div className="p-8 text-center bg-card rounded-xl border border-dashed border-border">
-              <Typography variant="p" color="muted">
+            <div className="p-8 text-center bg-[#AB47BC] text-white border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
+              <Typography
+                variant="h4"
+                color="white"
+                className="uppercase font-black"
+              >
                 No active tasks. Time to explore!
               </Typography>
             </div>
@@ -280,7 +289,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
         </div>
 
         {/* RIGHT: Recommended For You (1/3) */}
-        <div className="lg:col-span-1 space-y-4">
+        <div className="space-y-4">
           <div className="flex items-center justify-between mb-4">
             <Typography variant="h3" className="flex items-center gap-2">
               <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
@@ -292,10 +301,10 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
             {MOCK_RECOMMENDATIONS.map((rec) => (
               <div
                 key={rec.id}
-                className="group block p-4 bg-card border border-border rounded-xl shadow-sm hover:shadow-md hover:border-blue-500/50 transition-all cursor-pointer"
+                className="group block p-4 bg-card border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all cursor-pointer hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white bg-[#3B82F6] px-2 py-1 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
                     {rec.matchScore}% Match
                   </span>
                 </div>
@@ -321,7 +330,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
                     return (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/80 dark:bg-muted/40 transition-colors group-hover:bg-muted/80 group-hover:border-foreground/20"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 border-2 border-black dark:border-white bg-white dark:bg-black text-[10px] font-black uppercase tracking-widest text-foreground transition-colors group-hover:bg-[#AB47BC] group-hover:text-white"
                       >
                         {devicon && <i className={`${devicon} text-[14px]`} />}
                         {tag}
@@ -329,7 +338,7 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
                     );
                   })}
                   {rec.tags.length > 3 && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/60 dark:bg-muted/40 transition-colors">
+                    <span className="inline-flex items-center px-2.5 py-1 border-2 border-black dark:border-white bg-white dark:bg-black text-[10px] font-black uppercase tracking-widest text-foreground transition-colors">
                       +{rec.tags.length - 3}
                     </span>
                   )}
@@ -338,9 +347,12 @@ export default function StudentOverview({ onNavigate }: { onNavigate?: (id: stri
             ))}
           </div>
 
-          <button onClick={() => onNavigate?.("explore")} className="w-full group py-3 mt-4 flex items-center justify-center gap-2 bg-card border border-border rounded-xl hover:bg-muted hover:text-foreground transition-all font-bold text-sm uppercase tracking-wider">
+          <button
+            onClick={() => onNavigate?.("explore")}
+            className="w-full group py-3 mt-4 flex items-center justify-center gap-2 bg-[#3B82F6] text-white border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff] active:translate-x-[8px] active:translate-y-[8px] active:shadow-none font-black text-sm uppercase tracking-wider"
+          >
             Explore All Tasks
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       </motion.div>

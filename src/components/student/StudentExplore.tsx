@@ -172,7 +172,9 @@ export default function StudentExplore() {
             className="tracking-tight leading-none shrink-0 text-3xl md:text-5xl"
           >
             Find Your Next <br />
-            <span className="stu-hero__accent">Opportunity.</span>
+            <span className="stu-hero__accent inline-block mt-2">
+              Opportunity.
+            </span>
           </Typography>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full flex-1 max-w-4xl">
@@ -181,12 +183,12 @@ export default function StudentExplore() {
               <input
                 type="text"
                 placeholder="Search by keywords, skills, or company..."
-                className="w-full h-11 pl-12 pr-4 bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all shadow-sm text-sm"
+                className="w-full h-12 pl-12 pr-4 bg-background border-2 border-black dark:border-white text-foreground placeholder:text-muted-foreground rounded-none focus:outline-none focus:ring-0 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#3B82F6] text-sm font-bold"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <button className="h-11 px-8 bg-foreground text-background font-bold uppercase tracking-widest text-sm rounded-xl hover:bg-primary/90 hover:text-primary-foreground transition-colors shrink-0 shadow-sm flex items-center justify-center">
+            <button className="h-12 px-8 bg-black text-[#3B82F6] dark:bg-white dark:text-black font-black uppercase tracking-widest text-sm rounded-none hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all shadow-[4px_4px_0_0_#3B82F6] dark:shadow-[4px_4px_0_0_#3B82F6] border-2 border-black dark:border-white flex items-center justify-center">
               Search
             </button>
           </div>
@@ -202,17 +204,17 @@ export default function StudentExplore() {
               variant="label"
               className="uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2"
             >
-              <Filter className="w-4 h-4" /> Category
+              <Filter className="w-5 h-5" strokeWidth={2.5} /> CATEGORY
             </Typography>
             <div className="space-y-1 mt-4">
               {categoryFilters.map((f) => (
                 <button
                   key={f.label}
                   onClick={() => setActiveCategory(f.label)}
-                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors rounded-lg ${
+                  className={`w-full text-left px-4 py-3 text-sm font-black uppercase tracking-wider transition-all border-2 ${
                     activeCategory === f.label
-                      ? "bg-emerald-50 text-emerald-900 border border-emerald-200 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
-                      : "border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700"
+                      ? "bg-[#3B82F6] text-white border-black dark:bg-[#3B82F6] shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]"
+                      : "bg-white dark:bg-black text-black dark:text-white border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-900"
                   }`}
                 >
                   {f.label}
@@ -224,7 +226,7 @@ export default function StudentExplore() {
           <div className="pt-6 border-t border-border/50">
             <Typography
               variant="label"
-              className="uppercase tracking-widest text-muted-foreground mb-4 block"
+              className="uppercase tracking-widest text-muted-foreground mb-4 block font-black"
             >
               Skill Level
             </Typography>
@@ -239,10 +241,10 @@ export default function StudentExplore() {
                       className="flex items-center gap-3 cursor-pointer group w-full text-left"
                     >
                       <div
-                        className={`w-5 h-5 border-2 rounded transition-colors flex items-center justify-center ${
+                        className={`w-6 h-6 border-2 transition-colors flex items-center justify-center rounded-none ${
                           isChecked
-                            ? "bg-emerald-500 border-emerald-500 text-white"
-                            : "border-muted-foreground group-hover:border-emerald-500"
+                            ? "bg-[#3B82F6] border-black text-white dark:bg-[#3B82F6] dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                            : "bg-white dark:bg-black border-black dark:border-white"
                         }`}
                       >
                         {isChecked && (
@@ -261,7 +263,7 @@ export default function StudentExplore() {
                           </svg>
                         )}
                       </div>
-                      <span className="text-sm group-hover:text-foreground transition-colors capitalize">
+                      <span className="text-sm font-black uppercase tracking-wider group-hover:underline decoration-2 transition-all">
                         {level}
                       </span>
                     </button>
@@ -287,7 +289,7 @@ export default function StudentExplore() {
               onClick={() =>
                 setSortOrder((o) => (o === "newest" ? "oldest" : "newest"))
               }
-              className="text-sm font-bold flex items-center gap-1 hover:text-emerald-500 transition-colors"
+              className="text-sm font-black uppercase tracking-wider flex items-center gap-1 hover:underline decoration-2 transition-all"
             >
               Sort by: {sortOrder === "newest" ? "Newest" : "Oldest"}{" "}
               <ChevronDown
@@ -343,29 +345,29 @@ export default function StudentExplore() {
                 }}
                 key={task._id}
                 onClick={() => setSelectedTask(task)}
-                className="group bg-card border border-border rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-1 block"
+                className="group bg-white dark:bg-black border-2 border-black dark:border-white p-6 transition-all cursor-pointer shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#3B82F6] hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#3B82F6] block"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <span
-                        className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded ${
+                        className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
                           task.skillLevel === "advanced"
-                            ? "bg-red-600/10 text-red-700 dark:bg-red-500/20 dark:text-red-500"
+                            ? "bg-[#FF0055] text-white"
                             : task.skillLevel === "intermediate"
-                              ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              ? "bg-[#AB47BC] text-white"
+                              : "bg-[#3B82F6] text-white"
                         }`}
                       >
                         {capitalize(task.skillLevel)}
                       </span>
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                         Posted {timeAgo(task.createdAt)}
                       </span>
                     </div>
                     <Typography
                       variant="h3"
-                      className="group-hover:text-blue-500 transition-colors"
+                      className="group-hover:underline decoration-4 underline-offset-4 transition-all mb-2"
                     >
                       {task.title}
                     </Typography>
@@ -378,11 +380,15 @@ export default function StudentExplore() {
                   </div>
 
                   <div className="flex flex-row sm:flex-col items-center sm:items-end gap-4 sm:gap-2 shrink-0">
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                    <span className="text-[10px] font-black px-3 py-1 bg-black text-white dark:bg-white dark:text-black uppercase tracking-widest border-2 border-black dark:border-white">
                       {task.category}
                     </span>
                     <div
-                      className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium cursor-default"
+                      className={`flex items-center gap-1.5 text-sm font-black uppercase tracking-widest cursor-default border-2 border-black dark:border-white px-3 py-1 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
+                        deadlineToDuration(task.deadline) === "Expired"
+                          ? "bg-[#DC2626] text-white"
+                          : ""
+                      }`}
                       title={`Deadline: ${new Date(task.deadline).toLocaleString()}`}
                     >
                       <Clock className="w-4 h-4" />
@@ -394,19 +400,19 @@ export default function StudentExplore() {
                 <Typography
                   variant="p"
                   color="muted"
-                  className="mb-6 line-clamp-2"
+                  className="mb-6 line-clamp-2 wrap-break-word"
                 >
                   {task.description}
                 </Typography>
 
-                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/50 pt-4 mt-auto">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-t-4 border-black dark:border-white pt-6 mt-auto">
                   <div className="flex flex-wrap gap-2">
                     {task.skills.slice(0, 3).map((tag: string) => {
                       const devicon = getDeviconClass(tag);
                       return (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/80 dark:bg-muted/40 transition-colors group-hover:bg-muted/80 group-hover:border-foreground/20"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#3B82F6] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#3B82F6] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none"
                         >
                           {devicon && (
                             <i className={`${devicon} text-[14px]`} />
@@ -416,7 +422,7 @@ export default function StudentExplore() {
                       );
                     })}
                     {task.skills.length > 3 && (
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full border border-border bg-muted/60 text-xs font-medium text-foreground/60 dark:bg-muted/40 transition-colors">
+                      <span className="inline-flex items-center px-3 py-1.5 border-2 border-black dark:border-white text-[11px] font-black uppercase tracking-wider text-muted-foreground shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
                         +{task.skills.length - 3} skills
                       </span>
                     )}
@@ -426,7 +432,7 @@ export default function StudentExplore() {
                       e.stopPropagation();
                       setSelectedTask(task);
                     }}
-                    className="px-6 py-2 bg-foreground text-background rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-emerald-500 hover:text-black transition-colors"
+                    className="px-6 py-3 bg-[#3B82F6] text-white dark:bg-[#3B82F6]  border-2 border-black dark:border-white font-black text-sm uppercase tracking-widest hover:translate-y-1 hover:translate-x-1 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:shadow-none"
                   >
                     View & Apply
                   </button>
@@ -453,23 +459,26 @@ export default function StudentExplore() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-full max-w-xl bg-background border-l border-border z-[101] flex flex-col shadow-2xl overflow-hidden"
+              className="fixed top-0 right-0 h-full w-full max-w-xl bg-background border-l-4 border-black dark:border-white z-[101] flex flex-col shadow-[-8px_0_0_0_rgba(0,0,0,0.1)] overflow-hidden"
             >
-              <div className="flex items-center justify-between p-6 border-b border-border bg-card">
+              <div className="flex items-center justify-between p-6 border-b-4 border-black dark:border-white bg-[#3B82F6] dark:bg-black text-white">
                 <div>
-                  <Typography variant="h3" className="mb-1">
+                  <Typography
+                    variant="h2"
+                    className="mb-1 font-black uppercase tracking-widest text-2xl text-white"
+                  >
                     {selectedTask.title}
                   </Typography>
-                  <Typography variant="p" color="muted" className="text-sm m-0">
+                  <Typography variant="p" className="text-sm m-0 text-white/80">
                     {selectedTask.companyName} •{" "}
                     {capitalize(selectedTask.skillLevel)}
                   </Typography>
                 </div>
                 <button
                   onClick={() => setSelectedTask(null)}
-                  className="p-2 hover:bg-muted rounded-full transition-colors shrink-0"
+                  className="p-2 border-2 border-black dark:border-white transition-all hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black shrink-0"
                 >
-                  <X className="w-5 h-5 text-muted-foreground" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
@@ -497,9 +506,11 @@ export default function StudentExplore() {
                       return (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-muted/30 text-sm font-medium"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#3B82F6] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#3B82F6] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none"
                         >
-                          {devicon && <i className={`${devicon} text-base`} />}
+                          {devicon && (
+                            <i className={`${devicon} text-[14px]`} />
+                          )}
                           {tag}
                         </span>
                       );
@@ -507,31 +518,31 @@ export default function StudentExplore() {
                   </div>
                 </section>
 
-                <hr className="border-border/50" />
+                <hr className="border-t-4 border-black dark:border-white" />
 
                 {/* Apply Section */}
-                <section className="bg-muted/10 border border-border rounded-xl p-5 shadow-sm">
+                <section className="bg-white dark:bg-black border-4 border-black dark:border-white p-5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
                   <Typography
-                    variant="h4"
-                    className="mb-4 text-emerald-600 dark:text-emerald-400"
+                    variant="h3"
+                    className="mb-4 text-[#FF3D00] dark:text-[#FF3D00] font-black uppercase tracking-wider"
                   >
                     Your Application
                   </Typography>
 
                   <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg shadow-sm">
-                      <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                    <div className="flex items-center gap-3 p-3 bg-white dark:bg-black border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
+                      <div className="w-10 h-10 border-2 border-black dark:border-white bg-[#3B82F6] flex items-center justify-center shrink-0">
                         {user?.imageUrl ? (
                           <Image
                             src={user.imageUrl}
                             alt="Profile"
                             width={40}
                             height={40}
-                            className="w-10 h-10 rounded-full object-cover"
+                            className="w-10 h-10 object-cover"
                             unoptimized
                           />
                         ) : (
-                          <div className="text-emerald-600 font-bold">
+                          <div className="text-black font-bold">
                             {user?.firstName?.[0] || "S"}
                           </div>
                         )}
@@ -560,7 +571,7 @@ export default function StudentExplore() {
                       >
                         CV / Resume (Optional)
                       </Typography>
-                      <button className="w-full flex items-center justify-center gap-2 py-4 border-2 border-dashed border-border hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-lg text-sm transition-colors text-muted-foreground hover:text-emerald-600">
+                      <button className="w-full flex items-center justify-center gap-2 py-4 border-4 border-dashed border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors font-bold uppercase tracking-wider text-sm shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
                         <UploadCloud className="w-5 h-5" />
                         Upload PDF or Word Document
                       </button>
@@ -575,7 +586,7 @@ export default function StudentExplore() {
                       </Typography>
                       <textarea
                         rows={3}
-                        className="w-full p-3 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-shadow"
+                        className="w-full p-3 bg-transparent border-2 border-black dark:border-white text-sm focus:outline-none focus:ring-4 focus:ring-[#3B82F6] resize-y"
                         placeholder="Why are you a great fit for this task?"
                       ></textarea>
                     </div>
@@ -583,15 +594,15 @@ export default function StudentExplore() {
                 </section>
               </div>
 
-              <div className="p-6 border-t border-border bg-card">
+              <div className="p-6 border-t-4 border-black dark:border-white bg-card">
                 <button
                   onClick={() => {
                     alert("Application submitted! (Mock)");
                     setSelectedTask(null);
                   }}
-                  className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
+                  className="w-full py-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white border-4 border-black dark:border-white font-black transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0_0_#000] dark:hover:shadow-[8px_8px_0_0_#fff] flex items-center justify-center gap-2 text-base uppercase tracking-widest"
                 >
-                  <FileText className="w-4 h-4" />
+                  <FileText className="w-5 h-5" />
                   Submit Application
                 </button>
               </div>

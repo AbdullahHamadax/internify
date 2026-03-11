@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { Clock, Users, CheckCircle2, BarChart3 } from "lucide-react";
 import type { Task } from "./TaskManagement";
+import { Typography } from "@/components/ui/Typography";
 
 export interface DashboardStats {
   activeTasks: number;
@@ -188,11 +189,11 @@ export default function StatsCards({ stats, tasks }: StatsCardsProps) {
         }) => (
           <div key={key} className={`emp-stat-card ${accentClass}`}>
             <div className="emp-stat-card__info">
-              <div className="emp-stat-card__label">{label}</div>
-              <div className="emp-stat-card__value">
+              <Typography variant="span" weight="bold" color="muted" className="emp-stat-card__label uppercase text-xs">{label}</Typography>
+              <Typography variant="h2" className="emp-stat-card__value">
                 {stats[key]}
                 {suffix ?? ""}
-              </div>
+              </Typography>
               <Sparkline points={sparklines[key]} color={sparkColor} />
             </div>
             <div className={`emp-stat-card__icon ${colorClass}`}>
