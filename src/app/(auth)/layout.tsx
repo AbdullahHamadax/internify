@@ -36,8 +36,6 @@ export default function AuthLayout({
               backgroundSize: "40px 40px",
             }}
           />
-          <div className="absolute top-1/4 -right-20 w-[600px] h-[600px] bg-[#2563EB] rotate-12 z-0 border-4 border-black box-content shadow-[16px_16px_0_0_rgba(0,0,0,1)] dark:border-white dark:shadow-[16px_16px_0_0_rgba(255,255,255,1)]" />
-          <div className="absolute bottom-10 left-10 w-64 h-64 bg-[#AB47BC] -rotate-6 z-0 border-4 border-black shadow-[12px_12px_0_0_rgba(0,0,0,1)] dark:border-white dark:shadow-[12px_12px_0_0_rgba(255,255,255,1)]" />
 
           <div className="relative z-10 flex items-center gap-3 text-2xl font-black uppercase tracking-widest text-black dark:text-white">
             <div className="border-4 border-black dark:border-white bg-white dark:bg-black p-2.5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">

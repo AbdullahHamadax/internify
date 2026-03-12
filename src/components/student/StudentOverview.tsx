@@ -133,7 +133,9 @@ export default function StudentOverview({
   const firstName = user?.firstName || "there";
 
   const applications = useQuery(api.tasks.getStudentApplications);
-  const activeCount = applications ? applications.length : MOCK_STATS.activeApplications;
+  const activeCount = applications
+    ? applications.length
+    : MOCK_STATS.activeApplications;
 
   return (
     <motion.div
@@ -148,7 +150,10 @@ export default function StudentOverview({
           <Typography variant="h1" className="text-white">
             Hello, <span className="stu-hero__accent">{firstName}</span> 👋
           </Typography>
-          <Typography variant="p" className="text-white opacity-90 text-sm md:text-base leading-relaxed mt-2">
+          <Typography
+            variant="p"
+            className="text-white opacity-90 text-sm md:text-base leading-relaxed mt-2"
+          >
             Here is your command center. You have{" "}
             <span className="inline-flex items-center justify-center font-black text-black bg-white px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] -rotate-2 text-xl md:text-2xl">
               {activeCount}
@@ -242,7 +247,7 @@ export default function StudentOverview({
         className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-10"
       >
         {/* LEFT: Active Pipeline (2/3) */}
-        <div className="space-y-4 min-w-0">
+        <div className="space-y-4">
           <div className="flex items-center justify-between mb-4">
             <Typography variant="h3">Active Pipeline</Typography>
           </div>
@@ -276,7 +281,9 @@ export default function StudentOverview({
                       {app.task.title}
                     </Typography>
                     <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 text-sm text-muted-foreground min-w-0 w-full">
-                      <span className="font-medium truncate">{app.task.companyName}</span>
+                      <span className="font-medium truncate">
+                        {app.task.companyName}
+                      </span>
                       <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-border shrink-0" />
                       <span className="flex items-center gap-1 shrink-0 whitespace-nowrap">
                         <Clock className="w-3.5 h-3.5" />
@@ -291,20 +298,22 @@ export default function StudentOverview({
                         app.status === "in_progress"
                           ? "bg-[#1E40AF] text-white"
                           : app.status === "completed"
-                          ? "bg-emerald-600 text-white"
-                          : "bg-[#2563EB] text-white"
+                            ? "bg-emerald-600 text-white"
+                            : "bg-[#2563EB] text-white"
                       }`}
                     >
                       {app.status === "in_progress"
                         ? "In Progress"
                         : app.status === "completed"
-                        ? "Completed"
-                        : "Under Review"}
+                          ? "Completed"
+                          : "Under Review"}
                     </span>
                     <div className="w-full sm:w-32 h-2 bg-muted border border-black dark:border-white overflow-hidden">
                       <div
                         className="h-full bg-blue-600 transition-all duration-1000"
-                        style={{ width: `${app.status === "in_progress" ? 50 : app.status === "completed" ? 100 : 25}%` }}
+                        style={{
+                          width: `${app.status === "in_progress" ? 50 : app.status === "completed" ? 100 : 25}%`,
+                        }}
                       />
                     </div>
                   </div>
@@ -315,7 +324,7 @@ export default function StudentOverview({
         </div>
 
         {/* RIGHT: Recommended For You (1/3) */}
-        <div className="space-y-4 min-w-0">
+        <div className="space-y-4">
           <div className="flex items-center justify-between mb-4">
             <Typography variant="h3" className="flex items-center gap-2">
               <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
@@ -337,7 +346,7 @@ export default function StudentOverview({
 
                 <Typography
                   variant="h4"
-                  className="mb-1 leading-tight group-hover:text-blue-600 transition-colors truncate block w-full"
+                  className="mb-1 leading-tight group-hover:text-blue-600 transition-colors"
                 >
                   {rec.title}
                 </Typography>

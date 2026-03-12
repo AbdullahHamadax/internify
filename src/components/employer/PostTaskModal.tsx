@@ -264,7 +264,7 @@ export default function PostTaskModal({
   const selectContentClass =
     "z-[200] bg-white border-2 border-border shadow-[4px_4px_0_0_var(--border)] dark:bg-black rounded-none";
   const selectItemClass =
-    "cursor-pointer focus:bg-border focus:text-card rounded-none font-bold tracking-wide";
+    "cursor-pointer focus:bg-black focus:text-white dark:focus:bg-white dark:focus:text-black rounded-none font-bold tracking-wide";
 
   return (
     <div className="emp-modal-overlay" onClick={onClose}>

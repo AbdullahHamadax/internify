@@ -1,9 +1,8 @@
 "use client";
 
+
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
 import {
   Bell,
   GraduationCap,
@@ -30,6 +29,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 // Sub-components to be implemented
 import StudentOverview from "./StudentOverview";
 import StudentExplore from "./StudentExplore";
+import StudentProfile from "./StudentProfile";
 
 import "./student-dashboard.css";
 
@@ -48,7 +48,6 @@ function StudentNavbar({
   activeNav: string;
   onNavigate: (id: string) => void;
 }) {
-  const router = useRouter();
   const { signOut } = useClerk();
   const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -61,7 +60,7 @@ function StudentNavbar({
         {/* Brand */}
         <div className="stu-navbar__brand">
           <div className="stu-navbar__brand-icon">
-            <GraduationCap className="size-[1.125rem]" />
+            <GraduationCap className="size-4.5" />
           </div>
           <span className="stu-navbar__brand-text">Internify</span>
         </div>
@@ -111,7 +110,7 @@ function StudentNavbar({
           <DropdownMenuContent align="end" className="w-56 mt-2">
             <DropdownMenuLabel>Student Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem className="cursor-pointer" onClick={() => onNavigate("profile")}>
               <User className="mr-2 size-4" />
               <span>Profile</span>
             </DropdownMenuItem>
@@ -215,6 +214,7 @@ export default function StudentDashboard() {
       <main className="stu-main">
         {activeNav === "dashboard" && <StudentOverview onNavigate={(id) => setActiveNav(id)} />}
         {activeNav === "explore" && <StudentExplore />}
+        {activeNav === "profile" && <StudentProfile />}
         {activeNav === "messages" && (
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center p-10 bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] max-w-md">
