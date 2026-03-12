@@ -242,7 +242,7 @@ export default function StudentOverview({
         className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-10"
       >
         {/* LEFT: Active Pipeline (2/3) */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <div className="flex items-center justify-between mb-4">
             <Typography variant="h3">Active Pipeline</Typography>
           </div>
@@ -268,17 +268,17 @@ export default function StudentOverview({
                   key={app._id}
                   className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-card border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none min-h-[100px] w-full min-w-0"
                 >
-                  <div className="flex-1 space-y-1 mb-4 sm:mb-0 min-w-0 pr-4">
+                  <div className="flex-1 w-full space-y-1 mb-4 sm:mb-0 min-w-0 pr-0 sm:pr-4">
                     <Typography
                       variant="h4"
                       className="group-hover:text-blue-600 transition-colors truncate block w-full"
                     >
                       {app.task.title}
                     </Typography>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <span className="font-medium">{app.task.companyName}</span>
-                      <span className="w-1 h-1 rounded-full bg-border" />
-                      <span className="flex items-center gap-1">
+                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 text-sm text-muted-foreground min-w-0 w-full">
+                      <span className="font-medium truncate">{app.task.companyName}</span>
+                      <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-border shrink-0" />
+                      <span className="flex items-center gap-1 shrink-0 whitespace-nowrap">
                         <Clock className="w-3.5 h-3.5" />
                         Due {deadlineToDuration(app.task.deadline)}
                       </span>
@@ -315,7 +315,7 @@ export default function StudentOverview({
         </div>
 
         {/* RIGHT: Recommended For You (1/3) */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <div className="flex items-center justify-between mb-4">
             <Typography variant="h3" className="flex items-center gap-2">
               <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
@@ -337,7 +337,7 @@ export default function StudentOverview({
 
                 <Typography
                   variant="h4"
-                  className="mb-1 leading-tight group-hover:text-blue-600 transition-colors"
+                  className="mb-1 leading-tight group-hover:text-blue-600 transition-colors truncate block w-full"
                 >
                   {rec.title}
                 </Typography>

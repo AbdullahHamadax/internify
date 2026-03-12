@@ -386,24 +386,23 @@ export default function EmployerDashboard() {
       />
 
       <main className="emp-main">
-        {activeNav === "talent-search" && (
-          <TalentSearch />
-        )}
+        {activeNav === "talent-search" && <TalentSearch />}
 
-        {activeNav === "messages" && (
-          <Messages />
-        )}
+        {activeNav === "messages" && <Messages />}
 
         {activeNav === "dashboard" && (
           <>
             {/* Hero header with personality */}
             <div className="emp-hero">
               <div className="emp-hero__text">
-                <Typography variant="h1">
+                <Typography variant="h1" className="text-white">
                   {timeGreeting},{" "}
                   <span className="emp-hero__accent">{firstName}</span> 👋
                 </Typography>
-                <Typography variant="p" className="text-white opacity-90 text-sm md:text-base leading-relaxed mt-2">
+                <Typography
+                  variant="p"
+                  className="text-white opacity-90 text-sm md:text-base leading-relaxed mt-2"
+                >
                   Your tasks have received{" "}
                   <span className="inline-flex items-center justify-center font-black text-black bg-white px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] -rotate-2 text-xl md:text-2xl">
                     {stats.totalSubmissions} submissions
