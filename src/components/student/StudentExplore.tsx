@@ -434,7 +434,7 @@ export default function StudentExplore() {
                     }}
                     className="px-6 py-3 bg-[#3B82F6] text-white dark:bg-[#3B82F6]  border-2 border-black dark:border-white font-black text-sm uppercase tracking-widest hover:translate-y-1 hover:translate-x-1 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:shadow-none"
                   >
-                    View & Apply
+                    View
                   </button>
                 </div>
               </motion.div>
@@ -603,7 +603,7 @@ export default function StudentExplore() {
                   className="w-full py-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white border-4 border-black dark:border-white font-black transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0_0_#000] dark:hover:shadow-[8px_8px_0_0_#fff] flex items-center justify-center gap-2 text-base uppercase tracking-widest"
                 >
                   <FileText className="w-5 h-5" />
-                  Submit Application
+                  Accept Task
                 </button>
               </div>
             </motion.div>
