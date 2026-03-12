@@ -26,6 +26,7 @@ export interface PostTaskData {
   description: string;
   skills: string[];
   deadline: number;
+  maxApplicants?: number;
   imageStorageIds?: string[];
   attachments?: {
     storageId: string;
@@ -71,6 +72,7 @@ export default function PostTaskModal({
   const [description, setDescription] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [deadline, setDeadline] = useState("");
+  const [maxApplicants, setMaxApplicants] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imageStorageIds, setImageStorageIds] = useState<string[]>([]);
@@ -107,6 +109,12 @@ export default function PostTaskModal({
         } else {
           setDeadline("");
         }
+
+        if (initialData.maxApplicants !== undefined) {
+          setMaxApplicants(initialData.maxApplicants.toString());
+        } else {
+          setMaxApplicants("");
+        }
       } else {
         resetForm();
       }
@@ -135,6 +143,7 @@ export default function PostTaskModal({
     setDescription("");
     setSkills([]);
     setDeadline("");
+    setMaxApplicants("");
     setErrors({});
     setSelectedFiles([]);
     setImageStorageIds([]);
@@ -149,6 +158,8 @@ export default function PostTaskModal({
     if (!skillLevel) newErrors.skillLevel = "Skill level is required";
     if (!description.trim()) newErrors.description = "Description is required";
     if (!deadline) newErrors.deadline = "Deadline is required";
+    if (maxApplicants && isNaN(Number(maxApplicants))) newErrors.maxApplicants = "Must be a valid number";
+    if (maxApplicants && Number(maxApplicants) < 1) newErrors.maxApplicants = "Must be at least 1";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -218,6 +229,7 @@ export default function PostTaskModal({
         description: description.trim(),
         skills,
         deadline: new Date(deadline).getTime(),
+        maxApplicants: maxApplicants ? Number(maxApplicants) : undefined,
         imageStorageIds: newStorageIds,
         attachments: [
           ...attachments.map((a) => ({
@@ -381,6 +393,24 @@ export default function PostTaskModal({
             />
             {errors.deadline && (
               <span className="emp-modal__error">{errors.deadline}</span>
+            )}
+          </div>
+
+          {/* Max Applicants */}
+          <div className="emp-modal__field">
+            <Label htmlFor="max-applicants">Max Applicants (Optional)</Label>
+            <Input
+              id="max-applicants"
+              type="number"
+              min="1"
+              placeholder="e.g. 5 (Leave empty for no limit)"
+              value={maxApplicants}
+              onChange={(e) => setMaxApplicants(e.target.value)}
+              aria-invalid={!!errors.maxApplicants}
+              className="rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
+            />
+            {errors.maxApplicants && (
+              <span className="emp-modal__error">{errors.maxApplicants}</span>
             )}
           </div>
 

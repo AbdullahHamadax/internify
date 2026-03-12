@@ -37,7 +37,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="bg-[#3B82F6] rounded-none border-2 border-black dark:border-white p-1.5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
+              <div className="bg-[#2563EB] rounded-none border-2 border-black dark:border-white p-1.5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
                 <GraduationCap className="h-6 w-6 text-black" />
               </div>
               <Typography

@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-
 import deviconData from "devicon/devicon.json";
 
 const ICON_MAPPINGS: Record<string, string> = {
@@ -35,14 +33,13 @@ import {
   Loader2,
   Inbox,
   X,
-  UploadCloud,
   FileText,
+  Users,
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
 import { motion, Variants, AnimatePresence } from "framer-motion";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { useUser } from "@clerk/nextjs";
 
 // ── Helpers ──
 
@@ -100,10 +97,10 @@ export default function StudentExplore() {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
-
-  const { user } = useUser();
+  const [isAccepting, setIsAccepting] = useState(false);
 
   const tasks = useQuery(api.tasks.browseTasks);
+  const acceptTask = useMutation(api.tasks.acceptTask);
 
   // Category filter groups — each maps to one or more DB categories
   const categoryFilters: { label: string; match: string[] }[] = [
@@ -183,12 +180,12 @@ export default function StudentExplore() {
               <input
                 type="text"
                 placeholder="Search by keywords, skills, or company..."
-                className="w-full h-12 pl-12 pr-4 bg-background border-2 border-black dark:border-white text-foreground placeholder:text-muted-foreground rounded-none focus:outline-none focus:ring-0 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#3B82F6] text-sm font-bold"
+                className="w-full h-12 pl-12 pr-4 bg-background border-2 border-black dark:border-white text-foreground placeholder:text-muted-foreground rounded-none focus:outline-none focus:ring-0 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] text-sm font-bold"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <button className="h-12 px-8 bg-black text-[#3B82F6] dark:bg-white dark:text-black font-black uppercase tracking-widest text-sm rounded-none hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all shadow-[4px_4px_0_0_#3B82F6] dark:shadow-[4px_4px_0_0_#3B82F6] border-2 border-black dark:border-white flex items-center justify-center">
+            <button className="h-12 px-8 bg-black text-[#2563EB] dark:bg-white dark:text-black font-black uppercase tracking-widest text-sm rounded-none hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all shadow-[4px_4px_0_0_#2563EB] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-white flex items-center justify-center">
               Search
             </button>
           </div>
@@ -213,7 +210,7 @@ export default function StudentExplore() {
                   onClick={() => setActiveCategory(f.label)}
                   className={`w-full text-left px-4 py-3 text-sm font-black uppercase tracking-wider transition-all border-2 ${
                     activeCategory === f.label
-                      ? "bg-[#3B82F6] text-white border-black dark:bg-[#3B82F6] shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]"
+                      ? "bg-[#2563EB] text-white border-black dark:bg-[#2563EB] shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]"
                       : "bg-white dark:bg-black text-black dark:text-white border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-900"
                   }`}
                 >
@@ -243,7 +240,7 @@ export default function StudentExplore() {
                       <div
                         className={`w-6 h-6 border-2 transition-colors flex items-center justify-center rounded-none ${
                           isChecked
-                            ? "bg-[#3B82F6] border-black text-white dark:bg-[#3B82F6] dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                            ? "bg-[#2563EB] border-black text-white dark:bg-[#2563EB] dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
                             : "bg-white dark:bg-black border-black dark:border-white"
                         }`}
                       >
@@ -345,10 +342,10 @@ export default function StudentExplore() {
                 }}
                 key={task._id}
                 onClick={() => setSelectedTask(task)}
-                className="group bg-white dark:bg-black border-2 border-black dark:border-white p-6 transition-all cursor-pointer shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#3B82F6] hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#3B82F6] block"
+                className="group w-full min-w-0 bg-white dark:bg-black border-2 border-black dark:border-white p-6 transition-all cursor-pointer shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#2563EB] hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#2563EB] block"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
-                  <div>
+                  <div className="flex-1 min-w-0 pr-4">
                     <div className="flex items-center gap-2 mb-2">
                       <span
                         className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
@@ -356,7 +353,7 @@ export default function StudentExplore() {
                             ? "bg-[#FF0055] text-white"
                             : task.skillLevel === "intermediate"
                               ? "bg-[#AB47BC] text-white"
-                              : "bg-[#3B82F6] text-white"
+                              : "bg-[#2563EB] text-white"
                         }`}
                       >
                         {capitalize(task.skillLevel)}
@@ -364,10 +361,13 @@ export default function StudentExplore() {
                       <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                         Posted {timeAgo(task.createdAt)}
                       </span>
+                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+                        <Users className="w-3 h-3" /> {task.applicantCount || 0}{task.maxApplicants ? `/${task.maxApplicants}` : ""}
+                      </span>
                     </div>
                     <Typography
                       variant="h3"
-                      className="group-hover:underline decoration-4 underline-offset-4 transition-all mb-2"
+                      className="group-hover:underline decoration-4 underline-offset-4 transition-all mb-2 truncate block w-full"
                     >
                       {task.title}
                     </Typography>
@@ -412,7 +412,7 @@ export default function StudentExplore() {
                       return (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#3B82F6] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#3B82F6] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#2563EB] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none"
                         >
                           {devicon && (
                             <i className={`${devicon} text-[14px]`} />
@@ -432,7 +432,7 @@ export default function StudentExplore() {
                       e.stopPropagation();
                       setSelectedTask(task);
                     }}
-                    className="px-6 py-3 bg-[#3B82F6] text-white dark:bg-[#3B82F6]  border-2 border-black dark:border-white font-black text-sm uppercase tracking-widest hover:translate-y-1 hover:translate-x-1 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:shadow-none"
+                    className="px-6 py-3 bg-[#2563EB] text-white dark:bg-[#2563EB]  border-2 border-black dark:border-white font-black text-sm uppercase tracking-widest hover:translate-y-1 hover:translate-x-1 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:shadow-none"
                   >
                     View
                   </button>
@@ -461,17 +461,20 @@ export default function StudentExplore() {
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed top-0 right-0 h-full w-full max-w-xl bg-background border-l-4 border-black dark:border-white z-[101] flex flex-col shadow-[-8px_0_0_0_rgba(0,0,0,0.1)] overflow-hidden"
             >
-              <div className="flex items-center justify-between p-6 border-b-4 border-black dark:border-white bg-[#3B82F6] dark:bg-black text-white">
-                <div>
+              <div className="flex items-start justify-between p-6 border-b-4 border-black dark:border-white bg-[#2563EB] dark:bg-black text-white">
+                <div className="flex-1 min-w-0 pr-4">
                   <Typography
                     variant="h2"
-                    className="mb-1 font-black uppercase tracking-widest text-2xl text-white"
+                    className="mb-1 font-black uppercase tracking-widest text-2xl text-white break-words"
                   >
                     {selectedTask.title}
                   </Typography>
-                  <Typography variant="p" className="text-sm m-0 text-white/80">
+                  <Typography variant="p" className="text-sm m-0 text-white/80 flex items-center gap-2 mt-1">
                     {selectedTask.companyName} •{" "}
-                    {capitalize(selectedTask.skillLevel)}
+                    {capitalize(selectedTask.skillLevel)} •{" "}
+                    <span className="flex items-center gap-1">
+                      <Users className="w-4 h-4" /> {selectedTask.applicantCount || 0}{selectedTask.maxApplicants ? `/${selectedTask.maxApplicants}` : ""} Applications
+                    </span>
                   </Typography>
                 </div>
                 <button
@@ -506,7 +509,7 @@ export default function StudentExplore() {
                       return (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#3B82F6] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#3B82F6] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#2563EB] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none"
                         >
                           {devicon && (
                             <i className={`${devicon} text-[14px]`} />
@@ -518,92 +521,38 @@ export default function StudentExplore() {
                   </div>
                 </section>
 
-                <hr className="border-t-4 border-black dark:border-white" />
-
-                {/* Apply Section */}
-                <section className="bg-white dark:bg-black border-4 border-black dark:border-white p-5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
-                  <Typography
-                    variant="h3"
-                    className="mb-4 text-[#FF3D00] dark:text-[#FF3D00] font-black uppercase tracking-wider"
-                  >
-                    Your Application
-                  </Typography>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 bg-white dark:bg-black border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
-                      <div className="w-10 h-10 border-2 border-black dark:border-white bg-[#3B82F6] flex items-center justify-center shrink-0">
-                        {user?.imageUrl ? (
-                          <Image
-                            src={user.imageUrl}
-                            alt="Profile"
-                            width={40}
-                            height={40}
-                            className="w-10 h-10 object-cover"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="text-black font-bold">
-                            {user?.firstName?.[0] || "S"}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <Typography
-                          variant="p"
-                          className="font-semibold text-sm m-0"
-                        >
-                          {user?.fullName || "Student User"}
-                        </Typography>
-                        <Typography
-                          variant="p"
-                          className="text-xs text-muted-foreground m-0"
-                        >
-                          {user?.primaryEmailAddress?.emailAddress ||
-                            "student@university.edu"}
-                        </Typography>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Typography
-                        variant="label"
-                        className="block text-sm font-medium mb-1.5 text-foreground/80"
-                      >
-                        CV / Resume (Optional)
-                      </Typography>
-                      <button className="w-full flex items-center justify-center gap-2 py-4 border-4 border-dashed border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors font-bold uppercase tracking-wider text-sm shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
-                        <UploadCloud className="w-5 h-5" />
-                        Upload PDF or Word Document
-                      </button>
-                    </div>
-
-                    <div>
-                      <Typography
-                        variant="label"
-                        className="block text-sm font-medium mb-1.5 text-foreground/80"
-                      >
-                        Message to Employer (Optional)
-                      </Typography>
-                      <textarea
-                        rows={3}
-                        className="w-full p-3 bg-transparent border-2 border-black dark:border-white text-sm focus:outline-none focus:ring-4 focus:ring-[#3B82F6] resize-y"
-                        placeholder="Why are you a great fit for this task?"
-                      ></textarea>
-                    </div>
-                  </div>
-                </section>
               </div>
 
               <div className="p-6 border-t-4 border-black dark:border-white bg-card">
                 <button
-                  onClick={() => {
-                    alert("Application submitted! (Mock)");
-                    setSelectedTask(null);
+                  disabled={isAccepting}
+                  onClick={async () => {
+                    if (!selectedTask) return;
+                    setIsAccepting(true);
+                    try {
+                      await acceptTask({ taskId: selectedTask._id });
+                      setSelectedTask(null);
+                    } catch (err: unknown) {
+                      const message =
+                        err instanceof Error
+                          ? err.message
+                          : "Failed to accept task";
+                      alert(message);
+                    } finally {
+                      setIsAccepting(false);
+                    }
                   }}
-                  className="w-full py-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white border-4 border-black dark:border-white font-black transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0_0_#000] dark:hover:shadow-[8px_8px_0_0_#fff] flex items-center justify-center gap-2 text-base uppercase tracking-widest"
+                  className="w-full py-4 bg-[#2563EB] hover:bg-[#2563EB] text-white border-4 border-black dark:border-white font-black transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0_0_#000] dark:hover:shadow-[8px_8px_0_0_#fff] flex items-center justify-center gap-2 text-base uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FileText className="w-5 h-5" />
-                  Accept Task
+                  {isAccepting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" /> Accepting…
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-5 h-5" /> Accept Task
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>

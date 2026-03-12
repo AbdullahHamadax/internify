@@ -104,6 +104,8 @@ export default defineSchema({
     description: v.string(),
     skills: v.array(v.string()), // Tags like ["React", "TypeScript"]
     deadline: v.number(), // Unix timestamp
+    maxApplicants: v.optional(v.number()), // Limit number of students who can apply
+    applicantCount: v.optional(v.number()), // Current applicants count
     status: v.union(
       v.literal("pending"),
       v.literal("in_progress"),
@@ -124,4 +126,22 @@ export default defineSchema({
   })
     .index("by_employerId", ["employerId"])
     .index("by_status", ["status"]),
+
+  /**
+   * APPLICATIONS TABLE
+   * Tracks which students have accepted/applied to which tasks.
+   */
+  applications: defineTable({
+    studentId: v.id("users"),
+    taskId: v.id("tasks"),
+    status: v.union(
+      v.literal("accepted"),
+      v.literal("in_progress"),
+      v.literal("completed"),
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_studentId", ["studentId"])
+    .index("by_taskId", ["taskId"])
+    .index("by_studentId_taskId", ["studentId", "taskId"]),
 });

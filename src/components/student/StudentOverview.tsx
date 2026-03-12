@@ -34,9 +34,24 @@ import {
   ArrowRight,
   Star,
   Eye,
+  Loader2,
 } from "lucide-react";
 
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+
 import { Typography } from "@/components/ui/Typography";
+
+function deadlineToDuration(deadline: number): string {
+  const diff = Math.max(0, deadline - Date.now());
+  if (diff === 0) return "Expired";
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  if (days < 7) return `${days} day${days !== 1 ? "s" : ""}`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks} week${weeks !== 1 ? "s" : ""}`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months !== 1 ? "s" : ""}`;
+}
 
 const MOCK_STATS = {
   activeApplications: 3,
@@ -117,6 +132,9 @@ export default function StudentOverview({
   const { user } = useUser();
   const firstName = user?.firstName || "there";
 
+  const applications = useQuery(api.tasks.getStudentApplications);
+  const activeCount = applications ? applications.length : MOCK_STATS.activeApplications;
+
   return (
     <motion.div
       initial="hidden"
@@ -133,7 +151,7 @@ export default function StudentOverview({
           <Typography variant="p" className="text-white opacity-90 text-sm md:text-base leading-relaxed mt-2">
             Here is your command center. You have{" "}
             <span className="inline-flex items-center justify-center font-black text-black bg-white px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] -rotate-2 text-xl md:text-2xl">
-              {MOCK_STATS.activeApplications}
+              {activeCount}
             </span>{" "}
             active applications and{" "}
             <span className="inline-flex items-center justify-center font-black text-black bg-[#FCD34D] px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] rotate-2 text-xl md:text-2xl">
@@ -162,7 +180,7 @@ export default function StudentOverview({
             </Typography>
           </div>
           <Typography variant="h2" className="tracking-tighter">
-            {MOCK_STATS.activeApplications}
+            {activeCount}
           </Typography>
         </div>
 
@@ -230,62 +248,70 @@ export default function StudentOverview({
           </div>
 
           <div className="space-y-4">
-            {MOCK_ACTIVE_PIPELINE.map((item) => (
-              <div
-                key={item.id}
-                className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-card border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none min-h-[100px]"
-              >
-                <div className="flex-1 space-y-1 mb-4 sm:mb-0">
-                  <Typography
-                    variant="h4"
-                    className="group-hover:text-blue-500 transition-colors"
-                  >
-                    {item.title}
-                  </Typography>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span className="font-medium">{item.company}</span>
-                    <span className="w-1 h-1 rounded-full bg-border" />
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      Due {item.deadline}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="w-full sm:w-auto flex flex-col items-end gap-2 shrink-0">
-                  <span
-                    className={`text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white px-3 py-1 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
-                      item.status === "in_progress"
-                        ? "bg-[#1E40AF] text-white"
-                        : "bg-[#3B82F6] text-white"
-                    }`}
-                  >
-                    {item.status === "in_progress"
-                      ? "In Progress"
-                      : "Under Review"}
-                  </span>
-                  <div className="w-full sm:w-32 h-2 bg-muted border border-black dark:border-white overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 transition-all duration-1000"
-                      style={{ width: `${item.progress}%` }}
-                    />
-                  </div>
-                </div>
+            {applications === undefined ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
-            ))}
-          </div>
+            ) : applications.length === 0 ? (
+              <div className="p-8 text-center bg-[#AB47BC] text-white border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
+                <Typography
+                  variant="h4"
+                  color="white"
+                  className="uppercase font-black"
+                >
+                  No active tasks. Time to explore!
+                </Typography>
+              </div>
+            ) : (
+              applications.map((app) => (
+                <div
+                  key={app._id}
+                  className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-card border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none min-h-[100px] w-full min-w-0"
+                >
+                  <div className="flex-1 space-y-1 mb-4 sm:mb-0 min-w-0 pr-4">
+                    <Typography
+                      variant="h4"
+                      className="group-hover:text-blue-600 transition-colors truncate block w-full"
+                    >
+                      {app.task.title}
+                    </Typography>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <span className="font-medium">{app.task.companyName}</span>
+                      <span className="w-1 h-1 rounded-full bg-border" />
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        Due {deadlineToDuration(app.task.deadline)}
+                      </span>
+                    </div>
+                  </div>
 
-          {MOCK_ACTIVE_PIPELINE.length === 0 && (
-            <div className="p-8 text-center bg-[#AB47BC] text-white border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
-              <Typography
-                variant="h4"
-                color="white"
-                className="uppercase font-black"
-              >
-                No active tasks. Time to explore!
-              </Typography>
-            </div>
-          )}
+                  <div className="w-full sm:w-auto flex flex-col items-end gap-2 shrink-0">
+                    <span
+                      className={`text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white px-3 py-1 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
+                        app.status === "in_progress"
+                          ? "bg-[#1E40AF] text-white"
+                          : app.status === "completed"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-[#2563EB] text-white"
+                      }`}
+                    >
+                      {app.status === "in_progress"
+                        ? "In Progress"
+                        : app.status === "completed"
+                        ? "Completed"
+                        : "Under Review"}
+                    </span>
+                    <div className="w-full sm:w-32 h-2 bg-muted border border-black dark:border-white overflow-hidden">
+                      <div
+                        className="h-full bg-blue-600 transition-all duration-1000"
+                        style={{ width: `${app.status === "in_progress" ? 50 : app.status === "completed" ? 100 : 25}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* RIGHT: Recommended For You (1/3) */}
@@ -304,14 +330,14 @@ export default function StudentOverview({
                 className="group block p-4 bg-card border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all cursor-pointer hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-white bg-[#3B82F6] px-2 py-1 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white bg-[#2563EB] px-2 py-1 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
                     {rec.matchScore}% Match
                   </span>
                 </div>
 
                 <Typography
                   variant="h4"
-                  className="mb-1 leading-tight group-hover:text-blue-500 transition-colors"
+                  className="mb-1 leading-tight group-hover:text-blue-600 transition-colors"
                 >
                   {rec.title}
                 </Typography>
@@ -349,7 +375,7 @@ export default function StudentOverview({
 
           <button
             onClick={() => onNavigate?.("explore")}
-            className="w-full group py-3 mt-4 flex items-center justify-center gap-2 bg-[#3B82F6] text-white border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff] active:translate-x-[8px] active:translate-y-[8px] active:shadow-none font-black text-sm uppercase tracking-wider"
+            className="w-full group py-3 mt-4 flex items-center justify-center gap-2 bg-[#2563EB] text-white border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff] active:translate-x-[8px] active:translate-y-[8px] active:shadow-none font-black text-sm uppercase tracking-wider"
           >
             Explore All Tasks
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

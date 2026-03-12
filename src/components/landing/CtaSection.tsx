@@ -7,12 +7,12 @@ import { Typography } from "@/components/ui/Typography";
 
 export default function CtaSection() {
   return (
-    <section className="noise-overlay relative bg-black dark:bg-[#3B82F6] py-20 sm:py-28 overflow-hidden border-y-8 border-black dark:border-white">
+    <section className="noise-overlay relative bg-black dark:bg-[#2563EB] py-20 sm:py-28 overflow-hidden border-y-8 border-black dark:border-white">
       {/* Accent box instead of gradient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[400px] bg-[#AB47BC] rounded-none border-8 border-white dark:border-black transform -rotate-2 -z-10" />
 
-      <AnimateIn className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center bg-white dark:bg-black border-4 border-black dark:border-white p-12 shadow-[16px_16px_0_0_#3B82F6] dark:shadow-[16px_16px_0_0_#AB47BC] transform rotate-1">
-        <Zap className="mx-auto h-10 w-10 text-[#3B82F6] mb-6" />
+      <AnimateIn className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center bg-white dark:bg-black border-4 border-black dark:border-white p-12 shadow-[16px_16px_0_0_#2563EB] dark:shadow-[16px_16px_0_0_#AB47BC] transform rotate-1">
+        <Zap className="mx-auto h-10 w-10 text-[#2563EB] mb-6" />
         <Typography variant="h2" color="default" className="text-black dark:text-white">
           Ready to start building your career?
         </Typography>
@@ -26,7 +26,7 @@ export default function CtaSection() {
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link
             href="/signup"
-            className="bg-[#3B82F6] text-white border-4 border-black inline-flex items-center gap-2 rounded-none px-8 py-4 text-sm font-black uppercase tracking-widest shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+            className="bg-[#2563EB] text-white border-4 border-black inline-flex items-center gap-2 rounded-none px-8 py-4 text-sm font-black uppercase tracking-widest shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
           >
             Browse Tasks
             <ChevronRight className="h-5 w-5" />

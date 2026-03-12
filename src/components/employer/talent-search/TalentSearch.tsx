@@ -419,7 +419,7 @@ export default function TalentSearch() {
                       return (
                         <span
                           key={skill}
-                          className="inline-flex items-center gap-1.5 px-2 py-1 border-2 border-black dark:border-white bg-[#3B82F6] text-white text-[10px] font-black uppercase tracking-widest shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                          className="inline-flex items-center gap-1.5 px-2 py-1 border-2 border-black dark:border-white bg-[#2563EB] text-white text-[10px] font-black uppercase tracking-widest shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
                         >
                           {iconClass && (
                             <i className={`${iconClass} text-xs`}></i>

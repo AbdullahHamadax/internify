@@ -28,7 +28,7 @@ const HERO_COPY: {
         "The bridge between academic theory and industry reality. Join the future of hiring.",
       trustTitle: "Trusted by Leaders",
       trustSubtitle: "Students | Employers | Training Partners",
-      accentColor: "text-blue-500",
+      accentColor: "text-blue-600",
     },
     student: {
       title: "Launch your",
@@ -37,7 +37,7 @@ const HERO_COPY: {
         "Solve real challenges, build your portfolio, and stand out to top employers.",
       trustTitle: "Built for Students",
       trustSubtitle: "Learn | Practice | Get Hired",
-      accentColor: "text-blue-500",
+      accentColor: "text-blue-600",
     },
     employer: {
       title: "Build your",
@@ -57,7 +57,7 @@ const HERO_COPY: {
         "Pick up your progress, continue solving tasks, and grow your profile.",
       trustTitle: "Student Workspace",
       trustSubtitle: "Tasks | Portfolio | Certificates",
-      accentColor: "text-blue-500",
+      accentColor: "text-blue-600",
     },
     employer: {
       title: "Welcome",
@@ -108,7 +108,7 @@ export function AuthHero() {
       <div className="flex items-center gap-4 border-4 border-black dark:border-white bg-white dark:bg-black p-4 shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
         <div className="flex -space-x-3">
           {[
-            { letter: "S", color: "bg-[#3B82F6]" },
+            { letter: "S", color: "bg-[#2563EB]" },
             { letter: "E", color: "bg-[#AB47BC]" },
             { letter: "T", color: "bg-[#10B981]" },
           ].map((avatar) => (

@@ -274,7 +274,8 @@ export default function EmployerDashboard() {
       category: t.category,
       skillLevel: t.skillLevel.charAt(0).toUpperCase() + t.skillLevel.slice(1),
       status: t.status as TaskStatus,
-      applications: 0,
+      applications: t.applicantCount || 0,
+      maxApplicants: t.maxApplicants,
       daysLeft: Math.max(
         0,
         Math.ceil((t.deadline - now) / (1000 * 60 * 60 * 24)),
@@ -286,6 +287,7 @@ export default function EmployerDashboard() {
       imageStorageIds: t.imageStorageIds,
       imageUrls: t.imageUrls,
       resolvedAttachments: t.resolvedAttachments,
+      acceptedBy: t.acceptedBy,
     })) || [];
 
   const stats: DashboardStats = employerStats || {
@@ -328,6 +330,7 @@ export default function EmployerDashboard() {
             description: taskData.description,
             skills: taskData.skills,
             deadline: taskData.deadline,
+            maxApplicants: taskData.maxApplicants,
             imageStorageIds: taskData.imageStorageIds as
               | Id<"_storage">[]
               | undefined,
@@ -348,6 +351,7 @@ export default function EmployerDashboard() {
             description: taskData.description,
             skills: taskData.skills,
             deadline: taskData.deadline,
+            maxApplicants: taskData.maxApplicants,
             imageStorageIds: taskData.imageStorageIds as
               | Id<"_storage">[]
               | undefined,

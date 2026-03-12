@@ -220,7 +220,7 @@ export default function CompleteProfilePage() {
             type="button"
             onClick={() => selectRole("student")}
             aria-label="Continue as a student"
-            className="group w-full flex items-start gap-4 p-5 rounded-none border-4 border-black dark:border-white bg-[#3B82F6] text-left transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[8px_8px_0_0_#000] dark:hover:shadow-[8px_8px_0_0_#fff]"
+            className="group w-full flex items-start gap-4 p-5 rounded-none border-4 border-black dark:border-white bg-[#2563EB] text-left transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[8px_8px_0_0_#000] dark:hover:shadow-[8px_8px_0_0_#fff]"
           >
             <div className="p-3 border-2 border-black dark:border-white bg-white text-black transition-colors group-hover:bg-black group-hover:text-white">
               <User className="w-6 h-6" />
@@ -292,7 +292,7 @@ export default function CompleteProfilePage() {
             className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
               isEmployer
                 ? "bg-[#AB47BC] text-white"
-                : "bg-[#3B82F6] text-white"
+                : "bg-[#2563EB] text-white"
             }`}
           >
             {isEmployer ? (
@@ -342,7 +342,7 @@ export default function CompleteProfilePage() {
               >
                 <ToggleGroupItem
                   value="undergraduate"
-                  className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#3B82F6] data-[state=on]:text-black hover:-translate-y-1`}
+                  className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-black hover:-translate-y-1`}
                 >
                   <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
                   Undergrad
@@ -350,7 +350,7 @@ export default function CompleteProfilePage() {
 
                 <ToggleGroupItem
                   value="graduate"
-                  className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#3B82F6] data-[state=on]:text-black hover:-translate-y-1`}
+                  className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-black hover:-translate-y-1`}
                 >
                   <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
                   Graduate
@@ -393,7 +393,7 @@ export default function CompleteProfilePage() {
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-2 border-2 border-black dark:border-white bg-[#3B82F6] text-white shadow-[2px_2px_0_0_#000]`}
+                    className={`p-2 border-2 border-black dark:border-white bg-[#2563EB] text-white shadow-[2px_2px_0_0_#000]`}
                   >
                     <Upload className="h-5 w-5" />
                   </div>
@@ -423,7 +423,7 @@ export default function CompleteProfilePage() {
                 type="submit"
                 disabled={isSubmitting || !isLoaded}
                 className={`h-11 rounded-none border-2 border-black dark:border-white text-white font-black uppercase tracking-widest text-xs min-[375px]:text-sm whitespace-normal px-2 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] ${
-                  isEmployer ? "bg-[#AB47BC]" : "bg-[#3B82F6]"
+                  isEmployer ? "bg-[#AB47BC]" : "bg-[#2563EB]"
                 }`}
               >
                 {isSubmitting ? "Saving..." : "Create Account"}
@@ -548,7 +548,7 @@ export default function CompleteProfilePage() {
                 type="submit"
                 disabled={isSubmitting || !isLoaded}
                 className={`h-11 rounded-none border-2 border-black dark:border-white text-white font-black uppercase tracking-widest text-xs min-[375px]:text-sm whitespace-normal px-2 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] ${
-                  isEmployer ? "bg-[#AB47BC]" : "bg-[#3B82F6]"
+                  isEmployer ? "bg-[#AB47BC]" : "bg-[#2563EB]"
                 }`}
               >
                 {isSubmitting ? "Saving..." : "Create Account"}
