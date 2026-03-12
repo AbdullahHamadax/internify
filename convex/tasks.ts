@@ -60,6 +60,7 @@ export const createTask = mutation({
     description: v.string(),
     skills: v.array(v.string()),
     deadline: v.number(),
+    maxApplicants: v.optional(v.number()),
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
   },
@@ -94,6 +95,8 @@ export const createTask = mutation({
       description: args.description,
       skills: args.skills,
       deadline: args.deadline,
+      maxApplicants: args.maxApplicants,
+      applicantCount: 0,
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
       status: "pending",
@@ -118,8 +121,43 @@ export const browseTasks = query({
       .order("desc")
       .collect();
 
+    // Get current user's accepted tasks if authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    const acceptedTaskIds = new Set<string>();
+
+    if (identity) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_tokenIdentifier", (q) =>
+          q.eq("tokenIdentifier", identity.tokenIdentifier),
+        )
+        .unique();
+
+      if (user && user.role === "student") {
+        const applications = await ctx.db
+          .query("applications")
+          .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+          .collect();
+        applications.forEach((app) => acceptedTaskIds.add(app.taskId));
+      }
+    }
+
+    // Filter out tasks that are full or already accepted by the user
+    const availableTasks = tasks.filter((task) => {
+      if (
+        task.maxApplicants &&
+        (task.applicantCount ?? 0) >= task.maxApplicants
+      ) {
+        return false;
+      }
+      if (acceptedTaskIds.has(task._id)) {
+        return false;
+      }
+      return true;
+    });
+
     const enriched = await Promise.all(
-      tasks.map(async (task) => {
+      availableTasks.map(async (task) => {
         // Resolve the employer's company name
         const employerProfile = await ctx.db
           .query("employerProfiles")
@@ -134,6 +172,8 @@ export const browseTasks = query({
           skillLevel: task.skillLevel,
           skills: task.skills,
           deadline: task.deadline,
+          maxApplicants: task.maxApplicants,
+          applicantCount: task.applicantCount,
           createdAt: task.createdAt,
           companyName: employerProfile?.companyName ?? "Unknown Company",
         };
@@ -223,11 +263,30 @@ export const getEmployerTasks = query({
           );
         }
 
+        // Fetch accepted students
+        const applications = await ctx.db
+          .query("applications")
+          .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+          .collect();
+
+        const acceptedByRaw = await Promise.all(
+          applications.map(async (app) => {
+            const student = await ctx.db.get(app.studentId);
+            if (!student) return null;
+            const name =
+              [student.firstName, student.lastName].filter(Boolean).join(" ") ||
+              "Student";
+            return { id: student._id, name };
+          }),
+        );
+        const acceptedBy = acceptedByRaw.filter((s) => s !== null);
+
         return {
           ...task,
           imageStorageIds: filteredLegacyIds, // Pass the filtered array to avoid resurrecting deleted attachments
           imageUrls,
           resolvedAttachments,
+          acceptedBy,
         };
       }),
     );
@@ -341,6 +400,7 @@ export const updateTask = mutation({
     description: v.string(),
     skills: v.array(v.string()),
     deadline: v.number(),
+    maxApplicants: v.optional(v.number()),
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
   },
@@ -400,9 +460,165 @@ export const updateTask = mutation({
       description: args.description,
       skills: args.skills,
       deadline: args.deadline,
+      maxApplicants: args.maxApplicants,
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
       updatedAt: Date.now(),
     });
+  },
+});
+
+/**
+ * Accept a task as a student.
+ * - Prevents duplicate applications
+ * - Checks capacity (maxApplicants)
+ * - Increments applicantCount on the task
+ */
+export const acceptTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") {
+      throw new Error("Unauthorized: Only students can accept tasks");
+    }
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    if (task.status !== "pending") {
+      throw new Error("This task is no longer accepting applications");
+    }
+
+    // Check if already accepted
+    const existingApplication = await ctx.db
+      .query("applications")
+      .withIndex("by_studentId_taskId", (q) =>
+        q.eq("studentId", user._id).eq("taskId", args.taskId),
+      )
+      .unique();
+
+    if (existingApplication) {
+      throw new Error("You have already accepted this task");
+    }
+
+    // Check capacity
+    const currentCount = task.applicantCount ?? 0;
+    if (task.maxApplicants && currentCount >= task.maxApplicants) {
+      throw new Error("This task has reached its maximum number of applicants");
+    }
+
+    // Create the application record
+    await ctx.db.insert("applications", {
+      studentId: user._id,
+      taskId: args.taskId,
+      status: "accepted",
+      createdAt: Date.now(),
+    });
+
+    // Increment applicant count on the task
+    await ctx.db.patch(args.taskId, {
+      applicantCount: currentCount + 1,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Get all task IDs the current student has accepted.
+ * Used in the explore page to disable duplicate applications.
+ */
+export const getStudentAcceptedTaskIds = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) return [];
+
+    const applications = await ctx.db
+      .query("applications")
+      .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+      .collect();
+
+    return applications.map((a) => a.taskId);
+  },
+});
+
+/**
+ * Get all applications for the current student with full task details.
+ * Used in the student dashboard active pipeline.
+ */
+export const getStudentApplications = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) return [];
+
+    const applications = await ctx.db
+      .query("applications")
+      .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+      .collect();
+
+    const enriched = await Promise.all(
+      applications.map(async (app) => {
+        const task = await ctx.db.get(app.taskId);
+        if (!task) return null;
+
+        const employerProfile = await ctx.db
+          .query("employerProfiles")
+          .withIndex("by_userId", (q) => q.eq("userId", task.employerId))
+          .unique();
+
+        return {
+          _id: app._id,
+          taskId: app.taskId,
+          status: app.status,
+          acceptedAt: app.createdAt,
+          task: {
+            title: task.title,
+            description: task.description,
+            category: task.category,
+            skillLevel: task.skillLevel,
+            skills: task.skills,
+            deadline: task.deadline,
+            status: task.status,
+            companyName: employerProfile?.companyName ?? "Unknown Company",
+          },
+        };
+      }),
+    );
+
+    return enriched.filter((item) => item !== null);
   },
 });

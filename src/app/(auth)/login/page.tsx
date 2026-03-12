@@ -326,7 +326,7 @@ export default function LoginPage() {
             onClick={() => handleRoleChange("student")}
             className={`flex h-11 items-center justify-center rounded-none border-2 px-4 text-sm font-black uppercase tracking-widest transition-all duration-200 ${
               !isEmployer
-                ? "border-black dark:border-white bg-[#3B82F6] text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#3B82F6]"
+                ? "border-black dark:border-white bg-[#2563EB] text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB]"
                 : "border-black dark:border-white bg-white dark:bg-black text-gray-500 hover:text-black dark:hover:text-white hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff] hover:-translate-y-[2px]"
             }`}
           >
@@ -405,7 +405,7 @@ export default function LoginPage() {
             type="submit"
             disabled={isSubmitting || !isLoaded}
             className={`w-full h-11 text-base rounded-none border-2 border-black dark:border-white font-black uppercase tracking-widest text-white transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] ${
-              isEmployer ? "bg-[#AB47BC]" : "bg-[#3B82F6]"
+              isEmployer ? "bg-[#AB47BC]" : "bg-[#2563EB]"
             }`}
           >
             {isSubmitting ? "Signing in..." : "Sign in"}

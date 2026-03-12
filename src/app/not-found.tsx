@@ -20,8 +20,8 @@ export default function NotFound() {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-950 overflow-hidden px-4">
       {/* Gradient blobs */}
-      <div className="absolute top-0 right-0 -z-10 w-[500px] h-[500px] bg-gradient-to-br from-[#3B82F6]/10 via-[#1565C0]/8 to-[#7B1FA2]/10 dark:from-[#3B82F6]/20 dark:via-[#1565C0]/15 dark:to-[#7B1FA2]/20 rounded-full blur-3xl translate-x-1/4 -translate-y-1/4" />
-      <div className="absolute bottom-0 left-0 -z-10 w-[400px] h-[400px] bg-gradient-to-tr from-[#7B1FA2]/8 to-[#3B82F6]/8 dark:from-[#7B1FA2]/15 dark:to-[#3B82F6]/15 rounded-full blur-3xl -translate-x-1/4 translate-y-1/4" />
+      <div className="absolute top-0 right-0 -z-10 w-[500px] h-[500px] bg-gradient-to-br from-[#2563EB]/10 via-[#1565C0]/8 to-[#7B1FA2]/10 dark:from-[#2563EB]/20 dark:via-[#1565C0]/15 dark:to-[#7B1FA2]/20 rounded-full blur-3xl translate-x-1/4 -translate-y-1/4" />
+      <div className="absolute bottom-0 left-0 -z-10 w-[400px] h-[400px] bg-gradient-to-tr from-[#7B1FA2]/8 to-[#2563EB]/8 dark:from-[#7B1FA2]/15 dark:to-[#2563EB]/15 rounded-full blur-3xl -translate-x-1/4 translate-y-1/4" />
 
       {/* Noise texture */}
       <div className="noise-overlay absolute inset-0 pointer-events-none" />
@@ -71,7 +71,7 @@ export default function NotFound() {
         >
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-black uppercase tracking-widest text-white bg-[#3B82F6] border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+            className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-black uppercase tracking-widest text-white bg-[#2563EB] border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
           >
             <Home className="h-4 w-4" />
             Back to Home

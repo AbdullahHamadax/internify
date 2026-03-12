@@ -28,7 +28,7 @@ export default function AudienceSection() {
           <AnimateIn direction="left" delay={0.1}>
             <div
               id="for-students"
-              className="rounded-none border-4 border-black dark:border-white bg-[#3B82F6] dark:bg-gray-900 p-8 sm:p-10 shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#3B82F6] scroll-mt-20"
+              className="rounded-none border-4 border-black dark:border-white bg-[#2563EB] dark:bg-gray-900 p-8 sm:p-10 shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#2563EB] scroll-mt-20"
             >
               <span className="inline-block rounded-none border-2 border-black dark:border-white bg-white dark:bg-black px-4 py-1.5 text-xs font-black text-black dark:text-white uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
                 For Students
@@ -39,7 +39,7 @@ export default function AudienceSection() {
               <ul className="mt-6 space-y-4">
                 {studentBullets.map((item) => (
                   <li key={item} className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-white dark:text-[#3B82F6]" />
+                    <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-white dark:text-[#2563EB]" />
                     <Typography
                       variant="span"
                       color="default"
@@ -52,7 +52,7 @@ export default function AudienceSection() {
               </ul>
               <Link
                 href="/signup"
-                className="mt-8 inline-flex items-center gap-2 bg-black text-white dark:bg-[#3B82F6] dark:text-black border-4 border-black dark:border-white rounded-none px-6 py-3 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#AB47BC] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+                className="mt-8 inline-flex items-center gap-2 bg-black text-white dark:bg-[#2563EB] dark:text-black border-4 border-black dark:border-white rounded-none px-6 py-3 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#AB47BC] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
                 Start Learning Free
                 <ArrowRight className="h-5 w-5" />
@@ -88,7 +88,7 @@ export default function AudienceSection() {
               </ul>
               <Link
                 href="/signup"
-                className="mt-8 inline-flex items-center gap-2 bg-black text-white dark:bg-[#AB47BC] dark:text-white border-4 border-black dark:border-white rounded-none px-6 py-3 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#3B82F6] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+                className="mt-8 inline-flex items-center gap-2 bg-black text-white dark:bg-[#AB47BC] dark:text-white border-4 border-black dark:border-white rounded-none px-6 py-3 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#2563EB] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
                 Post a Challenge
                 <ArrowRight className="h-5 w-5" />

@@ -12,8 +12,8 @@ const stats = [
     label: "Students",
     icon: Users,
     duration: 0.9,
-    accent: "bg-[#3B82F6]",
-    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#3B82F6] border-2 border-black dark:border-[#3B82F6]",
+    accent: "bg-[#2563EB]",
+    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-[#2563EB]",
   },
   {
     value: 50,
@@ -21,8 +21,8 @@ const stats = [
     label: "Partner Companies",
     icon: Building2,
     duration: 0.7,
-    accent: "bg-[#3B82F6]",
-    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#3B82F6] border-2 border-black dark:border-[#3B82F6]",
+    accent: "bg-[#2563EB]",
+    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-[#2563EB]",
   },
   {
     value: 500,
@@ -37,8 +37,8 @@ const stats = [
     value: "AI",
     label: "Powered Feedback",
     icon: Bot,
-    accent: "bg-[#3B82F6]",
-    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#3B82F6] border-2 border-black dark:border-[#3B82F6]",
+    accent: "bg-[#2563EB]",
+    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-[#2563EB]",
   },
 ];
 

@@ -57,7 +57,7 @@ export default function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="bg-[#3B82F6] rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] p-1.5">
+            <div className="bg-[#2563EB] rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] p-1.5">
               <GraduationCap className="h-6 w-6 text-black" />
             </div>
             <Typography
@@ -82,7 +82,7 @@ export default function Navbar() {
                     link.href.startsWith("/#") &&
                     typeof window !== "undefined" &&
                     window.location.hash === link.href.slice(1))
-                    ? "bg-[#3B82F6] text-white border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] -translate-y-1 -translate-x-1"
+                    ? "bg-[#2563EB] text-white border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] -translate-y-1 -translate-x-1"
                     : "text-black dark:text-white"
                 }`}
               >
@@ -102,7 +102,7 @@ export default function Navbar() {
             </Link>
             <Link
               href="/signup"
-              className="bg-[#3B82F6] text-white border-2 border-black dark:border-white px-5 py-2.5 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+              className="bg-[#2563EB] text-white border-2 border-black dark:border-white px-5 py-2.5 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
             >
               Get Started
             </Link>
@@ -141,7 +141,7 @@ export default function Navbar() {
                     link.href.startsWith("/#") &&
                     typeof window !== "undefined" &&
                     window.location.hash === link.href.slice(1))
-                    ? "bg-[#3B82F6] text-white"
+                    ? "bg-[#2563EB] text-white"
                     : "bg-white text-black dark:bg-black dark:text-white hover:bg-[#AB47BC] hover:text-white"
                 }`}
               >
@@ -157,7 +157,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/signup"
-                className="bg-[#3B82F6] text-white border-2 border-black dark:border-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+                className="bg-[#2563EB] text-white border-2 border-black dark:border-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
                 Get Started
               </Link>

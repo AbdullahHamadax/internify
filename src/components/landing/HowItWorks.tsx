@@ -18,7 +18,7 @@ const StudentMockup1 = () => (
       {/* Task Card 1 */}
       <div className="bg-white dark:bg-black p-2 rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] flex flex-col gap-2">
         <div className="flex gap-2 items-center">
-          <div className="w-7 h-7 bg-[#3B82F6] border-2 border-black dark:border-white flex items-center justify-center">
+          <div className="w-7 h-7 bg-[#2563EB] border-2 border-black dark:border-white flex items-center justify-center">
             <Briefcase className="w-4 h-4 text-black" strokeWidth={2.5} />
           </div>
           <div className="flex-1">
@@ -46,7 +46,7 @@ const StudentMockup1 = () => (
 
 const StudentMockup2 = () => (
   <div className="w-48 h-48 relative flex items-center justify-center z-10 mx-auto">
-    <div className="absolute inset-0 bg-[#3B82F6] border-2 border-black dark:border-white rounded-none rotate-6 opacity-100 translate-x-2 translate-y-2"></div>
+    <div className="absolute inset-0 bg-[#2563EB] border-2 border-black dark:border-white rounded-none rotate-6 opacity-100 translate-x-2 translate-y-2"></div>
     <div className="relative w-44 bg-white dark:bg-gray-950 rounded-none border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] p-3.5 flex flex-col gap-3">
       <div className="flex justify-between items-center border-b-2 border-black dark:border-white pb-2">
         <div className="flex items-center gap-2">
@@ -55,7 +55,7 @@ const StudentMockup2 = () => (
           </div>
           <div className="h-2 w-12 bg-black dark:bg-white"></div>
         </div>
-        <div className="w-3 h-3 bg-[#3B82F6] border-2 border-black dark:border-white"></div>
+        <div className="w-3 h-3 bg-[#2563EB] border-2 border-black dark:border-white"></div>
       </div>
       
       <div className="bg-gray-100 dark:bg-gray-900 p-3 border-2 border-dashed border-black dark:border-white flex flex-col items-center justify-center gap-2 py-4">
@@ -63,7 +63,7 @@ const StudentMockup2 = () => (
         <div className="h-2 w-16 bg-black dark:bg-white"></div>
       </div>
       
-      <button className="w-full h-9 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-white dark:text-black text-[11px] font-black uppercase tracking-widest border-2 border-black dark:border-white shadow-[2px_2px_0_0_#3B82F6]">
+      <button className="w-full h-9 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-white dark:text-black text-[11px] font-black uppercase tracking-widest border-2 border-black dark:border-white shadow-[2px_2px_0_0_#2563EB]">
         <Send className="w-3.5 h-3.5" />
         Submit
       </button>
@@ -74,14 +74,14 @@ const StudentMockup2 = () => (
 const StudentMockup3 = () => (
   <div className="w-48 h-48 bg-white dark:bg-gray-950 rounded-none border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] relative overflow-hidden flex flex-col z-10 mx-auto justify-center items-center">
     {/* Stark Banner Stripe */}
-    <div className="absolute top-0 inset-x-0 h-10 bg-[#3B82F6] border-b-2 border-black dark:border-white"></div>
+    <div className="absolute top-0 inset-x-0 h-10 bg-[#2563EB] border-b-2 border-black dark:border-white"></div>
     
     <div className="relative z-10 flex flex-col items-center w-full px-4 text-center mt-6">
       <div className="w-14 h-14 bg-white dark:bg-black border-2 border-black dark:border-white flex items-center justify-center shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] mb-4 rotate-3">
         <Award className="w-7 h-7 text-black dark:text-white" strokeWidth={2.5} />
       </div>
       
-      <div className="px-3 py-1 bg-black text-white dark:bg-white dark:text-black font-black text-[9px] uppercase tracking-[0.2em] mb-3 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#3B82F6]">
+      <div className="px-3 py-1 bg-black text-white dark:bg-white dark:text-black font-black text-[9px] uppercase tracking-[0.2em] mb-3 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#2563EB]">
         Certified
       </div>
       
@@ -128,13 +128,13 @@ const EmployerMockup1 = () => (
 
 const EmployerMockup2 = () => (
   <div className="relative w-48 h-48 flex items-center justify-center z-10 mx-auto">
-    <div className="absolute w-44 h-44 bg-[#3B82F6] -rotate-6 translate-x-2 translate-y-3 border-2 border-black dark:border-white" />
+    <div className="absolute w-44 h-44 bg-[#2563EB] -rotate-6 translate-x-2 translate-y-3 border-2 border-black dark:border-white" />
     <div className="relative w-40 bg-white dark:bg-gray-950 rounded-none border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] p-4">
       <div className="flex justify-between items-start mb-4 border-b-2 border-black dark:border-white pb-3">
         <div className="w-8 h-8 bg-black dark:bg-white flex items-center justify-center">
-          <Bot className="w-5 h-5 text-[#3B82F6] dark:text-black" />
+          <Bot className="w-5 h-5 text-[#2563EB] dark:text-black" />
         </div>
-        <div className="px-2 py-1 bg-black text-[#3B82F6] dark:bg-white dark:text-black border-2 border-black dark:border-white text-[10px] font-black uppercase tracking-widest shadow-[2px_2px_0_0_#3B82F6]">
+        <div className="px-2 py-1 bg-black text-[#2563EB] dark:bg-white dark:text-black border-2 border-black dark:border-white text-[10px] font-black uppercase tracking-widest shadow-[2px_2px_0_0_#2563EB]">
           AI
         </div>
       </div>
@@ -147,7 +147,7 @@ const EmployerMockup2 = () => (
         </span>
       </div>
       <div className="w-full h-3 border-2 border-black dark:border-white bg-gray-200 dark:bg-gray-800">
-        <div className="w-[94%] h-full bg-[#3B82F6] border-r-2 border-black dark:border-white" />
+        <div className="w-[94%] h-full bg-[#2563EB] border-r-2 border-black dark:border-white" />
       </div>
     </div>
   </div>
@@ -159,7 +159,7 @@ const EmployerMockup3 = () => (
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className={`w-10 h-10 border-2 border-black dark:border-white flex items-center justify-center shadow-[2px_2px_0_0_#000] z-[${4 - i}] ${i === 1 ? "bg-[#3B82F6]" : i === 2 ? "bg-[#AB47BC]" : "bg-[#3B82F6]"} ${i === 2 ? "-translate-y-2" : ""}`}
+          className={`w-10 h-10 border-2 border-black dark:border-white flex items-center justify-center shadow-[2px_2px_0_0_#000] z-[${4 - i}] ${i === 1 ? "bg-[#2563EB]" : i === 2 ? "bg-[#AB47BC]" : "bg-[#2563EB]"} ${i === 2 ? "-translate-y-2" : ""}`}
         >
           <div className="w-4 h-4 rounded-none bg-black dark:bg-white mix-blend-overlay" />
         </div>
@@ -168,7 +168,7 @@ const EmployerMockup3 = () => (
     <div className="w-20 h-2 bg-black dark:bg-white mb-2" />
     <div className="w-16 h-1.5 bg-gray-400 dark:bg-gray-600 mb-6" />
 
-    <div className="w-full h-10 border-2 border-black dark:border-white bg-black dark:bg-white flex items-center justify-center gap-2 text-white dark:text-black shadow-[2px_2px_0_0_#3B82F6]">
+    <div className="w-full h-10 border-2 border-black dark:border-white bg-black dark:bg-white flex items-center justify-center gap-2 text-white dark:text-black shadow-[2px_2px_0_0_#2563EB]">
       <ShieldCheck className="w-4 h-4" />
       <span className="text-[11px] font-black uppercase tracking-widest">
         Hired
@@ -260,7 +260,7 @@ export default function HowItWorks() {
               {activeTab === "students" && (
                 <motion.div
                   layoutId="how-it-works-toggle"
-                  className="absolute inset-0 -z-10 bg-white dark:bg-black border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#3B82F6]"
+                  className="absolute inset-0 -z-10 bg-white dark:bg-black border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB]"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
@@ -277,7 +277,7 @@ export default function HowItWorks() {
               {activeTab === "employers" && (
                 <motion.div
                   layoutId="how-it-works-toggle"
-                  className="absolute inset-0 -z-10 bg-white dark:bg-black border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#3B82F6]"
+                  className="absolute inset-0 -z-10 bg-white dark:bg-black border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB]"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
@@ -302,7 +302,7 @@ export default function HowItWorks() {
 
                 <div className="relative w-full z-20">
                   {/* Step Badge */}
-                  <span className="absolute -top-14 left-1/2 -translate-x-1/2 w-10 h-10 bg-[#3B82F6] dark:bg-black border-2 border-black dark:border-white flex items-center justify-center text-sm font-black text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#3B82F6]">
+                  <span className="absolute -top-14 left-1/2 -translate-x-1/2 w-10 h-10 bg-[#2563EB] dark:bg-black border-2 border-black dark:border-white flex items-center justify-center text-sm font-black text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB]">
                     {step.num}
                   </span>
 

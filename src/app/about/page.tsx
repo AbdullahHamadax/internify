@@ -42,7 +42,7 @@ const values = [
     icon: Lightbulb,
     title: "Real-World Skills",
     desc: "Every task on Internify is authored by a real employer and mirrors actual work. No toy projects — only challenges that build genuine competence.",
-    accent: "bg-blue-500",
+    accent: "bg-blue-600",
   },
   {
     icon: Bot,
@@ -84,7 +84,7 @@ export default function AboutPage() {
               <Typography as="span" variant="h1">
                 Why We Built{" "}
               </Typography>
-              <Typography as="span" variant="h1" className="text-blue-600 dark:text-blue-500">
+              <Typography as="span" variant="h1" className="text-blue-600 dark:text-blue-600">
                 Internify
               </Typography>
             </Typography>
@@ -121,7 +121,7 @@ export default function AboutPage() {
               return (
                 <AnimateIn key={item.title} delay={i * 0.1}>
                   <div className="rounded-2xl border-2 border-black dark:border-white bg-white dark:bg-gray-900 p-8 h-full transition-transform duration-300 hover:-translate-y-1 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
                       <Icon className="h-6 w-6 text-white" />
                     </div>
                     <Typography variant="h4" as="h3" className="mt-5">
