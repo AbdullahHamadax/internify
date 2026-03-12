@@ -74,6 +74,13 @@ export default defineSchema({
     userId: v.id("users"), // Example: "jd769..." (This connects this profile to a ID in the 'users' table)
     academicStatus: academicStatusValidator,
     fieldOfStudy: v.string(), // Example: "Computer Science"
+    title: v.optional(v.string()), // Example: "Frontend Developer"
+    location: v.optional(v.string()), // Example: "San Francisco, CA"
+    description: v.optional(v.string()),
+    portfolio: v.optional(v.string()),
+    github: v.optional(v.string()),
+    linkedin: v.optional(v.string()),
+    skills: v.optional(v.array(v.string())),
     cvStorageId: v.optional(v.id("_storage")), // Example: A file ID for their uploaded PDF resume
     cvFileName: v.optional(v.string()), // Example: "Alice_Resume_2024.pdf"
     updatedAt: v.number(),

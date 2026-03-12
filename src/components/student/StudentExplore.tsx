@@ -35,6 +35,8 @@ import {
   X,
   FileText,
   Users,
+  Download,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
 import { motion, Variants, AnimatePresence } from "framer-motion";
@@ -98,6 +100,11 @@ export default function StudentExplore() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [previewAttachment, setPreviewAttachment] = useState<{
+    url: string;
+    type: string;
+    name: string;
+  } | null>(null);
 
   const tasks = useQuery(api.tasks.browseTasks);
   const acceptTask = useMutation(api.tasks.acceptTask);
@@ -180,7 +187,7 @@ export default function StudentExplore() {
               <input
                 type="text"
                 placeholder="Search by keywords, skills, or company..."
-                className="w-full h-12 pl-12 pr-4 bg-background border-2 border-black dark:border-white text-foreground placeholder:text-muted-foreground rounded-none focus:outline-none focus:ring-0 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] text-sm font-bold"
+                className="w-full h-12 pl-10 pr-4 bg-background border-2 border-black dark:border-white text-foreground placeholder:text-muted-foreground rounded-none focus:outline-none focus:ring-0 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] text-sm font-bold"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -330,16 +337,8 @@ export default function StudentExplore() {
 
           {/* Task Cards */}
           <div className="grid grid-cols-1 gap-4">
-            {filteredTasks.map((task, index) => (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 24,
-                  delay: index * 0.08,
-                }}
+            {filteredTasks.map((task) => (
+              <div
                 key={task._id}
                 onClick={() => setSelectedTask(task)}
                 className="group w-full min-w-0 bg-white dark:bg-black border-2 border-black dark:border-white p-6 transition-all cursor-pointer shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#2563EB] hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#2563EB] block"
@@ -362,7 +361,8 @@ export default function StudentExplore() {
                         Posted {timeAgo(task.createdAt)}
                       </span>
                       <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-                        <Users className="w-3 h-3" /> {task.applicantCount || 0}{task.maxApplicants ? `/${task.maxApplicants}` : ""}
+                        <Users className="w-3 h-3" /> {task.applicantCount || 0}
+                        {task.maxApplicants ? `/${task.maxApplicants}` : ""}
                       </span>
                     </div>
                     <Typography
@@ -437,7 +437,7 @@ export default function StudentExplore() {
                     View
                   </button>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -452,28 +452,36 @@ export default function StudentExplore() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedTask(null)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]"
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-100"
             />
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-full max-w-xl bg-background border-l-4 border-black dark:border-white z-[101] flex flex-col shadow-[-8px_0_0_0_rgba(0,0,0,0.1)] overflow-hidden"
+              className="fixed top-0 right-0 h-full w-full max-w-xl bg-background border-l-4 border-black dark:border-white z-101 flex flex-col shadow-[-8px_0_0_0_rgba(0,0,0,0.1)] overflow-hidden"
             >
               <div className="flex items-start justify-between p-6 border-b-4 border-black dark:border-white bg-[#2563EB] dark:bg-black text-white">
                 <div className="flex-1 min-w-0 pr-4">
                   <Typography
                     variant="h2"
-                    className="mb-1 font-black uppercase tracking-widest text-2xl text-white break-words"
+                    className="mb-1 font-black uppercase tracking-widest text-2xl text-white wrap-break-word"
                   >
                     {selectedTask.title}
                   </Typography>
-                  <Typography variant="p" className="text-sm m-0 text-white/80 flex items-center gap-2 mt-1">
+                  <Typography
+                    variant="p"
+                    className="text-sm m-0 text-white/80 flex items-center gap-2 mt-1"
+                  >
                     {selectedTask.companyName} •{" "}
                     {capitalize(selectedTask.skillLevel)} •{" "}
                     <span className="flex items-center gap-1">
-                      <Users className="w-4 h-4" /> {selectedTask.applicantCount || 0}{selectedTask.maxApplicants ? `/${selectedTask.maxApplicants}` : ""} Applications
+                      <Users className="w-4 h-4" />{" "}
+                      {selectedTask.applicantCount || 0}
+                      {selectedTask.maxApplicants
+                        ? `/${selectedTask.maxApplicants}`
+                        : ""}{" "}
+                      Applications
                     </span>
                   </Typography>
                 </div>
@@ -493,7 +501,7 @@ export default function StudentExplore() {
                   </Typography>
                   <Typography
                     variant="p"
-                    className="text-sm whitespace-pre-wrap break-words leading-relaxed text-foreground/80"
+                    className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed text-foreground/80"
                   >
                     {selectedTask.description}
                   </Typography>
@@ -521,6 +529,54 @@ export default function StudentExplore() {
                   </div>
                 </section>
 
+                {selectedTask.resolvedAttachments &&
+                  selectedTask.resolvedAttachments.length > 0 && (
+                    <section>
+                      <Typography variant="h4" className="mb-3">
+                        Attachments
+                      </Typography>
+                      <div className="flex flex-col gap-2">
+                        {selectedTask.resolvedAttachments.map(
+                          (att: {
+                            storageId: string;
+                            name: string;
+                            url: string;
+                            type: string;
+                          }) => {
+                            const isImage = att.type.startsWith("image/");
+
+                            return (
+                              <button
+                                key={att.storageId}
+                                onClick={() => setPreviewAttachment(att)}
+                                className="group flex flex-col sm:flex-row sm:items-center justify-between p-3 border-2 border-black dark:border-white bg-card hover:bg-muted transition-colors text-left"
+                              >
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                  <div className="p-2 border-2 border-transparent group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-colors shrink-0">
+                                    {isImage ? (
+                                      <ImageIcon className="w-4 h-4" />
+                                    ) : (
+                                      <FileText className="w-4 h-4" />
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col overflow-hidden">
+                                    <span className="text-sm font-bold truncate group-hover:underline decoration-2 underline-offset-2">
+                                      {att.name}
+                                    </span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] mt-0.5">
+                                      {isImage
+                                        ? "Image Preview"
+                                        : "PDF Preview"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          },
+                        )}
+                      </div>
+                    </section>
+                  )}
               </div>
 
               <div className="p-6 border-t-4 border-black dark:border-white bg-card">
@@ -557,6 +613,91 @@ export default function StudentExplore() {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Attachment Preview Modal */}
+      <AnimatePresence>
+        {previewAttachment && (
+          <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setPreviewAttachment(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-4xl max-h-[90vh] bg-background border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-4 border-b-4 border-black dark:border-white bg-[#A7F3D0] text-black">
+                <Typography
+                  variant="h4"
+                  className="truncate pr-4 font-black uppercase tracking-widest border-r-4 border-transparent"
+                >
+                  {previewAttachment.name}
+                </Typography>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="hidden sm:inline-block text-xs font-black uppercase tracking-widest px-2 py-1 border-2 border-black shadow-[2px_2px_0_0_#000]">
+                    Verified by Internify
+                  </span>
+                  <a
+                    href={previewAttachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 border-2 border-black hover:bg-black hover:text-[#A7F3D0] transition-colors"
+                    title="Download Original"
+                  >
+                    <Download className="w-5 h-5" />
+                  </a>
+                  <button
+                    onClick={() => setPreviewAttachment(null)}
+                    className="p-1 border-2 border-black hover:bg-black hover:text-[#A7F3D0] transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-auto bg-muted/50 p-4 sm:p-8 flex justify-center items-center">
+                {previewAttachment.type.startsWith("image/") ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={previewAttachment.url}
+                    alt={previewAttachment.name}
+                    className="max-w-full max-h-full object-contain border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000]"
+                  />
+                ) : previewAttachment.type === "application/pdf" ? (
+                  <iframe
+                    src={`${previewAttachment.url}#toolbar=0`}
+                    className="w-full h-full min-h-[60vh] border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000]"
+                    title={previewAttachment.name}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground w-full">
+                    <FileText className="w-16 h-16 mb-4 opacity-50" />
+                    <Typography variant="h3" className="mb-2 uppercase">
+                      Preview Not Available
+                    </Typography>
+                    <Typography variant="p">
+                      This file type cannot be previewed in the browser.
+                    </Typography>
+                    <a
+                      href={previewAttachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-6 px-6 py-2 bg-black text-[#A7F3D0] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-4 border-black inline-flex items-center gap-2 font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] hover:shadow-none"
+                    >
+                      <Download className="w-4 h-4" /> Download File
+                    </a>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </motion.div>

@@ -164,6 +164,40 @@ export const browseTasks = query({
           .withIndex("by_userId", (q) => q.eq("userId", task.employerId))
           .unique();
 
+        let resolvedAttachments: {
+          storageId: string;
+          name: string;
+          type: string;
+          url: string;
+        }[] = [];
+
+        if (task.attachments && task.attachments.length > 0) {
+          const mappedAttachments = await Promise.all(
+            task.attachments.map(async (att) => {
+              const url = await ctx.storage.getUrl(att.storageId);
+              return url
+                ? {
+                    storageId: att.storageId.toString(),
+                    name: att.name,
+                    type: att.type,
+                    url,
+                  }
+                : null;
+            }),
+          );
+
+          resolvedAttachments = mappedAttachments.filter(
+            (
+              att,
+            ): att is {
+              storageId: string;
+              name: string;
+              type: string;
+              url: string;
+            } => att !== null,
+          );
+        }
+
         return {
           _id: task._id,
           title: task.title,
@@ -176,6 +210,7 @@ export const browseTasks = query({
           applicantCount: task.applicantCount,
           createdAt: task.createdAt,
           companyName: employerProfile?.companyName ?? "Unknown Company",
+          resolvedAttachments,
         };
       }),
     );
