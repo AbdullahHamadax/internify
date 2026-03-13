@@ -30,14 +30,15 @@ import ThemeToggle from "@/components/ThemeToggle";
 import StudentOverview from "./StudentOverview";
 import StudentExplore from "./StudentExplore";
 import StudentProfile from "./StudentProfile";
+import StudentSettings from "./StudentSettings";
 
 import "./student-dashboard.css";
 
-/* ── Nav Links ── */
 const NAV_LINKS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "explore", label: "Explore Tasks", icon: Search },
   { id: "messages", label: "Messages", icon: MessageSquare },
+  { id: "settings", label: "Settings", icon: Settings },
 ];
 
 /* ── Top Navbar ── */
@@ -100,12 +101,13 @@ function StudentNavbar({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div
+            <button
+              type="button"
               className="stu-navbar__avatar cursor-pointer"
               title={user?.fullName ?? "Profile"}
             >
               {initials}
-            </div>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 mt-2">
             <DropdownMenuLabel>Student Account</DropdownMenuLabel>
@@ -114,7 +116,7 @@ function StudentNavbar({
               <User className="mr-2 size-4" />
               <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem className="cursor-pointer" onClick={() => onNavigate("settings")}>
               <Settings className="mr-2 size-4" />
               <span>Settings</span>
             </DropdownMenuItem>
@@ -215,6 +217,7 @@ export default function StudentDashboard() {
         {activeNav === "dashboard" && <StudentOverview onNavigate={(id) => setActiveNav(id)} />}
         {activeNav === "explore" && <StudentExplore />}
         {activeNav === "profile" && <StudentProfile />}
+        {activeNav === "settings" && <StudentSettings />}
         {activeNav === "messages" && (
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center p-10 bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] max-w-md">

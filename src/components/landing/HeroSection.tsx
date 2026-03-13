@@ -97,7 +97,7 @@ export default function HeroSection() {
 
                 {/* Task body */}
                 <div className="mt-5">
-                  <Typography variant="h4" as="h3" className="text-base">
+                  <Typography variant="h4" as="h2" className="text-base">
                     Build a REST API
                   </Typography>
                   <Typography
@@ -112,7 +112,7 @@ export default function HeroSection() {
 
                 {/* Badges */}
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="rounded-none border-2 border-black dark:border-white bg-[#FF0055] px-3 py-1 text-xs font-black uppercase tracking-widest text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
+                  <span className="rounded-none border-2 border-black dark:border-white bg-[#E11D48] px-3 py-1 text-xs font-black uppercase tracking-widest text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
                     Intermediate
                   </span>
                   <span className="rounded-none border-2 border-black dark:border-white bg-[#2563EB] px-3 py-1 text-xs font-black uppercase tracking-widest text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">

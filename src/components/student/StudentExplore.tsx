@@ -192,7 +192,7 @@ export default function StudentExplore() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <button className="h-12 px-8 bg-black text-[#2563EB] dark:bg-white dark:text-black font-black uppercase tracking-widest text-sm rounded-none hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all shadow-[4px_4px_0_0_#2563EB] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-white flex items-center justify-center">
+            <button className="h-12 px-8 bg-black text-white dark:bg-white dark:text-black font-black uppercase tracking-widest text-sm rounded-none hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all shadow-[4px_4px_0_0_white] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-white flex items-center justify-center">
               Search
             </button>
           </div>
@@ -349,7 +349,7 @@ export default function StudentExplore() {
                       <span
                         className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
                           task.skillLevel === "advanced"
-                            ? "bg-[#FF0055] text-white"
+                            ? "bg-[#E11D48] text-white"
                             : task.skillLevel === "intermediate"
                               ? "bg-[#AB47BC] text-white"
                               : "bg-[#2563EB] text-white"
