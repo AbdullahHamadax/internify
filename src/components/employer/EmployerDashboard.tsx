@@ -126,12 +126,13 @@ function EmployerNavbar({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div
+            <button
+              type="button"
               className="emp-navbar__avatar cursor-pointer"
               title={user?.fullName ?? "Profile"}
             >
               {initials}
-            </div>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 mt-2">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>

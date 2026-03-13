@@ -30,10 +30,8 @@ import {
   Briefcase,
   CheckCircle2,
   Clock,
-  TrendingUp,
   ArrowRight,
   Star,
-  Eye,
   Loader2,
 } from "lucide-react";
 
@@ -53,12 +51,7 @@ function deadlineToDuration(deadline: number): string {
   return `${months} month${months !== 1 ? "s" : ""}`;
 }
 
-const MOCK_STATS = {
-  activeApplications: 3,
-  completedTasks: 12,
-  successRate: "94%",
-  profileViews: 48,
-};
+// Mock stats removed
 
 const MOCK_RECOMMENDATIONS = [
   {
@@ -134,8 +127,14 @@ export default function StudentOverview({
 
   const applications = useQuery(api.tasks.getStudentApplications);
   const activeCount = applications
-    ? applications.length
-    : MOCK_STATS.activeApplications;
+    ? applications.filter(
+        (app) => app.status === "in_progress" || app.status === "accepted",
+      ).length
+    : 0;
+
+  const completedCount = applications
+    ? applications.filter((app) => app.status === "completed").length
+    : 0;
 
   return (
     <motion.div
@@ -152,7 +151,7 @@ export default function StudentOverview({
           </Typography>
           <Typography
             variant="p"
-            className="text-white opacity-90 text-sm md:text-base leading-relaxed mt-2"
+            className="text-white opacity-95 text-sm md:text-base leading-relaxed mt-2"
           >
             Here is your command center. You have{" "}
             <span className="inline-flex items-center justify-center font-black text-black bg-white px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] -rotate-2 text-xl md:text-2xl">
@@ -168,10 +167,7 @@ export default function StudentOverview({
       </motion.div>
 
       {/* STATS WIDGETS */}
-      <motion.div
-        variants={itemVariants}
-        className="grid grid-cols-2 md:grid-cols-4 gap-4"
-      >
+      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4">
         <div className="stu-stat-card stu-stat-card--blue">
           <div className="flex items-center gap-3 mb-3 text-muted-foreground">
             <div className="p-2 border-2 border-black dark:border-white bg-[#BFDBFE] dark:bg-[#1E3A8A] text-[#1D4ED8] dark:text-[#93C5FD] shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
@@ -181,7 +177,7 @@ export default function StudentOverview({
               variant="span"
               className="font-semibold uppercase tracking-wider"
             >
-              Active
+              Active Tasks
             </Typography>
           </div>
           <Typography variant="h2" className="tracking-tighter">
@@ -198,45 +194,11 @@ export default function StudentOverview({
               variant="span"
               className="font-semibold uppercase tracking-wider"
             >
-              Done
+              Completed Tasks
             </Typography>
           </div>
           <Typography variant="h2" className="tracking-tighter">
-            {MOCK_STATS.completedTasks}
-          </Typography>
-        </div>
-
-        <div className="stu-stat-card stu-stat-card--amber">
-          <div className="flex items-center gap-3 mb-3 text-muted-foreground">
-            <div className="p-2 border-2 border-black dark:border-white bg-[#FDE68A] dark:bg-[#78350F] text-[#B45309] dark:text-[#FDE68A] shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
-              <TrendingUp className="w-5 h-5" strokeWidth={2.5} />
-            </div>
-            <Typography
-              variant="span"
-              className="font-semibold uppercase tracking-wider"
-            >
-              Success
-            </Typography>
-          </div>
-          <Typography variant="h2" className="tracking-tighter">
-            {MOCK_STATS.successRate}
-          </Typography>
-        </div>
-
-        <div className="stu-stat-card stu-stat-card--indigo">
-          <div className="flex items-center gap-3 mb-3 text-muted-foreground">
-            <div className="p-2 border-2 border-black dark:border-white bg-[#E9D5FF] dark:bg-[#4C1D95] text-[#6D28D9] dark:text-[#E9D5FF] shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
-              <Eye className="w-5 h-5" strokeWidth={2.5} />
-            </div>
-            <Typography
-              variant="span"
-              className="font-semibold uppercase tracking-wider"
-            >
-              Views
-            </Typography>
-          </div>
-          <Typography variant="h2" className="tracking-tighter">
-            {MOCK_STATS.profileViews}
+            {completedCount}
           </Typography>
         </div>
       </motion.div>
@@ -281,14 +243,23 @@ export default function StudentOverview({
                       {app.task.title}
                     </Typography>
                     <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 text-sm text-muted-foreground min-w-0 w-full">
-                      <span className="font-medium truncate">
+                      <Typography
+                        variant="span"
+                        className="font-medium truncate"
+                      >
                         {app.task.companyName}
-                      </span>
+                      </Typography>
                       <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-border shrink-0" />
-                      <span className="flex items-center gap-1 shrink-0 whitespace-nowrap">
-                        <Clock className="w-3.5 h-3.5" />
+                      <Typography
+                        variant="span"
+                        className={`flex items-center gap-1.5 shrink-0 whitespace-nowrap ${deadlineToDuration(app.task.deadline) === "Expired" ? "text-red-600 dark:text-red-400 font-black tracking-wide" : ""}`}
+                      >
+                        <Clock
+                          className="w-3.5 h-3.5 mb-[2px]"
+                          strokeWidth={2.5}
+                        />
                         Due {deadlineToDuration(app.task.deadline)}
-                      </span>
+                      </Typography>
                     </div>
                   </div>
 
