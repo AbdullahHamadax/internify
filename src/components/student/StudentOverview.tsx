@@ -80,25 +80,6 @@ const MOCK_RECOMMENDATIONS = [
   },
 ];
 
-const MOCK_ACTIVE_PIPELINE = [
-  {
-    id: "p1",
-    title: "Frontend Development for E-commerce",
-    company: "ShopifyPlus",
-    status: "in_progress",
-    deadline: "Tomorrow",
-    progress: 75,
-  },
-  {
-    id: "p2",
-    title: "API Endpoint Optimization",
-    company: "FastAPI Solutions",
-    status: "review",
-    deadline: "2 days ago",
-    progress: 100,
-  },
-];
-
 // Motion Variants
 const containerVariants: Variants = {
   hidden: { opacity: 0 },

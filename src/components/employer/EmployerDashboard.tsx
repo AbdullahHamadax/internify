@@ -80,7 +80,7 @@ function EmployerNavbar({
         {/* Brand */}
         <div className="emp-navbar__brand">
           <div className="emp-navbar__brand-icon">
-            <GraduationCap className="size-[1.125rem]" />
+            <GraduationCap className="size-4.5" />
           </div>
           <span className="emp-navbar__brand-text">Internify</span>
         </div>

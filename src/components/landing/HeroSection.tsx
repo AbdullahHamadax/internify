@@ -61,7 +61,7 @@ export default function HeroSection() {
                 </Link>
                 <Link
                   href="/signup"
-                  className="bg-white text-black dark:bg-black dark:text-white border-4 border-black dark:border-white inline-flex items-center gap-2 rounded-none px-8 py-4 text-sm font-black uppercase tracking-widest shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#2563EB] transition-all duration-200 hover:-translate-y-0 hover:bg-[#AB47BC] hover:text-white hover:border-black dark:hover:border-white hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#2563EB] active:translate-x-[6px] active:translate-y-[6px] active:shadow-none"
+                  className="bg-white text-black dark:bg-black dark:text-white border-4 border-black dark:border-white inline-flex items-center gap-2 rounded-none px-8 py-4 text-sm font-black uppercase tracking-widest shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#2563EB] transition-all duration-200 hover:translate-y-0 hover:bg-[#AB47BC] hover:text-white hover:border-black dark:hover:border-white hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#2563EB] active:translate-x-[6px] active:translate-y-[6px] active:shadow-none"
                 >
                   Post a Task
                 </Link>
