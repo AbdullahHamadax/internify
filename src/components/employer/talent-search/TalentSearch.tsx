@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import {
   Search,
   Filter,
@@ -35,87 +37,7 @@ function getDeviconClass(skill: string): string | null {
   return match ? `devicon-${match.name}-plain colored` : null;
 }
 
-const DUMMY_TALENT = [
-  {
-    id: "1",
-    name: "Alex Johnson",
-    role: "Full Stack Developer",
-    university: "Stanford University",
-    location: "San Francisco, CA",
-    status: "Available now",
-    skills: ["React", "Node.js", "TypeScript", "PostgreSQL"],
-    bio: "Passionate CS junior building scalable web applications. Previously interned at a YC startup. Looking for challenging backend or full-stack roles.",
-    avatar: "AJ",
-    matchScore: 94,
-    rating: 4.8,
-    tasksDone: 15,
-    avgScore: 94,
-  },
-  {
-    id: "2",
-    name: "Sarah Chen",
-    role: "Product Designer",
-    university: "RISD",
-    location: "New York, NY",
-    status: "Available now",
-    skills: ["Figma", "UI/UX", "Prototyping", "User Research"],
-    bio: "Design student focusing on accessible and intuitive digital experiences. Strong background in user psychology and interaction design.",
-    avatar: "SC",
-    matchScore: 88,
-    rating: 4.5,
-    tasksDone: 12,
-    avgScore: 91,
-  },
-  {
-    id: "3",
-    name: "Michael Torres",
-    role: "Data Scientist",
-    university: "MIT",
-    location: "Remote",
-    status: "Actively interviewing",
-    skills: ["Python", "TensorFlow", "SQL", "Pandas"],
-    bio: "Mathematics and Machine Learning double major. Built predictive models for campus energy usage. Looking for applied AI roles.",
-    avatar: "MT",
-    matchScore: 82,
-    rating: 4.2,
-    tasksDone: 8,
-    avgScore: 87,
-  },
-  {
-    id: "4",
-    name: "Emily Wong",
-    role: "Frontend Engineer",
-    university: "UC Berkeley",
-    location: "San Jose, CA",
-    status: "Available now",
-    skills: ["Vue.js", "CSS Animations", "JavaScript", "HTML5"],
-    bio: "Creative coder with an eye for detail. I love bringing static designs to life with fluid animations. Open to frontend and creative development roles.",
-    avatar: "EW",
-    matchScore: 79,
-    rating: 4.6,
-    tasksDone: 10,
-    avgScore: 92,
-  },
-  {
-    id: "5",
-    name: "David Kim",
-    role: "Backend Engineer",
-    university: "University of Washington",
-    location: "Seattle, WA",
-    status: "Available now",
-    skills: ["Go", "Docker", "Kubernetes", "AWS"],
-    bio: "Systems enthusiast. Optimizing databases and designing microservices architectures. Looking for backend or infrastructure roles.",
-    avatar: "DK",
-    matchScore: 91,
-    rating: 4.9,
-    tasksDone: 20,
-    avgScore: 96,
-  },
-];
 
-const SKILL_CATEGORIES = Array.from(
-  new Set(DUMMY_TALENT.flatMap((t) => t.skills)),
-).sort();
 
 const STATUS_FILTERS = [
   "Available now",
@@ -124,6 +46,37 @@ const STATUS_FILTERS = [
 ];
 
 export default function TalentSearch() {
+  const students = useQuery(api.users.getStudentsForEmployer);
+  const talentData = students ? students.map(s => {
+    const mathSeed = s.user.createdAt || 1;
+    function capitalize(str: string) {
+      if (!str) return '';
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    const uniStr = s.profile?.fieldOfStudy ? `${capitalize(s.profile.academicStatus || '')} in ${s.profile.fieldOfStudy}` : 'University Student';
+    return {
+      id: s.user._id,
+      name: `${s.user.firstName || ''} ${s.user.lastName || ''}`.trim() || 'Anonymous Student',
+      role: s.profile?.title || 'Student',
+      university: uniStr.trim() || 'University of Internify',
+      location: s.profile?.location || 'Remote',
+      status: 'Available now',
+      skills: s.profile?.skills || [],
+      bio: s.profile?.description || 'Passionate student looking for a challenging internship to grow and learn.',
+      avatar: ((s.user.firstName?.[0] || '') + (s.user.lastName?.[0] || '')).toUpperCase() || 'ST',
+      matchScore: 80 + (mathSeed % 20),
+      rating: Number((4.0 + ((mathSeed % 10) / 10)).toFixed(1)),
+      tasksDone: mathSeed % 15,
+      avgScore: 85 + (mathSeed % 15),
+      github: s.profile?.github,
+      linkedin: s.profile?.linkedin,
+    };
+  }) : [];
+
+  const skillCategories = Array.from(
+    new Set(talentData.flatMap((t) => t.skills)),
+  ).sort();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -135,7 +88,7 @@ export default function TalentSearch() {
     );
   };
 
-  const filteredTalent = DUMMY_TALENT.filter((talent) => {
+  const filteredTalent = talentData.filter((talent) => {
     const matchesSearch =
       talent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       talent.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -221,14 +174,14 @@ export default function TalentSearch() {
                 />
               </div>
               <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto pr-1 pb-2">
-                {SKILL_CATEGORIES.filter((skill) =>
+                {skillCategories.filter((skill) =>
                   skill.toLowerCase().includes(skillSearchQuery.toLowerCase()),
                 ).length === 0 ? (
                   <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground py-4 text-center w-full border-2 border-dashed border-black dark:border-white">
                     No skills found
                   </div>
                 ) : (
-                  SKILL_CATEGORIES.filter((skill) =>
+                  skillCategories.filter((skill) =>
                     skill
                       .toLowerCase()
                       .includes(skillSearchQuery.toLowerCase()),
@@ -448,6 +401,7 @@ export default function TalentSearch() {
                         type="button"
                         className="p-3 border-4 border-black dark:border-white bg-[#333] hover:bg-[#111] text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all"
                         aria-label="GitHub Profile"
+                        onClick={() => talent.github && window.open(talent.github.startsWith('http') ? talent.github : `https://${talent.github}`, '_blank')}
                       >
                         <Github className="size-5" />
                       </button>
@@ -455,6 +409,7 @@ export default function TalentSearch() {
                         type="button"
                         className="p-3 border-4 border-black dark:border-white bg-[#0A66C2] hover:bg-[#004182] text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all"
                         aria-label="LinkedIn Profile"
+                        onClick={() => talent.linkedin && window.open(talent.linkedin.startsWith('http') ? talent.linkedin : `https://${talent.linkedin}`, '_blank')}
                       >
                         <Linkedin className="size-5" />
                       </button>

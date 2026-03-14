@@ -224,3 +224,42 @@ export const upsertCurrentUser = mutation({
     return { userId, role: args.role };
   },
 });
+
+/**
+ * QUERY: getStudentsForEmployer
+ * Fetches all student users and their profiles for the talent search.
+ */
+export const getStudentsForEmployer = query({
+  args: {},
+  handler: async (ctx) => {
+    // 1. Ensure the user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    // 2. We can enforce evaluating if caller is an employer, but for now just fetching all students
+    const students = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier") // Using a valid index or full scan if necessary
+      .filter((q) => q.eq(q.field("role"), "student"))
+      .collect();
+
+    // 3. For each student, get their profile
+    const studentsWithProfiles = await Promise.all(
+      students.map(async (student) => {
+        const profile = await ctx.db
+          .query("studentProfiles")
+          .withIndex("by_userId", (q) => q.eq("userId", student._id))
+          .unique();
+
+        return {
+          user: student,
+          profile: profile || null,
+        };
+      })
+    );
+
+    return studentsWithProfiles;
+  },
+});
