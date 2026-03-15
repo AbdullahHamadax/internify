@@ -61,7 +61,7 @@ export default function PartnerLogos() {
           variant="caption"
           color="muted"
           weight="medium"
-          className="uppercase tracking-widest"
+          className="uppercase tracking-widest text-md"
         >
           Trusted by leading organizations
         </Typography>

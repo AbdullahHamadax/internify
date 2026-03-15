@@ -29,7 +29,8 @@ import ThemeToggle from "@/components/ThemeToggle";
 import StudentOverview from "./StudentOverview";
 import StudentExplore from "./StudentExplore";
 import StudentProfile from "./StudentProfile";
-import StudentSettings from "./StudentSettings";
+import SettingsPage from "@/components/shared/Settings";
+import Footer from "@/components/landing/Footer";
 
 import "./student-dashboard.css";
 
@@ -59,7 +60,7 @@ function StudentNavbar({
         {/* Brand */}
         <div className="stu-navbar__brand">
           <div className="stu-navbar__brand-icon">
-            <GraduationCap className="size-4.5" />
+            <GraduationCap className="size-4.5 text-white" />
           </div>
           <span className="stu-navbar__brand-text">Internify</span>
         </div>
@@ -223,7 +224,7 @@ export default function StudentDashboard() {
         )}
         {activeNav === "explore" && <StudentExplore />}
         {activeNav === "profile" && <StudentProfile />}
-        {activeNav === "settings" && <StudentSettings />}
+        {activeNav === "settings" && <SettingsPage />}
         {activeNav === "messages" && (
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center p-10 bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] max-w-md">
@@ -239,6 +240,7 @@ export default function StudentDashboard() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

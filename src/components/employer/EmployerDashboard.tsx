@@ -42,6 +42,9 @@ import PostTaskModal, { type PostTaskData } from "./PostTaskModal";
 import TaskDetailModal from "./TaskDetailModal";
 import TalentSearch from "./talent-search/TalentSearch";
 import Messages from "./messages/Messages";
+import EmployerProfile from "./EmployerProfile";
+import SettingsPage from "@/components/shared/Settings";
+import Footer from "@/components/landing/Footer";
 
 import "./employer-dashboard.css";
 
@@ -80,7 +83,7 @@ function EmployerNavbar({
         {/* Brand */}
         <div className="emp-navbar__brand">
           <div className="emp-navbar__brand-icon">
-            <GraduationCap className="size-4.5" />
+            <GraduationCap className="size-4.5 text-white" />
           </div>
           <span className="emp-navbar__brand-text">Internify</span>
         </div>
@@ -137,11 +140,17 @@ function EmployerNavbar({
           <DropdownMenuContent align="end" className="w-56 mt-2">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onNavigate("profile")}
+            >
               <User className="mr-2 size-4" />
               <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onNavigate("settings")}
+            >
               <Settings className="mr-2 size-4" />
               <span>Settings</span>
             </DropdownMenuItem>
@@ -388,8 +397,9 @@ export default function EmployerDashboard() {
 
       <main className="emp-main">
         {activeNav === "talent-search" && <TalentSearch />}
-
         {activeNav === "messages" && <Messages />}
+        {activeNav === "profile" && <EmployerProfile />}
+        {activeNav === "settings" && <SettingsPage />}
 
         {activeNav === "dashboard" && (
           <>
@@ -463,6 +473,7 @@ export default function EmployerDashboard() {
           setModalOpen(true);
         }}
       />
+      <Footer />
     </div>
   );
 }

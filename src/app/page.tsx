@@ -24,17 +24,29 @@ import EmployerDashboard from "@/components/employer/EmployerDashboard";
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      <Navbar />
-      <main>
-        <HeroSection />
-        <StatsBar />
-        <HowItWorks />
-        <AudienceSection />
-        <PartnerLogos />
-        <CtaSection />
-      </main>
-      <Footer />
+    <div className="relative min-h-screen bg-white dark:bg-gray-950">
+      {/* Global Brutalist Grid Background overlay */}
+      <div
+        className="fixed inset-0 z-0 opacity-10 pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      ></div>
+
+      <div className="relative z-10">
+        <Navbar />
+        <main>
+          <HeroSection />
+          <StatsBar />
+          <HowItWorks />
+          <AudienceSection />
+          <PartnerLogos />
+          <CtaSection />
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }

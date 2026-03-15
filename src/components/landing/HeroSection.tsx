@@ -8,17 +8,8 @@ import { Typography } from "@/components/ui/Typography";
 export default function HeroSection() {
   return (
     <section className="relative pt-28 pb-20 sm:pt-36 sm:pb-28 overflow-hidden">
-      {/* Brutalist Grid Background overlay */}
-      <div
-        className="absolute inset-0 z-0 opacity-10"
-        style={{
-          backgroundImage:
-            "linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }}
-      ></div>
-      <div className="absolute top-0 right-0 -z-10 w-[600px] h-[600px] bg-[#2563EB] rounded-none translate-x-1/3 -translate-y-1/4 rotate-12 border-4 border-black dark:border-white shadow-[16px_16px_0_0_#AB47BC]" />
-      <div className="absolute bottom-0 left-0 -z-10 w-[400px] h-[400px] bg-[#AB47BC] rounded-none -translate-x-1/3 translate-y-1/4 -rotate-6 border-4 border-black dark:border-white shadow-[16px_16px_0_0_#2563EB]" />
+      <div className="hidden lg:block absolute top-0 right-0 -z-10 w-[600px] h-[600px] bg-[#2563EB] rounded-none translate-x-1/3 -translate-y-1/4 rotate-12 border-4 border-black dark:border-white shadow-[16px_16px_0_0_#AB47BC]" />
+      <div className="hidden lg:block absolute bottom-0 left-0 -z-10 w-[400px] h-[400px] bg-[#AB47BC] rounded-none -translate-x-1/3 translate-y-1/4 -rotate-6 border-4 border-black dark:border-white shadow-[16px_16px_0_0_#2563EB]" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
