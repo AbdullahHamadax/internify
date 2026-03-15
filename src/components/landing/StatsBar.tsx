@@ -12,8 +12,8 @@ const stats = [
     label: "Students",
     icon: Users,
     duration: 0.9,
-    accent: "bg-[#2563EB]",
-    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-[#2563EB]",
+    accent: "bg-[#AB47BC]",
+    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#AB47BC] border-2 border-black dark:border-[#AB47BC]",
   },
   {
     value: 50,
