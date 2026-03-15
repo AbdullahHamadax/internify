@@ -164,6 +164,22 @@ function TaskRow({
 
           {task.status === "completed" && (
             <>
+              {task.acceptedBy && task.acceptedBy.length > 0 && (
+                <>
+                  <span className="emp-task-row__meta-sep" />
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                      color: "var(--foreground)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Completed by: {task.acceptedBy.map((s) => s.name).join(", ")}
+                  </span>
+                </>
+              )}
               {task.avgScore !== undefined && (
                 <>
                   <span className="emp-task-row__meta-sep" />
