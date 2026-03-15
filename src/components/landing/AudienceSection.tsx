@@ -21,7 +21,7 @@ const employerBullets = [
 
 export default function AudienceSection() {
   return (
-    <section className="dot-pattern relative z-10 isolate py-20 sm:py-28 bg-[#F8FAFC] dark:bg-gray-950">
+    <section className="relative z-10 isolate py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
           {/* FOR STUDENTS */}

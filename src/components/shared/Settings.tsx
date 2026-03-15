@@ -2,17 +2,38 @@
 
 import { useState } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { Typography } from "@/components/ui/Typography";
 import { Loader2, Save, Shield, Github, Linkedin, Mail } from "lucide-react";
 
-export default function StudentSettings() {
+// Role-based theme config
+const THEME = {
+  student: {
+    accent: "#2563EB",
+    label: "Student",
+  },
+  employer: {
+    accent: "#AB47BC",
+    label: "Employer",
+  },
+} as const;
+
+export default function Settings() {
   const { user, isLoaded } = useUser();
   const { openUserProfile } = useClerk();
+  const currentUser = useQuery(api.users.currentUser);
+
+  const role = (currentUser?.user?.role as "student" | "employer") || "student";
+  const theme = THEME[role];
 
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   if (!isLoaded) {
     return (
@@ -22,28 +43,32 @@ export default function StudentSettings() {
     );
   }
 
-  const checkConnection = (strategy: string) => 
-    user?.externalAccounts.some(acc => acc.verification?.strategy === strategy);
+  const checkConnection = (strategy: string) =>
+    user?.externalAccounts.some(
+      (acc) => acc.verification?.strategy === strategy,
+    );
 
   const hasGithub = checkConnection("oauth_github");
   const hasGoogle = checkConnection("oauth_google");
-  const hasLinkedin = checkConnection("oauth_linkedin") || checkConnection("oauth_linkedin_oidc");
+  const hasLinkedin =
+    checkConnection("oauth_linkedin") || checkConnection("oauth_linkedin_oidc");
 
   const handleSaveProfile = async () => {
     if (!user) return;
     setIsSaving(true);
     setMessage(null);
     try {
-      await user.update({
-        firstName,
-        lastName,
-      });
+      await user.update({ firstName, lastName });
       setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (error) {
       console.error(error);
-      const errorMessage = error && typeof error === 'object' && 'errors' in error && Array.isArray((error as {errors: unknown[]}).errors) 
-        ? (error as {errors: {message: string}[]}).errors[0]?.message 
-        : "Failed to update profile.";
+      const errorMessage =
+        error &&
+        typeof error === "object" &&
+        "errors" in error &&
+        Array.isArray((error as { errors: unknown[] }).errors)
+          ? (error as { errors: { message: string }[] }).errors[0]?.message
+          : "Failed to update profile.";
       setMessage({ type: "error", text: errorMessage });
     } finally {
       setIsSaving(false);
@@ -62,11 +87,13 @@ export default function StudentSettings() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
-        
         {/* Sidebar Nav */}
         <div className="flex flex-col gap-2">
-          <button 
-            className="text-left px-4 py-3 font-black uppercase tracking-widest border-2 transition-colors bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB]"
+          <button
+            className="text-left px-4 py-3 font-black uppercase tracking-widest border-2 transition-colors text-white border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] cursor-default"
+            style={{
+              backgroundColor: theme.accent,
+            }}
           >
             Account
           </button>
@@ -74,30 +101,50 @@ export default function StudentSettings() {
 
         {/* Main Content Area */}
         <div className="flex flex-col gap-8">
-          
           {/* Section: Profile */}
-          <section className="bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#2563EB] p-6 sm:p-8">
-            <Typography variant="h3" className="uppercase tracking-widest border-b-4 border-black dark:border-white pb-4 mb-6">
+          <section
+            className="bg-card border-4 border-black dark:border-white p-6 sm:p-8"
+            style={{
+              boxShadow: `8px 8px 0 0 ${theme.accent}`,
+            }}
+          >
+            <Typography
+              variant="h3"
+              className="uppercase tracking-widest border-b-4 border-black dark:border-white pb-4 mb-6"
+            >
               Profile Details
             </Typography>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-black uppercase tracking-widest">First Name</label>
+                <label className="text-sm font-black uppercase tracking-widest">
+                  First Name
+                </label>
                 <input
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full bg-transparent border-2 border-black dark:border-white p-3 font-medium focus:outline-none focus:ring-0 focus:border-[#2563EB] transition-colors"
+                  className="w-full bg-transparent border-2 border-black dark:border-white p-3 font-medium focus:outline-none focus:ring-0 transition-colors"
+                  style={{ borderColor: undefined }}
+                  onFocus={(e) =>
+                    (e.currentTarget.style.borderColor = theme.accent)
+                  }
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "")}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-black uppercase tracking-widest">Last Name</label>
+                <label className="text-sm font-black uppercase tracking-widest">
+                  Last Name
+                </label>
                 <input
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full bg-transparent border-2 border-black dark:border-white p-3 font-medium focus:outline-none focus:ring-0 focus:border-[#2563EB] transition-colors"
+                  className="w-full bg-transparent border-2 border-black dark:border-white p-3 font-medium focus:outline-none focus:ring-0 transition-colors"
+                  onFocus={(e) =>
+                    (e.currentTarget.style.borderColor = theme.accent)
+                  }
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "")}
                 />
               </div>
             </div>
@@ -105,28 +152,47 @@ export default function StudentSettings() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="w-full sm:w-auto">
                 {message && (
-                  <Typography variant="span" className={`text-sm font-bold ${message.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                  <Typography
+                    variant="span"
+                    className={`text-sm font-bold ${message.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+                  >
                     {message.text}
                   </Typography>
                 )}
               </div>
               <button
                 onClick={handleSaveProfile}
-                disabled={isSaving || (firstName === user?.firstName && lastName === user?.lastName)}
-                className="w-full sm:w-auto px-6 py-3 bg-[#2563EB] text-white border-2 border-black dark:border-white font-black uppercase tracking-widest hover:translate-y-1 hover:translate-x-1 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0_0_#000] dark:disabled:hover:shadow-[4px_4px_0_0_#fff] flex items-center justify-center gap-2"
+                disabled={
+                  isSaving ||
+                  (firstName === user?.firstName && lastName === user?.lastName)
+                }
+                className="w-full sm:w-auto px-6 py-3 text-white border-2 border-black dark:border-white font-black uppercase tracking-widest hover:translate-y-1 hover:translate-x-1 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0_0_#000] dark:disabled:hover:shadow-[4px_4px_0_0_#fff] flex items-center justify-center gap-2"
+                style={{ backgroundColor: theme.accent }}
               >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
                 Save Changes
               </button>
             </div>
           </section>
 
           {/* Section: Connected Accounts */}
-          <section className="bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#2563EB] p-6 sm:p-8">
-            <Typography variant="h3" className="uppercase tracking-widest border-b-4 border-black dark:border-white pb-4 mb-6">
+          <section
+            className="bg-card border-4 border-black dark:border-white p-6 sm:p-8"
+            style={{
+              boxShadow: `8px 8px 0 0 ${theme.accent}`,
+            }}
+          >
+            <Typography
+              variant="h3"
+              className="uppercase tracking-widest border-b-4 border-black dark:border-white pb-4 mb-6"
+            >
               Connected Accounts
             </Typography>
-            
+
             <div className="flex flex-col gap-4">
               {/* Google */}
               <div className="flex items-center justify-between border-2 border-black dark:border-white p-4">
@@ -135,16 +201,18 @@ export default function StudentSettings() {
                     <Mail className="w-5 h-5" />
                   </div>
                   <div>
-                    <Typography variant="span" className="font-bold block">Google</Typography>
+                    <Typography variant="span" className="font-bold block">
+                      Google
+                    </Typography>
                     <Typography variant="caption" color="muted">
                       {hasGoogle ? "Connected" : "Not connected"}
                     </Typography>
                   </div>
                 </div>
                 {hasGoogle ? (
-                   <span className="text-xs font-black uppercase tracking-widest px-3 py-1 bg-[#A7F3D0] text-[#064E3B] border-2 border-black">
-                     Active
-                   </span>
+                  <span className="text-xs font-black uppercase tracking-widest px-3 py-1 bg-[#A7F3D0] text-[#064E3B] border-2 border-black">
+                    Active
+                  </span>
                 ) : (
                   <button
                     onClick={() => openUserProfile()}
@@ -162,16 +230,18 @@ export default function StudentSettings() {
                     <Github className="w-5 h-5" />
                   </div>
                   <div>
-                    <Typography variant="span" className="font-bold block">GitHub</Typography>
+                    <Typography variant="span" className="font-bold block">
+                      GitHub
+                    </Typography>
                     <Typography variant="caption" color="muted">
                       {hasGithub ? "Connected" : "Not connected"}
                     </Typography>
                   </div>
                 </div>
                 {hasGithub ? (
-                   <span className="text-xs font-black uppercase tracking-widest px-3 py-1 bg-[#A7F3D0] text-[#064E3B] border-2 border-black">
-                     Active
-                   </span>
+                  <span className="text-xs font-black uppercase tracking-widest px-3 py-1 bg-[#A7F3D0] text-[#064E3B] border-2 border-black">
+                    Active
+                  </span>
                 ) : (
                   <button
                     onClick={() => openUserProfile()}
@@ -189,16 +259,18 @@ export default function StudentSettings() {
                     <Linkedin className="w-5 h-5" />
                   </div>
                   <div>
-                    <Typography variant="span" className="font-bold block">LinkedIn</Typography>
+                    <Typography variant="span" className="font-bold block">
+                      LinkedIn
+                    </Typography>
                     <Typography variant="caption" color="muted">
                       {hasLinkedin ? "Connected" : "Not connected"}
                     </Typography>
                   </div>
                 </div>
                 {hasLinkedin ? (
-                   <span className="text-xs font-black uppercase tracking-widest px-3 py-1 bg-[#A7F3D0] text-[#064E3B] border-2 border-black">
-                     Active
-                   </span>
+                  <span className="text-xs font-black uppercase tracking-widest px-3 py-1 bg-[#A7F3D0] text-[#064E3B] border-2 border-black">
+                    Active
+                  </span>
                 ) : (
                   <button
                     onClick={() => openUserProfile()}
@@ -212,23 +284,34 @@ export default function StudentSettings() {
           </section>
 
           {/* Section: Security */}
-          <section className="bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#2563EB] p-6 sm:p-8">
-            <Typography variant="h3" className="uppercase tracking-widest border-b-4 border-black dark:border-white pb-4 mb-6 flex items-center gap-2">
+          <section
+            className="bg-card border-4 border-black dark:border-white p-6 sm:p-8"
+            style={{
+              boxShadow: `8px 8px 0 0 ${theme.accent}`,
+            }}
+          >
+            <Typography
+              variant="h3"
+              className="uppercase tracking-widest border-b-4 border-black dark:border-white pb-4 mb-6 flex items-center gap-2"
+            >
               <Shield className="w-5 h-5" /> Security
             </Typography>
-            
+
             <Typography variant="p" color="muted" className="mb-6">
-              Manage your password, 2FA, primary email address, and active sessions through our secure identity provider.
+              Manage your password, 2FA, primary email address, and active
+              sessions through our secure identity provider.
             </Typography>
 
             <button
               onClick={() => openUserProfile()}
-              className="w-full sm:w-auto px-6 py-3 bg-black text-white dark:bg-white dark:text-black border-2 border-black dark:border-white font-black uppercase tracking-widest hover:translate-y-1 hover:translate-x-1 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] hover:shadow-none"
+              className="w-full sm:w-auto px-6 py-3 text-white border-2 border-black dark:border-white font-black uppercase tracking-widest hover:translate-y-1 hover:translate-x-1 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:shadow-none"
+              style={{
+                backgroundColor: theme.accent,
+              }}
             >
               Open Security Settings
             </button>
           </section>
-
         </div>
       </div>
     </div>

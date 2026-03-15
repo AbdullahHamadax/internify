@@ -249,7 +249,7 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="relative z-10 py-20 sm:py-28 overflow-hidden bg-white dark:bg-gray-950"
+      className="relative z-10 py-20 sm:py-28 overflow-hidden"
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Header */}

@@ -58,7 +58,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
             <div className="bg-[#2563EB] rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] p-1.5">
-              <GraduationCap className="h-6 w-6 text-black" />
+              <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <Typography
               variant="span"

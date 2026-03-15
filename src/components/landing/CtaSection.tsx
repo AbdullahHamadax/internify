@@ -7,7 +7,7 @@ import { Typography } from "@/components/ui/Typography";
 
 export default function CtaSection() {
   return (
-    <section className="noise-overlay relative bg-black dark:bg-[#2563EB] py-20 sm:py-28 overflow-hidden border-y-8 border-black dark:border-white">
+    <section className="relative py-20 sm:py-28 overflow-hidden border-y-8 border-black dark:border-white">
       {/* Accent box instead of gradient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[400px] bg-[#AB47BC] rounded-none border-8 border-white dark:border-black transform -rotate-2 -z-10" />
 
