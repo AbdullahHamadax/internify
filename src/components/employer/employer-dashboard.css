@@ -12,8 +12,8 @@
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  --primary: #AB47BC;
-  --ring: #AB47BC;
+  --primary: #ab47bc;
+  --ring: #ab47bc;
 }
 
 /* ── Top Navbar ── */
@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #AB47BC;
+  background: #ab47bc;
   color: white;
   box-shadow: 4px 4px 0 0 var(--border);
 }
@@ -106,7 +106,7 @@
 }
 
 .emp-navbar__link:hover {
-  background: #AB47BC;
+  background: #ab47bc;
   color: white;
   border-color: var(--border);
   box-shadow: 4px 4px 0 0 var(--border);
@@ -115,15 +115,16 @@
 
 .emp-navbar__link--active {
   color: white;
-  background: #AB47BC;
+  background: #ab47bc;
   border-color: var(--border);
   box-shadow: 4px 4px 0 0 var(--border);
   transform: translate(-2px, -2px);
 }
 
-.dark .emp-navbar__link--active, .dark .emp-navbar__link:hover {
+.dark .emp-navbar__link--active,
+.dark .emp-navbar__link:hover {
   border-color: var(--border);
-  box-shadow: 4px 4px 0 0 #CE93D8;
+  box-shadow: 4px 4px 0 0 #ce93d8;
 }
 
 .emp-navbar__right {
@@ -175,7 +176,7 @@
   font-size: 0.8125rem;
   font-weight: 900;
   color: white;
-  background: #AB47BC;
+  background: #ab47bc;
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.1s ease;
@@ -225,7 +226,7 @@
   padding: 1.25rem 2rem;
   margin-bottom: 2rem;
   border-radius: 0;
-  background: #AB47BC;
+  background: #ab47bc;
   border: 4px solid var(--border);
   position: relative;
   overflow: hidden;
@@ -234,7 +235,7 @@
 }
 
 .dark .emp-hero {
-  background: #8E24AA;
+  background: #8e24aa;
   border-color: white;
   box-shadow: 8px 8px 0 0 white;
 }
@@ -247,7 +248,7 @@
   width: 300px;
   height: 300px;
   border-radius: 50%;
-  background: #BA68C81A;
+  background: #ba68c81a;
   pointer-events: none;
 }
 
@@ -382,7 +383,7 @@
   background: linear-gradient(90deg, hsl(160 84% 39%), hsl(140 70% 42%));
 }
 .emp-stat-card--violet::before {
-  background: linear-gradient(90deg, #AB47BC, #BA68C8);
+  background: linear-gradient(90deg, #ab47bc, #ba68c8);
 }
 
 .emp-stat-card__info {
@@ -442,11 +443,11 @@
   color: black;
 }
 .emp-stat-card__icon--violet {
-  background: #AB47BC;
+  background: #ab47bc;
   color: white;
 }
 .dark .emp-stat-card__icon--violet {
-  background: #CE93D8;
+  background: #ce93d8;
   color: black;
 }
 
@@ -588,19 +589,19 @@
   color: black;
 }
 .emp-cat-tag--mobile {
-  background: #AB47BC;
+  background: #ab47bc;
   color: white;
 }
 .dark .emp-cat-tag--mobile {
-  background: #CE93D8;
+  background: #ce93d8;
   color: black;
 }
 .emp-cat-tag--data {
-  background: #2563EB;
+  background: #2563eb;
   color: white;
 }
 .dark .emp-cat-tag--data {
-  background: #2563EB;
+  background: #2563eb;
   color: white;
 }
 .emp-cat-tag--design {
@@ -761,13 +762,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #AB47BC;
+  background: #ab47bc;
   color: white;
   box-shadow: 2px 2px 0 0 var(--border);
 }
 
 .dark .emp-analytics-card__icon {
-  background: #BA68C8;
+  background: #ba68c8;
   color: black;
 }
 

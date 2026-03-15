@@ -217,7 +217,7 @@ export default function StudentExplore() {
                   onClick={() => setActiveCategory(f.label)}
                   className={`w-full text-left px-4 py-3 text-sm font-black uppercase tracking-wider transition-all border-2 ${
                     activeCategory === f.label
-                      ? "bg-[#2563EB] text-white border-black dark:bg-[#2563EB] shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]"
+                      ? "bg-[#AB47BC] text-white border-black dark:bg-[#2563EB] shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]"
                       : "bg-white dark:bg-black text-black dark:text-white border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-900"
                   }`}
                 >
@@ -247,7 +247,7 @@ export default function StudentExplore() {
                       <div
                         className={`w-6 h-6 border-2 transition-colors flex items-center justify-center rounded-none ${
                           isChecked
-                            ? "bg-[#2563EB] border-black text-white dark:bg-[#2563EB] dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                            ? "bg-[#AB47BC] border-black text-white dark:bg-[#AB47BC] dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
                             : "bg-white dark:bg-black border-black dark:border-white"
                         }`}
                       >

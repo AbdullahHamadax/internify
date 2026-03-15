@@ -37,8 +37,6 @@ function getDeviconClass(skill: string): string | null {
   return match ? `devicon-${match.name}-plain colored` : null;
 }
 
-
-
 const STATUS_FILTERS = [
   "Available now",
   "Actively interviewing",
@@ -47,31 +45,42 @@ const STATUS_FILTERS = [
 
 export default function TalentSearch() {
   const students = useQuery(api.users.getStudentsForEmployer);
-  const talentData = students ? students.map(s => {
-    const mathSeed = s.user.createdAt || 1;
-    function capitalize(str: string) {
-      if (!str) return '';
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-    const uniStr = s.profile?.fieldOfStudy ? `${capitalize(s.profile.academicStatus || '')} in ${s.profile.fieldOfStudy}` : 'University Student';
-    return {
-      id: s.user._id,
-      name: `${s.user.firstName || ''} ${s.user.lastName || ''}`.trim() || 'Anonymous Student',
-      role: s.profile?.title || 'Student',
-      university: uniStr.trim() || 'University of Internify',
-      location: s.profile?.location || 'Remote',
-      status: 'Available now',
-      skills: s.profile?.skills || [],
-      bio: s.profile?.description || 'Passionate student looking for a challenging internship to grow and learn.',
-      avatar: ((s.user.firstName?.[0] || '') + (s.user.lastName?.[0] || '')).toUpperCase() || 'ST',
-      matchScore: 80 + (mathSeed % 20),
-      rating: Number((4.0 + ((mathSeed % 10) / 10)).toFixed(1)),
-      tasksDone: mathSeed % 15,
-      avgScore: 85 + (mathSeed % 15),
-      github: s.profile?.github,
-      linkedin: s.profile?.linkedin,
-    };
-  }) : [];
+  const talentData = students
+    ? students.map((s) => {
+        const mathSeed = s.user.createdAt || 1;
+        function capitalize(str: string) {
+          if (!str) return "";
+          return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+        const uniStr = s.profile?.fieldOfStudy
+          ? `${capitalize(s.profile.academicStatus || "")} in ${s.profile.fieldOfStudy}`
+          : "University Student";
+        return {
+          id: s.user._id,
+          name:
+            `${s.user.firstName || ""} ${s.user.lastName || ""}`.trim() ||
+            "Anonymous Student",
+          role: s.profile?.title || "Student",
+          university: uniStr.trim() || "University of Internify",
+          location: s.profile?.location || "Remote",
+          status: "Available now",
+          skills: s.profile?.skills || [],
+          bio:
+            s.profile?.description ||
+            "Passionate student looking for a challenging internship to grow and learn.",
+          avatar:
+            (
+              (s.user.firstName?.[0] || "") + (s.user.lastName?.[0] || "")
+            ).toUpperCase() || "ST",
+          matchScore: 80 + (mathSeed % 20),
+          rating: Number((4.0 + (mathSeed % 10) / 10).toFixed(1)),
+          tasksDone: mathSeed % 15,
+          avgScore: 85 + (mathSeed % 15),
+          github: s.profile?.github,
+          linkedin: s.profile?.linkedin,
+        };
+      })
+    : [];
 
   const skillCategories = Array.from(
     new Set(talentData.flatMap((t) => t.skills)),
@@ -115,7 +124,7 @@ export default function TalentSearch() {
             <Filter className="w-5 h-5 text-foreground" />
             <Typography
               variant="h4"
-              className="text-lg font-black uppercase tracking-widest m-0 px-2 bg-[#AB47BC] text-white border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+              className="text-lg font-black uppercase tracking-widest m-0 px-2 bg-[#2563EB] text-white border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
             >
               Filters
             </Typography>
@@ -181,24 +190,26 @@ export default function TalentSearch() {
                     No skills found
                   </div>
                 ) : (
-                  skillCategories.filter((skill) =>
-                    skill
-                      .toLowerCase()
-                      .includes(skillSearchQuery.toLowerCase()),
-                  ).map((skill) => (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => toggleSkill(skill)}
-                      className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-black dark:border-white transition-all duration-200 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] focus:outline-none ${
-                        selectedSkills.includes(skill)
-                          ? "bg-[#AB47BC] text-white hover:bg-[#8E24AA] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
-                          : "bg-surface text-foreground hover:bg-[#AB47BC] hover:text-white hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
-                      }`}
-                    >
-                      {skill}
-                    </button>
-                  ))
+                  skillCategories
+                    .filter((skill) =>
+                      skill
+                        .toLowerCase()
+                        .includes(skillSearchQuery.toLowerCase()),
+                    )
+                    .map((skill) => (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => toggleSkill(skill)}
+                        className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-black dark:border-white transition-all duration-200 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] focus:outline-none ${
+                          selectedSkills.includes(skill)
+                            ? "bg-[#2563EB] text-white hover:bg-[#1D4ED8] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
+                            : "bg-surface text-foreground hover:bg-[#2563EB] hover:text-white hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
+                        }`}
+                      >
+                        {skill}
+                      </button>
+                    ))
                 )}
               </div>
             </div>
@@ -401,7 +412,15 @@ export default function TalentSearch() {
                         type="button"
                         className="p-3 border-4 border-black dark:border-white bg-[#333] hover:bg-[#111] text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all"
                         aria-label="GitHub Profile"
-                        onClick={() => talent.github && window.open(talent.github.startsWith('http') ? talent.github : `https://${talent.github}`, '_blank')}
+                        onClick={() =>
+                          talent.github &&
+                          window.open(
+                            talent.github.startsWith("http")
+                              ? talent.github
+                              : `https://${talent.github}`,
+                            "_blank",
+                          )
+                        }
                       >
                         <Github className="size-5" />
                       </button>
@@ -409,7 +428,15 @@ export default function TalentSearch() {
                         type="button"
                         className="p-3 border-4 border-black dark:border-white bg-[#0A66C2] hover:bg-[#004182] text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all"
                         aria-label="LinkedIn Profile"
-                        onClick={() => talent.linkedin && window.open(talent.linkedin.startsWith('http') ? talent.linkedin : `https://${talent.linkedin}`, '_blank')}
+                        onClick={() =>
+                          talent.linkedin &&
+                          window.open(
+                            talent.linkedin.startsWith("http")
+                              ? talent.linkedin
+                              : `https://${talent.linkedin}`,
+                            "_blank",
+                          )
+                        }
                       >
                         <Linkedin className="size-5" />
                       </button>

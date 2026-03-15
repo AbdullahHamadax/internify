@@ -598,16 +598,16 @@ export default function StudentProfile() {
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               className="relative w-full max-w-2xl max-h-[90vh] bg-background border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] flex flex-col overflow-hidden"
             >
-              <div className="flex items-center justify-between p-4 border-b-4 border-black dark:border-white bg-[#2563EB] text-white">
+              <div className="flex items-center justify-between p-6 pb-2">
                 <Typography
                   variant="h3"
-                  className="font-black uppercase tracking-widest pl-2"
+                  className="font-black uppercase text-foreground tracking-widest"
                 >
                   Edit Profile
                 </Typography>
                 <button
                   onClick={() => setIsEditing(false)}
-                  className="p-1 border-2 border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border-2 border-border bg-transparent text-foreground shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -628,7 +628,7 @@ export default function StudentProfile() {
                       setFormData({ ...formData, title: e.target.value })
                     }
                     placeholder="e.g. Frontend Developer"
-                    className="w-full p-3 bg-card border-4 border-black dark:border-white focus:outline-none focus:ring-0 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all"
+                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
                   />
                 </div>
 
@@ -646,7 +646,7 @@ export default function StudentProfile() {
                       setFormData({ ...formData, location: e.target.value })
                     }
                     placeholder="e.g. San Francisco, CA"
-                    className="w-full p-3 bg-card border-4 border-black dark:border-white focus:outline-none focus:ring-0 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all"
+                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
                   />
                 </div>
 
@@ -664,7 +664,7 @@ export default function StudentProfile() {
                     }
                     placeholder="Tell us about your passions and goals..."
                     rows={4}
-                    className="w-full p-3 bg-card border-4 border-black dark:border-white focus:outline-none focus:ring-0 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all resize-none"
+                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] resize-none"
                   />
                 </div>
 
@@ -691,7 +691,7 @@ export default function StudentProfile() {
                           })
                         }
                         placeholder="https://..."
-                        className="w-full p-2 bg-card border-2 border-black dark:border-white focus:outline-none shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                        className="w-full p-2 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
                       />
                     </div>
                     <div>
@@ -708,7 +708,7 @@ export default function StudentProfile() {
                           setFormData({ ...formData, github: e.target.value })
                         }
                         placeholder="https://github.com/..."
-                        className="w-full p-2 bg-card border-2 border-black dark:border-white focus:outline-none shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                        className="w-full p-2 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
                       />
                     </div>
                     <div>
@@ -725,7 +725,7 @@ export default function StudentProfile() {
                           setFormData({ ...formData, linkedin: e.target.value })
                         }
                         placeholder="https://linkedin.com/in/..."
-                        className="w-full p-2 bg-card border-2 border-black dark:border-white focus:outline-none shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                        className="w-full p-2 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
                       />
                     </div>
                   </div>
@@ -771,7 +771,7 @@ export default function StudentProfile() {
                       onChange={(e) => setSkillInput(e.target.value)}
                       onKeyDown={handleAddSkill}
                       placeholder="Search skills or type a custom one..."
-                      className="flex-1 p-3 bg-card border-4 border-black dark:border-white focus:outline-none shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]"
+                      className="flex-1 p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
                     />
                     {showCustomAdd && (
                       <button
