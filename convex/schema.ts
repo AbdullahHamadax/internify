@@ -151,4 +151,26 @@ export default defineSchema({
     .index("by_studentId", ["studentId"])
     .index("by_taskId", ["taskId"])
     .index("by_studentId_taskId", ["studentId", "taskId"]),
+
+  /**
+   * SUBMISSIONS TABLE
+   * Tracks file submissions from students for their accepted tasks.
+   */
+  submissions: defineTable({
+    applicationId: v.id("applications"),
+    studentId: v.id("users"),
+    taskId: v.id("tasks"),
+    files: v.array(
+      v.object({
+        storageId: v.id("_storage"),
+        name: v.string(),
+        type: v.string(),
+      }),
+    ),
+    note: v.optional(v.string()),
+    submittedAt: v.number(),
+  })
+    .index("by_taskId", ["taskId"])
+    .index("by_applicationId", ["applicationId"])
+    .index("by_studentId", ["studentId"]),
 });

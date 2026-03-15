@@ -566,10 +566,18 @@ export const acceptTask = mutation({
     });
 
     // Increment applicant count on the task
-    await ctx.db.patch(args.taskId, {
-      applicantCount: currentCount + 1,
+    const newCount = currentCount + 1;
+    const updates: Record<string, unknown> = {
+      applicantCount: newCount,
       updatedAt: Date.now(),
-    });
+    };
+
+    // Auto-move to "in_progress" when max applicants reached
+    if (task.maxApplicants && newCount >= task.maxApplicants) {
+      updates.status = "in_progress";
+    }
+
+    await ctx.db.patch(args.taskId, updates);
   },
 });
 
@@ -635,11 +643,19 @@ export const getStudentApplications = query({
           .withIndex("by_userId", (q) => q.eq("userId", task.employerId))
           .unique();
 
+        const existingSubmission = await ctx.db
+          .query("submissions")
+          .withIndex("by_applicationId", (q) =>
+            q.eq("applicationId", app._id),
+          )
+          .unique();
+
         return {
           _id: app._id,
           taskId: app.taskId,
           status: app.status,
           acceptedAt: app.createdAt,
+          hasSubmission: !!existingSubmission,
           task: {
             title: task.title,
             description: task.description,
@@ -655,5 +671,123 @@ export const getStudentApplications = query({
     );
 
     return enriched.filter((item) => item !== null);
+  },
+});
+
+/**
+ * Submit files for a task (student).
+ * Creates a submission record and marks the application as completed.
+ */
+export const submitTask = mutation({
+  args: {
+    applicationId: v.id("applications"),
+    files: v.array(
+      v.object({
+        storageId: v.id("_storage"),
+        name: v.string(),
+        type: v.string(),
+      }),
+    ),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") {
+      throw new Error("Unauthorized: Only students can submit tasks");
+    }
+
+    const application = await ctx.db.get(args.applicationId);
+    if (!application) throw new Error("Application not found");
+    if (application.studentId !== user._id) {
+      throw new Error("Unauthorized: This is not your application");
+    }
+
+    // Prevent duplicate submissions
+    const existing = await ctx.db
+      .query("submissions")
+      .withIndex("by_applicationId", (q) =>
+        q.eq("applicationId", args.applicationId),
+      )
+      .unique();
+    if (existing) throw new Error("You have already submitted for this task");
+
+    if (args.files.length === 0) {
+      throw new Error("At least one file is required");
+    }
+
+    // Create submission
+    await ctx.db.insert("submissions", {
+      applicationId: args.applicationId,
+      studentId: user._id,
+      taskId: application.taskId,
+      files: args.files,
+      note: args.note,
+      submittedAt: Date.now(),
+    });
+
+    // Mark application as completed
+    await ctx.db.patch(args.applicationId, { status: "completed" });
+
+    // Mark task as completed so it appears in the employer's Completed tab
+    await ctx.db.patch(application.taskId, {
+      status: "completed",
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Get all submissions for a specific task (employer).
+ * Returns student name, submission date, note, and resolved file URLs.
+ */
+export const getTaskSubmissions = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const submissions = await ctx.db
+      .query("submissions")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+
+    const enriched = await Promise.all(
+      submissions.map(async (sub) => {
+        const student = await ctx.db.get(sub.studentId);
+        const studentName = student
+          ? [student.firstName, student.lastName].filter(Boolean).join(" ") ||
+            "Student"
+          : "Unknown Student";
+
+        const resolvedFiles = await Promise.all(
+          sub.files.map(async (file) => {
+            const url = await ctx.storage.getUrl(file.storageId);
+            return url
+              ? { storageId: file.storageId.toString(), name: file.name, type: file.type, url }
+              : null;
+          }),
+        );
+
+        return {
+          _id: sub._id,
+          studentId: sub.studentId,
+          studentName,
+          note: sub.note,
+          submittedAt: sub.submittedAt,
+          files: resolvedFiles.filter((f) => f !== null),
+        };
+      }),
+    );
+
+    return enriched;
   },
 });
