@@ -49,6 +49,7 @@ function LandingPage() {
           <CtaSection />
         </main>
         <Footer />
+        <Chatbot userRole="guest" />
       </div>
     </div>
   );
@@ -101,7 +102,7 @@ export default function Home() {
     return (
       <>
         <EmployerDashboard />
-        <Chatbot />
+        <Chatbot userRole="employer" />
       </>
     );
   }
@@ -110,7 +111,7 @@ export default function Home() {
   return (
     <>
       <StudentDashboard />
-      <Chatbot />
+      <Chatbot userRole="student" />
     </>
   );
 }
