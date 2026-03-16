@@ -3,7 +3,7 @@
 
 import { Building2, GraduationCap, LogOut, Upload, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Typography } from "@/components/ui/Typography";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +23,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -81,27 +80,6 @@ export default function CompleteProfilePage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isEmployer = role === "employer";
-
-  const theme = useMemo(() => {
-    if (isEmployer) {
-      return {
-        accentText: "text-purple-600 dark:text-purple-400",
-        primaryBtn: "bg-purple-600 hover:bg-purple-700",
-        softBg: "bg-purple-50/50 dark:bg-purple-950/30",
-        dashHover: "hover:border-purple-500",
-        iconBg: "bg-purple-100 dark:bg-purple-900",
-        iconText: "text-purple-600 dark:text-purple-400",
-      };
-    }
-    return {
-      accentText: "text-blue-600 dark:text-blue-400",
-      primaryBtn: "bg-blue-600 hover:bg-blue-700",
-      softBg: "bg-blue-50/50 dark:bg-blue-950/30",
-      dashHover: "hover:border-blue-500",
-      iconBg: "bg-blue-100 dark:bg-blue-900",
-      iconText: "text-blue-600 dark:text-blue-400",
-    };
-  }, [isEmployer]);
 
   // ── Forms ──
 
@@ -225,9 +203,9 @@ export default function CompleteProfilePage() {
 
   if (step === 0 || !role) {
     return (
-      <Card className="rounded-3xl border shadow-sm">
-        <CardHeader className="text-center space-y-2 px-4 sm:px-8 pt-8">
-          <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
+      <Card className="rounded-none border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
+        <CardHeader className="text-center space-y-2 px-4 sm:px-8 pt-8 rounded-none border-b-4 border-black dark:border-white pb-6 mb-6">
+          <Typography variant="h2" className="text-2xl uppercase tracking-widest font-black text-center">Complete Your Profile</Typography>
           <CardDescription>
             You signed in with{" "}
             <strong>
@@ -242,22 +220,19 @@ export default function CompleteProfilePage() {
             type="button"
             onClick={() => selectRole("student")}
             aria-label="Continue as a student"
-            className="group w-full flex items-start gap-4 p-5 border rounded-2xl text-left transition-all
-                       hover:shadow-sm hover:-translate-y-px
-                       hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
+            className="group w-full flex items-start gap-4 p-5 rounded-none border-4 border-black dark:border-white bg-[#2563EB] text-left transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[8px_8px_0_0_#000] dark:hover:shadow-[8px_8px_0_0_#fff]"
           >
-            <div className="p-3 rounded-xl bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-900 dark:text-blue-400">
+            <div className="p-3 border-2 border-black dark:border-white bg-white text-black transition-colors group-hover:bg-black group-hover:text-white">
               <User className="w-6 h-6" />
             </div>
             <div className="space-y-1">
               <Typography
                 variant="span"
-                weight="semibold"
-                className="block text-base"
+                className="block text-base font-black uppercase tracking-widest text-white"
               >
                 I&apos;m a Student
               </Typography>
-              <Typography variant="span" color="muted" className="block">
+              <Typography variant="span" className="block text-white font-bold text-sm">
                 Solve tasks, build your portfolio, and earn certificates.
               </Typography>
             </div>
@@ -267,22 +242,19 @@ export default function CompleteProfilePage() {
             type="button"
             onClick={() => selectRole("employer")}
             aria-label="Continue as an employer"
-            className="group w-full flex items-start gap-4 p-5 border rounded-2xl text-left transition-all
-                       hover:shadow-sm hover:-translate-y-px
-                       hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-950/30"
+            className="group w-full flex items-start gap-4 p-5 rounded-none border-4 border-black dark:border-white bg-[#AB47BC] text-left transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[8px_8px_0_0_#000] dark:hover:shadow-[8px_8px_0_0_#fff]"
           >
-            <div className="p-3 rounded-xl bg-purple-100 text-purple-600 transition-colors group-hover:bg-purple-600 group-hover:text-white dark:bg-purple-900 dark:text-purple-400">
+            <div className="p-3 border-2 border-black dark:border-white bg-white text-black transition-colors group-hover:bg-black group-hover:text-white">
               <Building2 className="w-6 h-6" />
             </div>
             <div className="space-y-1">
               <Typography
                 variant="span"
-                weight="semibold"
-                className="block text-base"
+                className="block text-base font-black uppercase tracking-widest text-white"
               >
                 I&apos;m an Employer
               </Typography>
-              <Typography variant="span" color="muted" className="block">
+              <Typography variant="span" className="block text-white font-bold text-sm">
                 Post challenges and evaluate junior talent with AI.
               </Typography>
             </div>
@@ -312,15 +284,15 @@ export default function CompleteProfilePage() {
   // ── Step 1: Profile form ──
 
   return (
-    <Card className="rounded-3xl border-2 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
-      <CardHeader className="px-4 sm:px-8 pt-8">
+    <Card className="rounded-none border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
+      <CardHeader className="px-4 sm:px-8 pt-8 rounded-none border-b-4 border-black dark:border-white pb-6 mb-6">
         {/* Role badge */}
         <div className="flex justify-center mb-1">
           <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
               isEmployer
-                ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                ? "bg-[#AB47BC] text-white"
+                : "bg-[#2563EB] text-white"
             }`}
           >
             {isEmployer ? (
@@ -333,8 +305,8 @@ export default function CompleteProfilePage() {
         </div>
 
         <div className="text-center space-y-1 pt-2">
-          <CardTitle className="text-2xl">Complete your profile</CardTitle>
-          <CardDescription>Tell us more about yourself</CardDescription>
+          <Typography variant="h2" className="text-2xl uppercase tracking-widest font-black text-center">Complete Your Profile</Typography>
+          <CardDescription className="text-black dark:text-white font-bold uppercase tracking-widest text-xs">Tell us more about yourself</CardDescription>
         </div>
       </CardHeader>
 
@@ -370,15 +342,15 @@ export default function CompleteProfilePage() {
               >
                 <ToggleGroupItem
                   value="undergraduate"
-                  className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50 dark:data-[state=on]:bg-blue-950 dark:data-[state=on]:border-blue-400"
+                  className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-black hover:-translate-y-1`}
                 >
                   <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
-                  Undergraduate
+                  Undergrad
                 </ToggleGroupItem>
 
                 <ToggleGroupItem
                   value="graduate"
-                  className="w-full min-w-0 h-12 rounded-xl border justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm data-[state=on]:border-blue-600 data-[state=on]:bg-blue-50"
+                  className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-black hover:-translate-y-1`}
                 >
                   <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
                   Graduate
@@ -391,6 +363,7 @@ export default function CompleteProfilePage() {
               <Input
                 id="field"
                 placeholder="e.g., Computer Science, Business, Design..."
+                className="rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] px-3 py-2 text-sm focus-visible:ring-offset-0 focus-visible:ring-0 focus-visible:border-black dark:focus-visible:border-white"
                 {...studentForm.register("fieldOfStudy")}
                 aria-invalid={!!studentForm.formState.errors.fieldOfStudy}
               />
@@ -416,20 +389,19 @@ export default function CompleteProfilePage() {
                 type="button"
                 onClick={pickFile}
                 aria-label="Upload CV"
-                className={`w-full rounded-xl border border-dashed p-4 text-left transition-all
-                            hover:shadow-sm ${theme.softBg} ${theme.dashHover}`}
+                className={`w-full rounded-none border-4 border-black dark:border-white p-4 text-left transition-all bg-white dark:bg-black text-black dark:text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] focus:outline-none`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-2 rounded-lg ${theme.iconBg} ${theme.iconText}`}
+                    className={`p-2 border-2 border-black dark:border-white bg-[#2563EB] text-white shadow-[2px_2px_0_0_#000]`}
                   >
                     <Upload className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">
+                    <div className="font-black uppercase tracking-widest text-sm truncate">
                       {cvFile ? cvFile.name : "Click to upload your CV"}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
+                    <div className="text-xs font-bold uppercase tracking-widest mt-1 opacity-70">
                       Accepted formats: PDF, DOC, DOCX
                     </div>
                   </div>
@@ -443,16 +415,18 @@ export default function CompleteProfilePage() {
                 variant="outline"
                 onClick={goBack}
                 disabled={isSubmitting}
-                className="hover:bg-zinc-100 transition-colors dark:hover:bg-gray-800"
+                className="h-11 rounded-none border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black font-black uppercase tracking-widest"
               >
                 Back
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting || !isLoaded}
-                className={`text-white font-semibold text-sm whitespace-normal ${theme.primaryBtn}`}
+                className={`h-11 rounded-none border-2 border-black dark:border-white text-white font-black uppercase tracking-widest text-xs min-[375px]:text-sm whitespace-normal px-2 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] ${
+                  isEmployer ? "bg-[#AB47BC]" : "bg-[#2563EB]"
+                }`}
               >
-                {isSubmitting ? "Saving..." : "Complete Profile"}
+                {isSubmitting ? "Saving..." : "Create Account"}
               </Button>
             </div>
           </form>
@@ -470,6 +444,7 @@ export default function CompleteProfilePage() {
               <Input
                 id="company"
                 placeholder="e.g., TechCorp Inc."
+                className="rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] px-3 py-2 text-sm focus-visible:ring-offset-0 focus-visible:ring-0 focus-visible:border-black dark:focus-visible:border-white"
                 {...employerForm.register("companyName")}
                 aria-invalid={!!employerForm.formState.errors.companyName}
               />
@@ -485,6 +460,7 @@ export default function CompleteProfilePage() {
               <Input
                 id="position"
                 placeholder="e.g., HR Manager, Tech Lead, CEO..."
+                className="rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] px-3 py-2 text-sm focus-visible:ring-offset-0 focus-visible:ring-0 focus-visible:border-black dark:focus-visible:border-white"
                 {...employerForm.register("position")}
                 aria-invalid={!!employerForm.formState.errors.position}
               />
@@ -509,10 +485,10 @@ export default function CompleteProfilePage() {
                   )
                 }
               >
-                <SelectTrigger className="h-11 rounded-lg bg-white cursor-pointer transition-colors hover:bg-slate-50 dark:bg-gray-800 dark:hover:bg-gray-700">
+                <SelectTrigger className="h-11 rounded-none border-2 border-black dark:border-white transition-all shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] bg-white cursor-pointer hover:-translate-y-px hover:-translate-x-px hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff] dark:bg-black font-bold focus:ring-0">
                   <SelectValue placeholder="Select your level..." />
                 </SelectTrigger>
-                <SelectContent className="bg-white z-50 shadow-lg border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                <SelectContent className="bg-white dark:bg-black z-50 rounded-none border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
                   <SelectItem
                     value="mid"
                     className="cursor-pointer focus:bg-slate-100 dark:focus:bg-gray-700"
@@ -564,16 +540,18 @@ export default function CompleteProfilePage() {
                 variant="outline"
                 onClick={goBack}
                 disabled={isSubmitting}
-                className="hover:bg-zinc-100 transition-colors"
+                className="h-11 rounded-none border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black font-black uppercase tracking-widest"
               >
                 Back
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting || !isLoaded}
-                className={`text-white font-semibold text-sm whitespace-normal ${theme.primaryBtn}`}
+                className={`h-11 rounded-none border-2 border-black dark:border-white text-white font-black uppercase tracking-widest text-xs min-[375px]:text-sm whitespace-normal px-2 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] ${
+                  isEmployer ? "bg-[#AB47BC]" : "bg-[#2563EB]"
+                }`}
               >
-                {isSubmitting ? "Saving..." : "Complete Profile"}
+                {isSubmitting ? "Saving..." : "Create Account"}
               </Button>
             </div>
           </form>

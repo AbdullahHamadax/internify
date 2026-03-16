@@ -60,6 +60,7 @@ export const createTask = mutation({
     description: v.string(),
     skills: v.array(v.string()),
     deadline: v.number(),
+    maxApplicants: v.optional(v.number()),
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
   },
@@ -94,6 +95,8 @@ export const createTask = mutation({
       description: args.description,
       skills: args.skills,
       deadline: args.deadline,
+      maxApplicants: args.maxApplicants,
+      applicantCount: 0,
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
       status: "pending",
@@ -102,6 +105,117 @@ export const createTask = mutation({
     });
 
     return taskId;
+  },
+});
+
+/**
+ * Public query: returns all pending tasks for the student marketplace.
+ * Joins with employerProfiles to surface the company name.
+ */
+export const browseTasks = query({
+  args: {},
+  handler: async (ctx) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .order("desc")
+      .collect();
+
+    // Get current user's accepted tasks if authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    const acceptedTaskIds = new Set<string>();
+
+    if (identity) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_tokenIdentifier", (q) =>
+          q.eq("tokenIdentifier", identity.tokenIdentifier),
+        )
+        .unique();
+
+      if (user && user.role === "student") {
+        const applications = await ctx.db
+          .query("applications")
+          .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+          .collect();
+        applications.forEach((app) => acceptedTaskIds.add(app.taskId));
+      }
+    }
+
+    // Filter out tasks that are full or already accepted by the user
+    const availableTasks = tasks.filter((task) => {
+      if (
+        task.maxApplicants &&
+        (task.applicantCount ?? 0) >= task.maxApplicants
+      ) {
+        return false;
+      }
+      if (acceptedTaskIds.has(task._id)) {
+        return false;
+      }
+      return true;
+    });
+
+    const enriched = await Promise.all(
+      availableTasks.map(async (task) => {
+        // Resolve the employer's company name
+        const employerProfile = await ctx.db
+          .query("employerProfiles")
+          .withIndex("by_userId", (q) => q.eq("userId", task.employerId))
+          .unique();
+
+        let resolvedAttachments: {
+          storageId: string;
+          name: string;
+          type: string;
+          url: string;
+        }[] = [];
+
+        if (task.attachments && task.attachments.length > 0) {
+          const mappedAttachments = await Promise.all(
+            task.attachments.map(async (att) => {
+              const url = await ctx.storage.getUrl(att.storageId);
+              return url
+                ? {
+                    storageId: att.storageId.toString(),
+                    name: att.name,
+                    type: att.type,
+                    url,
+                  }
+                : null;
+            }),
+          );
+
+          resolvedAttachments = mappedAttachments.filter(
+            (
+              att,
+            ): att is {
+              storageId: string;
+              name: string;
+              type: string;
+              url: string;
+            } => att !== null,
+          );
+        }
+
+        return {
+          _id: task._id,
+          title: task.title,
+          description: task.description,
+          category: task.category,
+          skillLevel: task.skillLevel,
+          skills: task.skills,
+          deadline: task.deadline,
+          maxApplicants: task.maxApplicants,
+          applicantCount: task.applicantCount,
+          createdAt: task.createdAt,
+          companyName: employerProfile?.companyName ?? "Unknown Company",
+          resolvedAttachments,
+        };
+      }),
+    );
+
+    return enriched;
   },
 });
 
@@ -184,11 +298,30 @@ export const getEmployerTasks = query({
           );
         }
 
+        // Fetch accepted students
+        const applications = await ctx.db
+          .query("applications")
+          .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+          .collect();
+
+        const acceptedByRaw = await Promise.all(
+          applications.map(async (app) => {
+            const student = await ctx.db.get(app.studentId);
+            if (!student) return null;
+            const name =
+              [student.firstName, student.lastName].filter(Boolean).join(" ") ||
+              "Student";
+            return { id: student._id, name };
+          }),
+        );
+        const acceptedBy = acceptedByRaw.filter((s) => s !== null);
+
         return {
           ...task,
           imageStorageIds: filteredLegacyIds, // Pass the filtered array to avoid resurrecting deleted attachments
           imageUrls,
           resolvedAttachments,
+          acceptedBy,
         };
       }),
     );
@@ -302,6 +435,7 @@ export const updateTask = mutation({
     description: v.string(),
     skills: v.array(v.string()),
     deadline: v.number(),
+    maxApplicants: v.optional(v.number()),
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
   },
@@ -361,9 +495,299 @@ export const updateTask = mutation({
       description: args.description,
       skills: args.skills,
       deadline: args.deadline,
+      maxApplicants: args.maxApplicants,
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
       updatedAt: Date.now(),
     });
+  },
+});
+
+/**
+ * Accept a task as a student.
+ * - Prevents duplicate applications
+ * - Checks capacity (maxApplicants)
+ * - Increments applicantCount on the task
+ */
+export const acceptTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") {
+      throw new Error("Unauthorized: Only students can accept tasks");
+    }
+
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    if (task.status !== "pending") {
+      throw new Error("This task is no longer accepting applications");
+    }
+
+    // Check if already accepted
+    const existingApplication = await ctx.db
+      .query("applications")
+      .withIndex("by_studentId_taskId", (q) =>
+        q.eq("studentId", user._id).eq("taskId", args.taskId),
+      )
+      .unique();
+
+    if (existingApplication) {
+      throw new Error("You have already accepted this task");
+    }
+
+    // Check capacity
+    const currentCount = task.applicantCount ?? 0;
+    if (task.maxApplicants && currentCount >= task.maxApplicants) {
+      throw new Error("This task has reached its maximum number of applicants");
+    }
+
+    // Create the application record
+    await ctx.db.insert("applications", {
+      studentId: user._id,
+      taskId: args.taskId,
+      status: "accepted",
+      createdAt: Date.now(),
+    });
+
+    // Increment applicant count on the task
+    const newCount = currentCount + 1;
+    const updates: Record<string, unknown> = {
+      applicantCount: newCount,
+      updatedAt: Date.now(),
+    };
+
+    // Auto-move to "in_progress" when max applicants reached
+    if (task.maxApplicants && newCount >= task.maxApplicants) {
+      updates.status = "in_progress";
+    }
+
+    await ctx.db.patch(args.taskId, updates);
+  },
+});
+
+/**
+ * Get all task IDs the current student has accepted.
+ * Used in the explore page to disable duplicate applications.
+ */
+export const getStudentAcceptedTaskIds = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) return [];
+
+    const applications = await ctx.db
+      .query("applications")
+      .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+      .collect();
+
+    return applications.map((a) => a.taskId);
+  },
+});
+
+/**
+ * Get all applications for the current student with full task details.
+ * Used in the student dashboard active pipeline.
+ */
+export const getStudentApplications = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) return [];
+
+    const applications = await ctx.db
+      .query("applications")
+      .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+      .collect();
+
+    const enriched = await Promise.all(
+      applications.map(async (app) => {
+        const task = await ctx.db.get(app.taskId);
+        if (!task) return null;
+
+        const employerProfile = await ctx.db
+          .query("employerProfiles")
+          .withIndex("by_userId", (q) => q.eq("userId", task.employerId))
+          .unique();
+
+        const existingSubmission = await ctx.db
+          .query("submissions")
+          .withIndex("by_applicationId", (q) =>
+            q.eq("applicationId", app._id),
+          )
+          .unique();
+
+        return {
+          _id: app._id,
+          taskId: app.taskId,
+          status: app.status,
+          acceptedAt: app.createdAt,
+          hasSubmission: !!existingSubmission,
+          task: {
+            title: task.title,
+            description: task.description,
+            category: task.category,
+            skillLevel: task.skillLevel,
+            skills: task.skills,
+            deadline: task.deadline,
+            status: task.status,
+            companyName: employerProfile?.companyName ?? "Unknown Company",
+          },
+        };
+      }),
+    );
+
+    return enriched.filter((item) => item !== null);
+  },
+});
+
+/**
+ * Submit files for a task (student).
+ * Creates a submission record and marks the application as completed.
+ */
+export const submitTask = mutation({
+  args: {
+    applicationId: v.id("applications"),
+    files: v.array(
+      v.object({
+        storageId: v.id("_storage"),
+        name: v.string(),
+        type: v.string(),
+      }),
+    ),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") {
+      throw new Error("Unauthorized: Only students can submit tasks");
+    }
+
+    const application = await ctx.db.get(args.applicationId);
+    if (!application) throw new Error("Application not found");
+    if (application.studentId !== user._id) {
+      throw new Error("Unauthorized: This is not your application");
+    }
+
+    // Prevent duplicate submissions
+    const existing = await ctx.db
+      .query("submissions")
+      .withIndex("by_applicationId", (q) =>
+        q.eq("applicationId", args.applicationId),
+      )
+      .unique();
+    if (existing) throw new Error("You have already submitted for this task");
+
+    if (args.files.length === 0) {
+      throw new Error("At least one file is required");
+    }
+
+    // Create submission
+    await ctx.db.insert("submissions", {
+      applicationId: args.applicationId,
+      studentId: user._id,
+      taskId: application.taskId,
+      files: args.files,
+      note: args.note,
+      submittedAt: Date.now(),
+    });
+
+    // Mark application as completed
+    await ctx.db.patch(args.applicationId, { status: "completed" });
+
+    // Mark task as completed so it appears in the employer's Completed tab
+    await ctx.db.patch(application.taskId, {
+      status: "completed",
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Get all submissions for a specific task (employer).
+ * Returns student name, submission date, note, and resolved file URLs.
+ */
+export const getTaskSubmissions = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const submissions = await ctx.db
+      .query("submissions")
+      .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
+      .collect();
+
+    const enriched = await Promise.all(
+      submissions.map(async (sub) => {
+        const student = await ctx.db.get(sub.studentId);
+        const studentName = student
+          ? [student.firstName, student.lastName].filter(Boolean).join(" ") ||
+            "Student"
+          : "Unknown Student";
+
+        const resolvedFiles = await Promise.all(
+          sub.files.map(async (file) => {
+            const url = await ctx.storage.getUrl(file.storageId);
+            return url
+              ? { storageId: file.storageId.toString(), name: file.name, type: file.type, url }
+              : null;
+          }),
+        );
+
+        return {
+          _id: sub._id,
+          studentId: sub.studentId,
+          studentName,
+          note: sub.note,
+          submittedAt: sub.submittedAt,
+          files: resolvedFiles.filter((f) => f !== null),
+        };
+      }),
+    );
+
+    return enriched;
   },
 });

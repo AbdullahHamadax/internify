@@ -15,8 +15,11 @@ import AudienceSection from "@/components/landing/AudienceSection";
 import PartnerLogos from "@/components/landing/PartnerLogos";
 import CtaSection from "@/components/landing/CtaSection";
 import Footer from "@/components/landing/Footer";
-import SignedInView from "@/components/SignedInView";
+import StudentDashboard from "@/components/student/StudentDashboard";
 import EmployerDashboard from "@/components/employer/EmployerDashboard";
+
+// Import your new Chatbot component
+import Chatbot from "@/components/Chatbot";
 
 /* ═══════════════════════════════════════════════════════════
    HOMEPAGE (landing page for signed-out users)
@@ -24,17 +27,30 @@ import EmployerDashboard from "@/components/employer/EmployerDashboard";
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      <Navbar />
-      <main>
-        <HeroSection />
-        <StatsBar />
-        <HowItWorks />
-        <AudienceSection />
-        <PartnerLogos />
-        <CtaSection />
-      </main>
-      <Footer />
+    <div className="relative min-h-screen bg-white dark:bg-gray-950">
+      {/* Global Brutalist Grid Background overlay */}
+      <div
+        className="fixed inset-0 z-0 opacity-10 pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      ></div>
+
+      <div className="relative z-10">
+        <Navbar />
+        <main>
+          <HeroSection />
+          <StatsBar />
+          <HowItWorks />
+          <AudienceSection />
+          <PartnerLogos />
+          <CtaSection />
+        </main>
+        <Footer />
+        <Chatbot userRole="guest" />
+      </div>
     </div>
   );
 }
@@ -81,11 +97,21 @@ export default function Home() {
     );
   }
 
-  // Signed-in employer → show the employer dashboard
+  // Signed-in employer → show the employer dashboard AND the Chatbot
   if (currentUser.user.role === "employer") {
-    return <EmployerDashboard />;
+    return (
+      <>
+        <EmployerDashboard />
+        <Chatbot userRole="employer" />
+      </>
+    );
   }
 
-  // Signed-in student → show student view
-  return <SignedInView />;
+  // Signed-in student → show student view AND the Chatbot
+  return (
+    <>
+      <StudentDashboard />
+      <Chatbot userRole="student" />
+    </>
+  );
 }

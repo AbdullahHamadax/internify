@@ -12,8 +12,8 @@ const stats = [
     label: "Students",
     icon: Users,
     duration: 0.9,
-    accent: "from-[#00BCD4] to-[#1565C0]",
-    glow: "shadow-cyan-500/20 dark:shadow-cyan-400/10",
+    accent: "bg-[#AB47BC]",
+    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#AB47BC] border-2 border-black dark:border-[#AB47BC]",
   },
   {
     value: 50,
@@ -21,8 +21,8 @@ const stats = [
     label: "Partner Companies",
     icon: Building2,
     duration: 0.7,
-    accent: "from-[#1565C0] to-[#3B82F6]",
-    glow: "shadow-blue-500/20 dark:shadow-blue-400/10",
+    accent: "bg-[#2563EB]",
+    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-[#2563EB]",
   },
   {
     value: 500,
@@ -30,15 +30,15 @@ const stats = [
     label: "Tasks Posted",
     icon: ClipboardList,
     duration: 0.8,
-    accent: "from-[#7B1FA2] to-[#AB47BC]",
-    glow: "shadow-purple-500/20 dark:shadow-purple-400/10",
+    accent: "bg-[#AB47BC]",
+    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#AB47BC] border-2 border-black dark:border-[#AB47BC]",
   },
   {
     value: "AI",
     label: "Powered Feedback",
     icon: Bot,
-    accent: "from-[#00BCD4] to-[#7B1FA2]",
-    glow: "shadow-violet-500/20 dark:shadow-violet-400/10",
+    accent: "bg-[#2563EB]",
+    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-[#2563EB]",
   },
 ];
 
@@ -48,7 +48,7 @@ export default function StatsBar() {
       {/* Floating gradient accent — sits behind the cards */}
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Asymmetric grid — first card spans 2 cols on large screens for visual weight */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
           {stats.map((stat, i) => {
             const Icon = stat.icon;
             // Alternate vertical offsets for asymmetry on desktop
@@ -58,17 +58,14 @@ export default function StatsBar() {
             return (
               <AnimateIn key={i} delay={i * 0.1}>
                 <div
-                  className={`group relative rounded-2xl border border-gray-100 dark:border-gray-800/60 bg-white/80 dark:bg-gray-900/60 backdrop-blur-sm p-6 shadow-lg ${stat.glow} transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${offsetClass}`}
+                  className={`group relative rounded-none bg-white dark:bg-gray-950 p-6 ${stat.glow} transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_currentColor] ${offsetClass}`}
                 >
-                  {/* Gradient accent bar at top */}
-                  <div
-                    className={`absolute top-0 left-6 right-6 h-[2px] rounded-full bg-gradient-to-r ${stat.accent} opacity-60 group-hover:opacity-100 transition-opacity`}
-                  />
+                  <div className={`absolute top-0 left-0 right-0 h-2 rounded-none border-b-2 border-black dark:border-white ${stat.accent}`} />
 
                   <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
                     {/* Icon with gradient background */}
                     <div
-                      className={`shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.accent} shadow-lg`}
+                      className={`shrink-0 flex h-14 w-14 items-center justify-center rounded-none ${stat.accent} border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-transform group-hover:scale-105`}
                     >
                       <Icon className="h-5 w-5 text-white" />
                     </div>

@@ -67,6 +67,13 @@ export const upsertCurrentUser = mutation({
       v.object({
         academicStatus: academicStatusValidator,
         fieldOfStudy: v.string(),
+        title: v.optional(v.string()),
+        location: v.optional(v.string()),
+        description: v.optional(v.string()),
+        portfolio: v.optional(v.string()),
+        github: v.optional(v.string()),
+        linkedin: v.optional(v.string()),
+        skills: v.optional(v.array(v.string())),
         cvFileName: v.optional(v.string()),
       }),
     ),
@@ -151,6 +158,13 @@ export const upsertCurrentUser = mutation({
         await ctx.db.patch(existingStudentProfile._id, {
           academicStatus: args.studentProfile.academicStatus,
           fieldOfStudy: args.studentProfile.fieldOfStudy,
+          title: args.studentProfile.title,
+          location: args.studentProfile.location,
+          description: args.studentProfile.description,
+          portfolio: args.studentProfile.portfolio,
+          github: args.studentProfile.github,
+          linkedin: args.studentProfile.linkedin,
+          skills: args.studentProfile.skills,
           cvFileName: args.studentProfile.cvFileName,
           updatedAt: now,
         });
@@ -160,6 +174,13 @@ export const upsertCurrentUser = mutation({
           userId,
           academicStatus: args.studentProfile.academicStatus,
           fieldOfStudy: args.studentProfile.fieldOfStudy,
+          title: args.studentProfile.title,
+          location: args.studentProfile.location,
+          description: args.studentProfile.description,
+          portfolio: args.studentProfile.portfolio,
+          github: args.studentProfile.github,
+          linkedin: args.studentProfile.linkedin,
+          skills: args.studentProfile.skills,
           cvFileName: args.studentProfile.cvFileName,
           updatedAt: now,
         });
@@ -201,5 +222,44 @@ export const upsertCurrentUser = mutation({
     }
 
     return { userId, role: args.role };
+  },
+});
+
+/**
+ * QUERY: getStudentsForEmployer
+ * Fetches all student users and their profiles for the talent search.
+ */
+export const getStudentsForEmployer = query({
+  args: {},
+  handler: async (ctx) => {
+    // 1. Ensure the user is authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    // 2. We can enforce evaluating if caller is an employer, but for now just fetching all students
+    const students = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier") // Using a valid index or full scan if necessary
+      .filter((q) => q.eq(q.field("role"), "student"))
+      .collect();
+
+    // 3. For each student, get their profile
+    const studentsWithProfiles = await Promise.all(
+      students.map(async (student) => {
+        const profile = await ctx.db
+          .query("studentProfiles")
+          .withIndex("by_userId", (q) => q.eq("userId", student._id))
+          .unique();
+
+        return {
+          user: student,
+          profile: profile || null,
+        };
+      })
+    );
+
+    return studentsWithProfiles;
   },
 });

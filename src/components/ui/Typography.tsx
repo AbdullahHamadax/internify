@@ -21,14 +21,14 @@ const variantElements: Record<Variant, string> = {
 };
 
 const variantStyles: Record<Variant, string> = {
-  h1: "text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]",
-  h2: "text-3xl sm:text-4xl font-bold",
-  h3: "text-xl sm:text-2xl font-bold",
-  h4: "text-lg font-bold",
-  p: "text-base",
-  span: "text-sm",
-  label: "text-sm font-medium",
-  caption: "text-xs",
+  h1: "text-4xl sm:text-5xl lg:text-7xl font-black tracking-tighter leading-[1.1] uppercase",
+  h2: "text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.1] uppercase",
+  h3: "text-xl sm:text-2xl font-black tracking-tight",
+  h4: "text-lg font-bold tracking-tight",
+  p: "text-base font-medium",
+  span: "text-sm font-medium",
+  label: "text-sm font-black uppercase tracking-widest",
+  caption: "text-xs font-bold uppercase tracking-widest",
 };
 
 /* ─── Color definitions ─── */

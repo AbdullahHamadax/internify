@@ -1,12 +1,23 @@
 "use client";
 
-import { X, CalendarDays, Users, Trash2, Tag, FileText } from "lucide-react";
+import { X, CalendarDays, Users, Trash2, Tag, FileText, Download, User } from "lucide-react";
 
 import Image from "next/image";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
 import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/button";
 import type { Task } from "./TaskManagement";
 import deviconData from "devicon/devicon.json";
+
+const ICON_MAPPINGS: Record<string, string> = {
+  "Vue": "vuejs",
+  "HTML": "html5",
+  "CSS": "css3",
+  "Express": "express",
+  "TensorFlow": "tensorFlow",
+};
 
 interface TaskDetailModalProps {
   task: Task | null;
@@ -23,6 +34,11 @@ export default function TaskDetailModal({
   onDelete,
   onEdit,
 }: TaskDetailModalProps) {
+  const submissions = useQuery(
+    api.tasks.getTaskSubmissions,
+    open && task ? { taskId: task.id as Id<"tasks"> } : "skip",
+  );
+
   if (!open || !task) return null;
 
   const handleDelete = () => {
@@ -92,7 +108,7 @@ export default function TaskDetailModal({
             <Typography variant="h4" className="font-semibold mb-2">
               Description
             </Typography>
-            <div className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+            <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">
               {task.description || "No description provided."}
             </div>
           </div>
@@ -105,16 +121,20 @@ export default function TaskDetailModal({
               </Typography>
               <div className="flex flex-wrap gap-2">
                 {task.skills.map((skill) => {
-                  const deviconName = skill
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]/g, "");
-                  const hasIcon = (
-                    deviconData as Array<{ name: string; altnames: string[] }>
-                  ).some(
-                    (icon) =>
-                      icon.name === deviconName ||
-                      icon.altnames.includes(deviconName),
-                  );
+                  const mappedKey = ICON_MAPPINGS[skill];
+                  let deviconName = mappedKey;
+                  let hasIcon = !!mappedKey;
+
+                  if (!hasIcon) {
+                    deviconName = skill.toLowerCase().replace(/[^a-z0-9]/g, "");
+                    hasIcon = (
+                      deviconData as Array<{ name: string; altnames: string[] }>
+                    ).some(
+                      (icon) =>
+                        icon.name === deviconName ||
+                        icon.altnames.includes(deviconName!),
+                    );
+                  }
 
                   return (
                     <span
@@ -225,6 +245,62 @@ export default function TaskDetailModal({
                     </a>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Submissions */}
+          {submissions && submissions.length > 0 && (
+            <div>
+              <Typography variant="h4" className="font-semibold mb-3">
+                Submissions ({submissions.length})
+              </Typography>
+              <div className="space-y-4">
+                {submissions.map((sub) => (
+                  <div
+                    key={sub._id}
+                    className="border-2 border-black dark:border-white p-4 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 bg-[#2563EB] border border-black dark:border-white">
+                        <User className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <span className="font-bold text-sm">{sub.studentName}</span>
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {new Date(sub.submittedAt).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+
+                    {sub.note && (
+                      <p className="text-sm text-muted-foreground mb-3 italic">
+                        &ldquo;{sub.note}&rdquo;
+                      </p>
+                    )}
+
+                    <div className="space-y-1.5">
+                      {sub.files.map((file, fi) => (
+                        <a
+                          key={fi}
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-2 bg-muted/50 hover:bg-muted border border-black/20 dark:border-white/20 transition-colors group"
+                        >
+                          <FileText className="w-4 h-4 text-[#2563EB] shrink-0" />
+                          <span className="text-sm font-medium truncate flex-1">
+                            {file.name}
+                          </span>
+                          <Download className="w-4 h-4 text-muted-foreground group-hover:text-foreground shrink-0" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

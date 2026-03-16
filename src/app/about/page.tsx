@@ -42,25 +42,25 @@ const values = [
     icon: Lightbulb,
     title: "Real-World Skills",
     desc: "Every task on Internify is authored by a real employer and mirrors actual work. No toy projects — only challenges that build genuine competence.",
-    accent: "from-[#00BCD4] to-[#1565C0]",
+    accent: "bg-blue-600",
   },
   {
     icon: Bot,
     title: "AI-Powered Fairness",
     desc: "Our AI evaluation engine scores submissions objectively and instantly, removing bias and giving every student an equal shot.",
-    accent: "from-[#1565C0] to-[#7B1FA2]",
+    accent: "bg-purple-500",
   },
   {
     icon: ShieldCheck,
     title: "Verified Credentials",
     desc: "Certificates earned on Internify are tamper-proof and company-branded. Employers trust them because they represent proven ability.",
-    accent: "from-[#7B1FA2] to-[#AB47BC]",
+    accent: "bg-emerald-500",
   },
   {
     icon: Handshake,
     title: "Industry Partnerships",
     desc: "We partner directly with companies to create challenges that reflect their hiring needs, so students train on what actually matters.",
-    accent: "from-[#00BCD4] to-[#7B1FA2]",
+    accent: "bg-blue-600",
   },
 ];
 
@@ -75,20 +75,16 @@ export default function AboutPage() {
 
       {/* ─── HERO ─── */}
       <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-20 overflow-hidden">
-        {/* Gradient blobs */}
-        <div className="absolute top-0 right-0 -z-10 w-[600px] h-[600px] bg-gradient-to-br from-[#00BCD4]/8 via-[#1565C0]/6 to-[#7B1FA2]/8 dark:from-[#00BCD4]/15 dark:via-[#1565C0]/10 dark:to-[#7B1FA2]/15 rounded-full blur-3xl translate-x-1/3 -translate-y-1/4" />
-        <div className="absolute bottom-0 left-0 -z-10 w-[400px] h-[400px] bg-gradient-to-tr from-[#7B1FA2]/5 to-[#00BCD4]/5 dark:from-[#7B1FA2]/10 dark:to-[#00BCD4]/10 rounded-full blur-3xl -translate-x-1/3 translate-y-1/4" />
-
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <AnimateIn>
-            <span className="inline-block rounded-full bg-blue-50 dark:bg-blue-500/10 px-5 py-2 text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-6">
+            <span className="inline-block rounded-none border-2 border-black dark:border-white bg-blue-100 dark:bg-blue-900/50 px-5 py-2 text-xs font-black text-blue-700 dark:text-blue-300 uppercase tracking-widest mb-6 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
               Our Story
             </span>
             <Typography variant="h1">
               <Typography as="span" variant="h1">
                 Why We Built{" "}
               </Typography>
-              <Typography as="span" variant="h1" color="gradient">
+              <Typography as="span" variant="h1" className="text-blue-600 dark:text-blue-600">
                 Internify
               </Typography>
             </Typography>
@@ -124,8 +120,8 @@ export default function AboutPage() {
               const Icon = item.icon;
               return (
                 <AnimateIn key={item.title} delay={i * 0.1}>
-                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#00BCD4] to-[#1565C0] shadow-lg">
+                  <div className="rounded-2xl border-2 border-black dark:border-white bg-white dark:bg-gray-900 p-8 h-full transition-transform duration-300 hover:-translate-y-1 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
                       <Icon className="h-6 w-6 text-white" />
                     </div>
                     <Typography variant="h4" as="h3" className="mt-5">
@@ -148,9 +144,6 @@ export default function AboutPage() {
 
       {/* ─── OUR SOLUTION ─── */}
       <section className="relative py-20 sm:py-28 overflow-hidden">
-        {/* Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-r from-[#00BCD4]/8 via-[#1565C0]/6 to-[#7B1FA2]/8 dark:from-[#00BCD4]/15 dark:via-[#1565C0]/10 dark:to-[#7B1FA2]/15 rounded-full blur-3xl" />
-
         <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <AnimateIn className="text-center max-w-2xl mx-auto">
             <Typography variant="h2">Our Solution</Typography>
@@ -161,7 +154,7 @@ export default function AboutPage() {
           </AnimateIn>
 
           <AnimateIn delay={0.15}>
-            <div className="mt-14 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 backdrop-blur-sm p-8 sm:p-10 shadow-lg">
+            <div className="mt-14 rounded-2xl border-2 border-black dark:border-white bg-white dark:bg-gray-900 p-8 sm:p-10 shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
               <div className="space-y-6 text-gray-600 dark:text-gray-400 leading-relaxed text-base">
                 <Typography variant="p">
                   Internify is a{" "}
@@ -222,13 +215,9 @@ export default function AboutPage() {
               const Icon = val.icon;
               return (
                 <AnimateIn key={val.title} delay={i * 0.1}>
-                  <div className="group rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-                    {/* Gradient accent bar */}
+                  <div className="group rounded-2xl border-2 border-black dark:border-white bg-white dark:bg-gray-900 p-8 h-full transition-transform duration-300 hover:-translate-y-1 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
                     <div
-                      className={`absolute top-0 left-6 right-6 h-[2px] rounded-full bg-gradient-to-r ${val.accent} opacity-0 group-hover:opacity-60 transition-opacity`}
-                    />
-                    <div
-                      className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${val.accent} shadow-lg`}
+                      className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${val.accent} border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]`}
                     >
                       <Icon className="h-6 w-6 text-white" />
                     </div>

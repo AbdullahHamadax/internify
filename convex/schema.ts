@@ -74,6 +74,13 @@ export default defineSchema({
     userId: v.id("users"), // Example: "jd769..." (This connects this profile to a ID in the 'users' table)
     academicStatus: academicStatusValidator,
     fieldOfStudy: v.string(), // Example: "Computer Science"
+    title: v.optional(v.string()), // Example: "Frontend Developer"
+    location: v.optional(v.string()), // Example: "San Francisco, CA"
+    description: v.optional(v.string()),
+    portfolio: v.optional(v.string()),
+    github: v.optional(v.string()),
+    linkedin: v.optional(v.string()),
+    skills: v.optional(v.array(v.string())),
     cvStorageId: v.optional(v.id("_storage")), // Example: A file ID for their uploaded PDF resume
     cvFileName: v.optional(v.string()), // Example: "Alice_Resume_2024.pdf"
     updatedAt: v.number(),
@@ -104,6 +111,8 @@ export default defineSchema({
     description: v.string(),
     skills: v.array(v.string()), // Tags like ["React", "TypeScript"]
     deadline: v.number(), // Unix timestamp
+    maxApplicants: v.optional(v.number()), // Limit number of students who can apply
+    applicantCount: v.optional(v.number()), // Current applicants count
     status: v.union(
       v.literal("pending"),
       v.literal("in_progress"),
@@ -124,4 +133,44 @@ export default defineSchema({
   })
     .index("by_employerId", ["employerId"])
     .index("by_status", ["status"]),
+
+  /**
+   * APPLICATIONS TABLE
+   * Tracks which students have accepted/applied to which tasks.
+   */
+  applications: defineTable({
+    studentId: v.id("users"),
+    taskId: v.id("tasks"),
+    status: v.union(
+      v.literal("accepted"),
+      v.literal("in_progress"),
+      v.literal("completed"),
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_studentId", ["studentId"])
+    .index("by_taskId", ["taskId"])
+    .index("by_studentId_taskId", ["studentId", "taskId"]),
+
+  /**
+   * SUBMISSIONS TABLE
+   * Tracks file submissions from students for their accepted tasks.
+   */
+  submissions: defineTable({
+    applicationId: v.id("applications"),
+    studentId: v.id("users"),
+    taskId: v.id("tasks"),
+    files: v.array(
+      v.object({
+        storageId: v.id("_storage"),
+        name: v.string(),
+        type: v.string(),
+      }),
+    ),
+    note: v.optional(v.string()),
+    submittedAt: v.number(),
+  })
+    .index("by_taskId", ["taskId"])
+    .index("by_applicationId", ["applicationId"])
+    .index("by_studentId", ["studentId"]),
 });
