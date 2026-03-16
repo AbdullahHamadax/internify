@@ -334,8 +334,8 @@ function StepIndicator({
     }
     if (activeColor === "blue") {
       return {
-        active: "bg-blue-600 text-white dark:bg-blue-500",
-        complete: "bg-blue-600 text-white dark:bg-blue-500",
+        active: "bg-blue-600 text-white dark:bg-blue-600",
+        complete: "bg-blue-600 text-white dark:bg-blue-600",
         inactive: "bg-muted text-muted-foreground",
       };
     }
@@ -390,7 +390,7 @@ function StepConnector({ isComplete, activeColor }: StepConnectorProps) {
   const completeBg = !activeColor
     ? "bg-primary"
     : activeColor === "blue"
-      ? "bg-blue-600 dark:bg-blue-500"
+      ? "bg-blue-600 dark:bg-blue-600"
       : "bg-purple-600 dark:bg-purple-500";
 
   return (

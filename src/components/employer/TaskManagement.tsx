@@ -9,6 +9,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Typography } from "@/components/ui/Typography";
 
 export type TaskStatus = "pending" | "in_progress" | "completed";
 
@@ -19,6 +20,7 @@ export interface Task {
   skillLevel: string;
   status: TaskStatus;
   applications: number;
+  maxApplicants?: number;
   daysLeft?: number;
   deadline?: number;
   createdAt?: number;
@@ -34,6 +36,7 @@ export interface Task {
     type: string;
     url: string;
   }[];
+  acceptedBy?: { id: string; name: string }[];
 }
 
 interface TaskManagementProps {
@@ -75,15 +78,17 @@ function getCategoryClass(category: string): string {
 
 function TaskRow({
   task,
+  currentTab,
   onView,
 }: {
   task: Task;
+  currentTab: TaskStatus;
   onView: (task: Task) => void;
 }) {
   return (
     <div className="emp-task-row">
       <div className="emp-task-row__info">
-        <div className="emp-task-row__title">{task.title}</div>
+        <Typography variant="h4" className="emp-task-row__title">{task.title}</Typography>
         <div className="emp-task-row__meta">
           <span className={`emp-cat-tag ${getCategoryClass(task.category)}`}>
             {task.category}
@@ -100,7 +105,7 @@ function TaskRow({
                   gap: "0.25rem",
                 }}
               >
-                <Users className="size-3.5" /> {task.applications}
+                <Users className="size-3.5" /> {task.applications} {task.maxApplicants ? `/ ${task.maxApplicants}` : ""}
               </span>
               {task.deadline !== undefined ? (
                 <>
@@ -140,8 +145,41 @@ function TaskRow({
             </>
           )}
 
+          {currentTab === "in_progress" && task.acceptedBy && task.acceptedBy.length > 0 && (
+            <>
+              <span className="emp-task-row__meta-sep" />
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.25rem",
+                  color: "var(--foreground)",
+                  fontWeight: 600,
+                }}
+              >
+                Being done by: {task.acceptedBy.map((s) => s.name).join(", ")}
+              </span>
+            </>
+          )}
+
           {task.status === "completed" && (
             <>
+              {task.acceptedBy && task.acceptedBy.length > 0 && (
+                <>
+                  <span className="emp-task-row__meta-sep" />
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                      color: "var(--foreground)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Completed by: {task.acceptedBy.map((s) => s.name).join(", ")}
+                  </span>
+                </>
+              )}
               {task.avgScore !== undefined && (
                 <>
                   <span className="emp-task-row__meta-sep" />
@@ -193,7 +231,15 @@ export default function TaskManagement({
 
   const filterTasks = (status: TaskStatus) =>
     tasks
-      .filter((t) => t.status === status)
+      .filter((t) => {
+        if (status === "in_progress") {
+          return (
+            t.status === "in_progress" ||
+            (t.status === "pending" && t.acceptedBy && t.acceptedBy.length > 0)
+          );
+        }
+        return t.status === status;
+      })
       .filter(
         (t) =>
           !query ||
@@ -204,7 +250,7 @@ export default function TaskManagement({
   return (
     <div className="emp-tasks">
       <div className="emp-tasks__header">
-        <span className="emp-tasks__title">Task Management</span>
+        <Typography variant="h2" className="emp-tasks__title">Task Management</Typography>
         <div className="emp-tasks__header-actions">
           <button
             type="button"
@@ -248,13 +294,13 @@ export default function TaskManagement({
             return (
               <TabsContent key={status} value={status}>
                 {filtered.length === 0 ? (
-                  <div className="emp-task-empty">
+                  <Typography variant="p" color="muted" className="emp-task-empty text-center">
                     No {STATUS_LABEL[status].toLowerCase()} tasks
                     {query ? ` matching "${query}"` : ""}
-                  </div>
+                  </Typography>
                 ) : (
                   filtered.map((task) => (
-                    <TaskRow key={task.id} task={task} onView={onViewTask} />
+                    <TaskRow key={task.id} task={task} currentTab={status} onView={onViewTask} />
                   ))
                 )}
               </TabsContent>

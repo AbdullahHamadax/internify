@@ -42,6 +42,9 @@ import PostTaskModal, { type PostTaskData } from "./PostTaskModal";
 import TaskDetailModal from "./TaskDetailModal";
 import TalentSearch from "./talent-search/TalentSearch";
 import Messages from "./messages/Messages";
+import EmployerProfile from "./EmployerProfile";
+import SettingsPage from "@/components/shared/Settings";
+import Footer from "@/components/landing/Footer";
 
 import "./employer-dashboard.css";
 
@@ -80,7 +83,7 @@ function EmployerNavbar({
         {/* Brand */}
         <div className="emp-navbar__brand">
           <div className="emp-navbar__brand-icon">
-            <GraduationCap className="size-[1.125rem]" />
+            <GraduationCap className="size-4.5 text-white" />
           </div>
           <span className="emp-navbar__brand-text">Internify</span>
         </div>
@@ -126,21 +129,28 @@ function EmployerNavbar({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div
+            <button
+              type="button"
               className="emp-navbar__avatar cursor-pointer"
               title={user?.fullName ?? "Profile"}
             >
               {initials}
-            </div>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 mt-2">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onNavigate("profile")}
+            >
               <User className="mr-2 size-4" />
               <span>Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onNavigate("settings")}
+            >
               <Settings className="mr-2 size-4" />
               <span>Settings</span>
             </DropdownMenuItem>
@@ -265,6 +275,8 @@ export default function EmployerDashboard() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
+  const [now] = useState(() => Date.now());
+
   const tasks: Task[] =
     employerTasks?.map((t: any) => ({
       id: t._id,
@@ -272,10 +284,11 @@ export default function EmployerDashboard() {
       category: t.category,
       skillLevel: t.skillLevel.charAt(0).toUpperCase() + t.skillLevel.slice(1),
       status: t.status as TaskStatus,
-      applications: 0,
+      applications: t.applicantCount || 0,
+      maxApplicants: t.maxApplicants,
       daysLeft: Math.max(
         0,
-        Math.ceil((t.deadline - Date.now()) / (1000 * 60 * 60 * 24)),
+        Math.ceil((t.deadline - now) / (1000 * 60 * 60 * 24)),
       ),
       deadline: t.deadline,
       createdAt: t.createdAt,
@@ -284,6 +297,7 @@ export default function EmployerDashboard() {
       imageStorageIds: t.imageStorageIds,
       imageUrls: t.imageUrls,
       resolvedAttachments: t.resolvedAttachments,
+      acceptedBy: t.acceptedBy,
     })) || [];
 
   const stats: DashboardStats = employerStats || {
@@ -326,6 +340,7 @@ export default function EmployerDashboard() {
             description: taskData.description,
             skills: taskData.skills,
             deadline: taskData.deadline,
+            maxApplicants: taskData.maxApplicants,
             imageStorageIds: taskData.imageStorageIds as
               | Id<"_storage">[]
               | undefined,
@@ -346,6 +361,7 @@ export default function EmployerDashboard() {
             description: taskData.description,
             skills: taskData.skills,
             deadline: taskData.deadline,
+            maxApplicants: taskData.maxApplicants,
             imageStorageIds: taskData.imageStorageIds as
               | Id<"_storage">[]
               | undefined,
@@ -380,28 +396,33 @@ export default function EmployerDashboard() {
       />
 
       <main className="emp-main">
-        {activeNav === "talent-search" && (
-          <TalentSearch />
-        )}
-
-        {activeNav === "messages" && (
-          <Messages />
-        )}
+        {activeNav === "talent-search" && <TalentSearch />}
+        {activeNav === "messages" && <Messages />}
+        {activeNav === "profile" && <EmployerProfile />}
+        {activeNav === "settings" && <SettingsPage />}
 
         {activeNav === "dashboard" && (
           <>
             {/* Hero header with personality */}
             <div className="emp-hero">
               <div className="emp-hero__text">
-                <Typography variant="h1">
+                <Typography variant="h1" className="text-white">
                   {timeGreeting},{" "}
                   <span className="emp-hero__accent">{firstName}</span> 👋
                 </Typography>
-                <Typography variant="p">
+                <Typography
+                  variant="p"
+                  className="text-white opacity-90 text-sm md:text-base leading-relaxed mt-2"
+                >
                   Your tasks have received{" "}
-                  <strong>{stats.totalSubmissions} submissions</strong> this
-                  month. {stats.activeTasks} tasks are actively seeking talented
-                  students.
+                  <span className="inline-flex items-center justify-center font-black text-black bg-white px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] -rotate-2 text-xl md:text-2xl">
+                    {stats.totalSubmissions} submissions
+                  </span>{" "}
+                  this month.{" "}
+                  <span className="inline-flex items-center justify-center font-black text-black bg-[#FCD34D] px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] rotate-2 text-xl md:text-2xl">
+                    {stats.activeTasks}
+                  </span>{" "}
+                  tasks are actively seeking talented students.
                 </Typography>
               </div>
               <button
@@ -452,6 +473,7 @@ export default function EmployerDashboard() {
           setModalOpen(true);
         }}
       />
+      <Footer />
     </div>
   );
 }

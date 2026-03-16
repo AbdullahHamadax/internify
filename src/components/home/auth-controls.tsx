@@ -20,15 +20,15 @@ export function AuthControls() {
     user?.firstName || user?.fullName || user?.username || "there";
 
   return (
-    <div className="inline-flex items-center gap-3 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-      <span className="whitespace-nowrap">Hello, {name}</span>
+    <div className="inline-flex items-center gap-3 rounded-none border-2 border-black dark:border-white bg-white px-3 py-1.5 text-sm text-black shadow-[4px_4px_0_0_#000] dark:bg-black dark:text-white dark:shadow-[4px_4px_0_0_#fff]">
+      <span className="whitespace-nowrap font-bold uppercase tracking-widest text-xs">Hello, {name}</span>
       <button
         type="button"
         onClick={async () => {
           await signOut();
           router.push("/login");
         }}
-        className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className="rounded-none border-2 border-black dark:border-white bg-[#FF3366] px-3 py-1 text-xs font-black uppercase tracking-widest text-white transition-all shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff]"
       >
         Sign out
       </button>

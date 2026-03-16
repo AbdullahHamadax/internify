@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { BarChart3, Inbox } from "lucide-react";
 import type { Task } from "./TaskManagement";
+import { Typography } from "@/components/ui/Typography";
 
 interface AnalyticsPanelProps {
   tasks: Task[];
@@ -57,12 +58,12 @@ export default function AnalyticsPanel({ tasks }: AnalyticsPanelProps) {
     <aside className="emp-analytics">
       {/* Analytics metrics */}
       <div className="emp-analytics-card">
-        <div className="emp-analytics-card__title">
+        <Typography variant="h4" className="emp-analytics-card__title">
           <div className="emp-analytics-card__icon">
             <BarChart3 className="size-4" strokeWidth={2} />
           </div>
           Analytics
-        </div>
+        </Typography>
 
         {tasks.length === 0 ? (
           <div className="emp-analytics-empty">
@@ -70,16 +71,16 @@ export default function AnalyticsPanel({ tasks }: AnalyticsPanelProps) {
               className="size-8 mx-auto mb-2 opacity-40"
               strokeWidth={1.5}
             />
-            <p className="text-sm text-muted-foreground text-center">
+            <Typography variant="p" color="muted" className="text-sm text-center">
               Post your first task to see analytics
-            </p>
+            </Typography>
           </div>
         ) : (
           metrics.map((m) => (
             <div key={m.label} className="emp-metric">
               <div className="emp-metric__head">
-                <span className="emp-metric__label">{m.label}</span>
-                <span className="emp-metric__value">{m.value}%</span>
+                <Typography variant="span" weight="bold" className="emp-metric__label">{m.label}</Typography>
+                <Typography variant="span" weight="bold" className="emp-metric__value">{m.value}%</Typography>
               </div>
               <div className="emp-metric__bar">
                 <div
@@ -94,12 +95,12 @@ export default function AnalyticsPanel({ tasks }: AnalyticsPanelProps) {
 
       {/* Category breakdown — real data */}
       <div className="emp-analytics-card">
-        <div className="emp-analytics-card__title">Task Categories</div>
+        <Typography variant="h4" className="emp-analytics-card__title">Task Categories</Typography>
 
         {categoryBreakdown.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <Typography variant="p" color="muted" className="text-sm py-4 text-center">
             No tasks yet
-          </p>
+          </Typography>
         ) : (
           categoryBreakdown.map(([category, count]) => (
             <div key={category} className="emp-metric">
@@ -109,9 +110,11 @@ export default function AnalyticsPanel({ tasks }: AnalyticsPanelProps) {
               </div>
               <div className="emp-metric__bar">
                 <div
-                  className="emp-metric__fill emp-metric__fill--violet"
+                  className="emp-metric__fill"
                   style={{
                     width: `${(count / maxCategoryCount) * 100}%`,
+                    backgroundColor: "hsl(263 70% 50%)",
+                    border: "2px solid var(--border)",
                   }}
                 />
               </div>
