@@ -33,20 +33,20 @@ export default function Footer() {
   return (
     <footer className="relative border-t-4 border-black dark:border-white text-black dark:text-white pb-2">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 text-center sm:text-left">
           {/* Brand */}
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="bg-[#2563EB] rounded-none border-2 border-black dark:border-white p-1.5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
+          <div className="flex flex-col items-center sm:items-start">
+            <div className="flex items-start gap-2.5">
+              <div className="bg-[#2563EB] rounded-none border-2 border-black dark:border-white p-1.5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] -mt-1">
                 <GraduationCap className="h-6 w-6 text-white" />
               </div>
-              <Typography variant="span" className="text-lg mb-1" weight="bold">
+              <Typography variant="span" className="text-lg" weight="bold">
                 Internify
               </Typography>
             </div>
             <Typography
               variant="span"
-              className="mt-4 leading-relaxed max-w-xs font-bold"
+              className="mt-6 leading-relaxed max-w-xs font-bold"
             >
               Bridging education and industry. Empowering students to build
               real-world skills and launch their careers.
@@ -55,7 +55,7 @@ export default function Footer() {
 
           {/* Link columns */}
           {footerColumns.map((col) => (
-            <div key={col.title}>
+            <div key={col.title} className="flex flex-col items-center sm:items-start">
               <Typography
                 variant="span"
                 className="font-black uppercase tracking-widest text-lg"

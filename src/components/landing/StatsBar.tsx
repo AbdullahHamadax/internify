@@ -60,7 +60,9 @@ export default function StatsBar() {
                 <div
                   className={`group relative rounded-none bg-white dark:bg-gray-950 p-6 ${stat.glow} transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_currentColor] ${offsetClass}`}
                 >
-                  <div className={`absolute top-0 left-0 right-0 h-2 rounded-none border-b-2 border-black dark:border-white ${stat.accent}`} />
+                  <div
+                    className={`absolute top-0 left-0 right-0 h-2 rounded-none border-b-2 border-black dark:border-white ${stat.accent}`}
+                  />
 
                   <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
                     {/* Icon with gradient background */}
