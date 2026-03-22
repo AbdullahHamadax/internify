@@ -408,7 +408,7 @@ export default function EmployerDashboard() {
               <div className="emp-hero__text">
                 <Typography variant="h1" className="text-white">
                   {timeGreeting},{" "}
-                  <span className="emp-hero__accent">{firstName}</span> 👋
+                  <span className="emp-hero__accent">{firstName}</span>
                 </Typography>
                 <Typography
                   variant="p"
@@ -422,7 +422,7 @@ export default function EmployerDashboard() {
                   <span className="inline-flex items-center justify-center font-black text-black bg-[#FCD34D] px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] rotate-2 text-xl md:text-2xl">
                     {stats.activeTasks}
                   </span>{" "}
-                  tasks are actively seeking talented students.
+                  tasks are still looking for talented students.
                 </Typography>
               </div>
               <button

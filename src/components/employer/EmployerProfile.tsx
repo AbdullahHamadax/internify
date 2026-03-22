@@ -65,8 +65,7 @@ export default function EmployerProfile() {
   // Profile Data Resolution
   const profileCompany =
     employerProfile?.companyName || DEFAULT_PROFILE.companyName;
-  const profilePosition =
-    employerProfile?.position || DEFAULT_PROFILE.position;
+  const profilePosition = employerProfile?.position || DEFAULT_PROFILE.position;
   const profileRank = employerProfile?.rankLevel || DEFAULT_PROFILE.rankLevel;
 
   // Edit Modal State
@@ -130,14 +129,14 @@ export default function EmployerProfile() {
         {/* LEFT COLUMN: Identity & Actions (4/12 Width) */}
         <motion.div variants={itemVariants} className="lg:col-span-5 space-y-6">
           {/* Main Profile Card */}
-          <div className="bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] p-6 relative">
-            <div className="absolute top-0 right-0 p-2 bg-[#EA4335] text-white border-b-4 border-l-4 border-black dark:border-white font-black text-xs uppercase tracking-widest">
-              Employer
+          <div className="bg-card border-4 border-border shadow-[8px_8px_0_0_var(--border)] p-6 relative">
+            <div className="absolute -top-4 -right-4 bg-[#EA4335] text-white border-4 border-black dark:border-white px-3 py-1 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] z-10 -rotate-3 hover:-rotate-6 transition-transform">
+              Hiring
             </div>
 
             <div className="flex flex-col items-center text-center space-y-4 pt-4">
               {/* Brutalist Avatar */}
-              <div className="w-32 h-32 border-4 border-black dark:border-white bg-[#FCD34D] shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] flex items-center justify-center overflow-hidden">
+              <div className="w-32 h-32 border-4 border-border bg-[#FCD34D] shadow-[4px_4px_0_0_var(--border)] flex items-center justify-center overflow-hidden">
                 {user?.imageUrl ? (
                   <Image
                     src={user.imageUrl}
@@ -167,22 +166,27 @@ export default function EmployerProfile() {
                 </Typography>
 
                 <div className="flex flex-wrap gap-2 justify-center mt-3">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-black text-white dark:bg-white dark:text-black border-2 border-black dark:border-white text-xs font-black uppercase tracking-wider shadow-[2px_2px_0_0_#2563EB]">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-black text-white dark:bg-white dark:text-black border-2 border-border text-xs font-black uppercase tracking-wider shadow-[2px_2px_0_0_var(--border)]">
                     <Building2 className="w-3.5 h-3.5" />
                     {profileCompany}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#2563EB] text-white border-2 border-black dark:border-white text-xs font-black uppercase tracking-wider shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#2563EB] text-white border-2 border-border text-xs font-black uppercase tracking-wider shadow-[2px_2px_0_0_var(--border)]">
                     <Award className="w-3.5 h-3.5" />
                     {profileRank}
                   </span>
                 </div>
               </div>
             </div>
-            
-            <div className="mt-6 pt-6 border-t-4 border-black dark:border-white text-center">
-               <Typography variant="p" color="muted" className="text-sm font-bold">
-                 Member since {new Date(dbUser?.createdAt || Date.now()).toLocaleDateString()}
-               </Typography>
+
+            <div className="mt-6 pt-6 border-t-4 border-border text-center">
+              <Typography
+                variant="p"
+                color="muted"
+                className="text-sm font-bold"
+              >
+                Member since{" "}
+                {new Date(dbUser?.createdAt || Date.now()).toLocaleDateString()}
+              </Typography>
             </div>
           </div>
 
@@ -213,42 +217,73 @@ export default function EmployerProfile() {
             </Typography>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-card border-4 border-black dark:border-white p-6 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-default">
+              <div className="bg-card border-4 border-border p-6 shadow-[4px_4px_0_0_var(--border)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-default">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-[#2563EB] text-white border-2 border-black shadow-[2px_2px_0_0_#000]">
-                     <ClipboardList className="w-5 h-5" />
+                  <div className="p-2 bg-[#2563EB] text-white border-2 border-border shadow-[2px_2px_0_0_var(--border)]">
+                    <ClipboardList className="w-5 h-5" />
                   </div>
-                  <Typography variant="h4" className="uppercase tracking-widest text-sm">Active Tasks</Typography>
+                  <Typography
+                    variant="h4"
+                    className="uppercase tracking-widest text-sm"
+                  >
+                    Active Tasks
+                  </Typography>
                 </div>
                 <Typography variant="h1" className="text-4xl">
-                   {employerStats === undefined ? <Loader2 className="animate-spin w-8 h-8 mt-2" /> : <CountUp from={0} to={employerStats.activeTasks} />}
+                  {employerStats === undefined ? (
+                    <Loader2 className="animate-spin w-8 h-8 mt-2" />
+                  ) : (
+                    <CountUp from={0} to={employerStats.activeTasks} />
+                  )}
                 </Typography>
               </div>
 
-              <div className="bg-card border-4 border-black dark:border-white p-6 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#AB47BC] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-default">
+              <div className="bg-card border-4 border-border p-6 shadow-[4px_4px_0_0_var(--border)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-default">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-[#AB47BC] text-white border-2 border-black shadow-[2px_2px_0_0_#000]">
-                     <CheckCircle2 className="w-5 h-5" />
+                  <div className="p-2 bg-[#AB47BC] text-white border-2 border-border shadow-[2px_2px_0_0_var(--border)]">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
-                  <Typography variant="h4" className="uppercase tracking-widest text-sm">Completed Tasks</Typography>
+                  <Typography
+                    variant="h4"
+                    className="uppercase tracking-widest text-sm"
+                  >
+                    Completed Tasks
+                  </Typography>
                 </div>
                 <Typography variant="h1" className="text-4xl">
-                   {employerStats === undefined ? <Loader2 className="animate-spin w-8 h-8 mt-2" /> : <CountUp from={0} to={employerStats.completedTasks} />}
+                  {employerStats === undefined ? (
+                    <Loader2 className="animate-spin w-8 h-8 mt-2" />
+                  ) : (
+                    <CountUp from={0} to={employerStats.completedTasks} />
+                  )}
                 </Typography>
               </div>
 
-              <div className="bg-card border-4 border-black dark:border-white p-6 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#10B981] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-default sm:col-span-2">
+              <div className="bg-card border-4 border-border p-6 shadow-[4px_4px_0_0_var(--border)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-default sm:col-span-2">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-[#10B981] text-white border-2 border-black shadow-[2px_2px_0_0_#000]">
-                     <Users className="w-5 h-5" />
+                  <div className="p-2 bg-[#10B981] text-white border-2 border-border shadow-[2px_2px_0_0_var(--border)]">
+                    <Users className="w-5 h-5" />
                   </div>
-                  <Typography variant="h4" className="uppercase tracking-widest text-sm">Total Talent Submissions</Typography>
+                  <Typography
+                    variant="h4"
+                    className="uppercase tracking-widest text-sm"
+                  >
+                    Total Talent Submissions
+                  </Typography>
                 </div>
                 <div className="flex items-end justify-between">
                   <Typography variant="h1" className="text-5xl">
-                     {employerStats === undefined ? <Loader2 className="animate-spin w-10 h-10 mt-2" /> : <CountUp from={0} to={employerStats.totalSubmissions} />}
+                    {employerStats === undefined ? (
+                      <Loader2 className="animate-spin w-10 h-10 mt-2" />
+                    ) : (
+                      <CountUp from={0} to={employerStats.totalSubmissions} />
+                    )}
                   </Typography>
-                  <Typography variant="span" color="muted" className="font-bold mb-1">
+                  <Typography
+                    variant="span"
+                    color="muted"
+                    className="font-bold mb-1"
+                  >
                     students evaluated
                   </Typography>
                 </div>
@@ -273,9 +308,9 @@ export default function EmployerProfile() {
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="relative w-full max-w-xl max-h-[90vh] bg-background border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] flex flex-col overflow-hidden"
+              className="relative w-full max-w-xl max-h-[90vh] bg-background border-4 border-border shadow-[8px_8px_0_0_var(--border)] flex flex-col overflow-hidden"
             >
-              <div className="flex items-center justify-between p-6 pb-2 border-b-4 border-black dark:border-white">
+              <div className="flex items-center justify-between p-6 pb-2 border-b-4 border-border">
                 <Typography
                   variant="h3"
                   className="font-black uppercase text-foreground tracking-widest"
@@ -353,7 +388,7 @@ export default function EmployerProfile() {
                 </div>
               </div>
 
-              <div className="p-6 pt-4 border-t-4 border-black dark:border-white flex justify-end gap-4 bg-muted">
+              <div className="p-6 pt-4 border-t-4 border-border flex justify-end gap-4 bg-muted">
                 <button
                   onClick={() => setIsEditing(false)}
                   className="px-6 py-2.5 bg-transparent text-foreground border-2 border-border font-black uppercase tracking-widest hover:bg-card transition-colors shadow-[2px_2px_0_0_var(--border)]"
@@ -364,7 +399,7 @@ export default function EmployerProfile() {
                 <button
                   onClick={handleSaveProfile}
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-[#2563EB] text-white border-2 border-black dark:border-white font-black uppercase tracking-widest hover:translate-x-[2px] hover:translate-y-[2px] shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:shadow-none transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#2563EB] text-white border-2 border-border font-black uppercase tracking-widest hover:translate-x-[2px] hover:translate-y-[2px] shadow-[4px_4px_0_0_var(--border)] hover:shadow-none transition-all disabled:opacity-50"
                 >
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

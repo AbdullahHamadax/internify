@@ -51,7 +51,7 @@ export default function AudienceSection() {
                 ))}
               </ul>
               <Link
-                href="/signup"
+                href="/signup?role=student"
                 className="mt-8 inline-flex items-center gap-2 bg-black text-white dark:bg-[#2563EB] dark:text-black border-4 border-black dark:border-white rounded-none px-6 py-3 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#AB47BC] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
                 Start Learning Free
@@ -87,7 +87,7 @@ export default function AudienceSection() {
                 ))}
               </ul>
               <Link
-                href="/signup"
+                href="/signup?role=employer"
                 className="mt-8 inline-flex items-center gap-2 bg-black text-white dark:bg-[#AB47BC] dark:text-white border-4 border-black dark:border-white rounded-none px-6 py-3 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#2563EB] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
               >
                 Post a Challenge

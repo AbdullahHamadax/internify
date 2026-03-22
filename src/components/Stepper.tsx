@@ -324,25 +324,25 @@ function StepIndicator({
 
   // Determine color classes based on activeColor prop
   const colorClasses = (() => {
+    const baseInactive = "bg-white text-black dark:bg-black dark:text-white";
     if (!activeColor) {
-      // Default: use generic primary
       return {
-        active: "bg-primary text-primary-foreground",
-        complete: "bg-primary text-primary-foreground",
-        inactive: "bg-muted text-muted-foreground",
+        active: "bg-black text-white dark:bg-white dark:text-black",
+        complete: "bg-black text-white dark:bg-white dark:text-black",
+        inactive: baseInactive,
       };
     }
     if (activeColor === "blue") {
       return {
-        active: "bg-blue-600 text-white dark:bg-blue-600",
-        complete: "bg-blue-600 text-white dark:bg-blue-600",
-        inactive: "bg-muted text-muted-foreground",
+        active: "bg-[#2563EB] text-white",
+        complete: "bg-[#2563EB] text-white",
+        inactive: baseInactive,
       };
     }
     return {
-      active: "bg-purple-600 text-white dark:bg-purple-500",
-      complete: "bg-purple-600 text-white dark:bg-purple-500",
-      inactive: "bg-muted text-muted-foreground",
+      active: "bg-[#AB47BC] text-white",
+      complete: "bg-[#AB47BC] text-white",
+      inactive: baseInactive,
     };
   })();
 
@@ -360,14 +360,14 @@ function StepIndicator({
           complete: { scale: 1 },
         }}
         transition={{ duration: 0.3 }}
-        className={`flex h-8 w-8 items-center justify-center rounded-full font-semibold transition-colors duration-300 ${
+        className={`flex h-10 w-10 items-center justify-center rounded-none border-2 border-black dark:border-white shadow-[3px_3px_0_0_#000] dark:shadow-[3px_3px_0_0_#fff] font-black transition-colors duration-300 ${
           colorClasses[status]
         }`}
       >
         {status === "complete" ? (
-          <CheckIcon className="h-4 w-4" />
+          <CheckIcon className="h-5 w-5" />
         ) : status === "active" ? (
-          <div className="h-2 w-2 rounded-full bg-white" />
+          <div className="h-2.5 w-2.5 rounded-none bg-white dark:bg-black" />
         ) : (
           <span className="text-sm">{step}</span>
         )}
@@ -388,15 +388,15 @@ function StepConnector({ isComplete, activeColor }: StepConnectorProps) {
   };
 
   const completeBg = !activeColor
-    ? "bg-primary"
+    ? "bg-black dark:bg-white"
     : activeColor === "blue"
-      ? "bg-blue-600 dark:bg-blue-600"
-      : "bg-purple-600 dark:bg-purple-500";
+      ? "bg-[#2563EB]"
+      : "bg-[#AB47BC]";
 
   return (
-    <div className="relative mx-2 h-0.5 flex-1 overflow-hidden rounded bg-muted">
+    <div className="relative mx-4 h-3 flex-1 overflow-hidden rounded-none border-2 border-black dark:border-white bg-white dark:bg-black shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
       <motion.div
-        className={`absolute left-0 top-0 h-full ${completeBg}`}
+        className={`absolute left-0 top-0 h-full border-r-2 border-black dark:border-white ${completeBg}`}
         variants={lineVariants}
         initial={false}
         animate={isComplete ? "complete" : "incomplete"}
@@ -406,7 +406,7 @@ function StepConnector({ isComplete, activeColor }: StepConnectorProps) {
   );
 }
 
-interface CheckIconProps extends React.SVGProps<SVGSVGElement> {}
+type CheckIconProps = React.SVGProps<SVGSVGElement>;
 
 function CheckIcon(props: CheckIconProps) {
   return (

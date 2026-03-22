@@ -510,7 +510,12 @@ export default function SignUpPage() {
     return (
       <Card className="rounded-none border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
         <CardHeader className="text-center space-y-2 px-4 sm:px-8 pt-8 rounded-none border-b-4 border-black dark:border-white pb-6 mb-6">
-          <Typography variant="h2" className="text-2xl uppercase tracking-widest font-black text-center">Join Internify</Typography>
+          <Typography
+            variant="h2"
+            className="text-2xl uppercase tracking-widest font-black text-center"
+          >
+            Join Internify
+          </Typography>
           <CardDescription className="text-black dark:text-white font-bold uppercase tracking-widest text-xs">
             Choose how you want to use the platform
           </CardDescription>
@@ -533,7 +538,10 @@ export default function SignUpPage() {
               >
                 I&apos;m a Student
               </Typography>
-              <Typography variant="span" className="block text-white font-bold text-sm">
+              <Typography
+                variant="span"
+                className="block text-white font-bold text-sm"
+              >
                 Solve tasks, build your portfolio, and earn certificates.
               </Typography>
             </div>
@@ -555,7 +563,10 @@ export default function SignUpPage() {
               >
                 I&apos;m an Employer
               </Typography>
-              <Typography variant="span" className="block text-white font-bold text-sm">
+              <Typography
+                variant="span"
+                className="block text-white font-bold text-sm"
+              >
                 Post challenges and evaluate junior talent with AI.
               </Typography>
             </div>
@@ -588,9 +599,7 @@ export default function SignUpPage() {
         <div className="flex justify-center mb-1">
           <span
             className={`inline-flex items-center gap-2 px-4 py-1.5 text-sm font-black uppercase tracking-widest border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
-              isEmployer
-                ? "bg-[#AB47BC] text-white"
-                : "bg-[#2563EB] text-white"
+              isEmployer ? "bg-[#AB47BC] text-white" : "bg-[#2563EB] text-white"
             }`}
           >
             {isEmployer ? (
@@ -617,7 +626,12 @@ export default function SignUpPage() {
           <Step>
             <div className="px-4 sm:px-8 pb-8 space-y-6">
               <div className="text-center space-y-1 mb-6">
-                <Typography variant="h2" className="text-2xl uppercase tracking-widest font-black text-center">Create Your Account</Typography>
+                <Typography
+                  variant="h2"
+                  className="text-2xl uppercase tracking-widest font-black text-center"
+                >
+                  Create Your Account
+                </Typography>
                 <CardDescription className="text-black dark:text-white font-bold uppercase tracking-widest text-xs">
                   Enter your basic account details
                 </CardDescription>
@@ -714,7 +728,7 @@ export default function SignUpPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -754,10 +768,15 @@ export default function SignUpPage() {
           <Step>
             <div className="px-4 sm:px-8 pb-8 space-y-6">
               <div className="text-center space-y-1 mb-6">
-                <Typography variant="h2" className="text-2xl uppercase tracking-widest font-black text-center">
+                <Typography
+                  variant="h2"
+                  className="text-2xl uppercase tracking-widest font-black text-center"
+                >
                   Complete Your Profile
                 </Typography>
-                <CardDescription className="text-black dark:text-white font-bold uppercase tracking-widest text-xs">Tell us more about yourself</CardDescription>
+                <CardDescription className="text-black dark:text-white font-bold uppercase tracking-widest text-xs">
+                  Tell us more about yourself
+                </CardDescription>
               </div>
               {submitError && step === 2 && (
                 <Typography
@@ -786,21 +805,21 @@ export default function SignUpPage() {
                           { shouldValidate: true },
                         )
                       }
-                      className="grid w-full grid-cols-1 min-[375px]:grid-cols-2 gap-3"
+                      className="grid w-full grid-cols-1 sm:grid-cols-2 gap-3"
                     >
                       <ToggleGroupItem
                         value="undergraduate"
-                        className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-black hover:-translate-y-1`}
+                        className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 sm:px-3 text-xs sm:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-white hover:-translate-y-1`}
                       >
-                        <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
+                        <GraduationCap className="mr-2 h-4 w-4 shrink-0" />
                         Undergrad
                       </ToggleGroupItem>
 
                       <ToggleGroupItem
                         value="graduate"
-                        className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-black hover:-translate-y-1`}
+                        className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 sm:px-3 text-xs sm:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-white hover:-translate-y-1`}
                       >
-                        <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
+                        <GraduationCap className="mr-2 h-4 w-4 shrink-0" />
                         Graduate
                       </ToggleGroupItem>
                     </ToggleGroup>
@@ -843,7 +862,7 @@ export default function SignUpPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className={`p-2 border-2 border-black dark:border-white bg-[#2563EB] text-white shadow-[2px_2px_0_0_#000]`}
+                          className={`p-2 border-2 border-black dark:border-white bg-[#2563EB] text-white`}
                         >
                           <Upload className="h-5 w-5" />
                         </div>
@@ -866,7 +885,7 @@ export default function SignUpPage() {
                     data-cl-size="flexible"
                   />
 
-                  <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -1017,7 +1036,7 @@ export default function SignUpPage() {
                     data-cl-size="flexible"
                   />
 
-                  <div className="grid grid-cols-1 min-[375px]:grid-cols-2 gap-3 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -1101,7 +1120,7 @@ export default function SignUpPage() {
                     </Typography>
                   </div>
 
-                  <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                     <Button
                       type="button"
                       variant="outline"

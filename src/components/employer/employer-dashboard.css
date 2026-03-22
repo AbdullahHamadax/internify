@@ -58,13 +58,13 @@
   width: 2.125rem;
   height: 2.125rem;
   border-radius: 0;
-  border: 2px solid var(--border);
+  border: 2px solid var(--foreground);
   display: flex;
   align-items: center;
   justify-content: center;
   background: #ab47bc;
   color: white;
-  box-shadow: 4px 4px 0 0 var(--border);
+  box-shadow: 2px 2px 0 0 var(--foreground);
 }
 
 .emp-navbar__brand-text {
@@ -92,39 +92,40 @@
 
 .emp-navbar__link {
   padding: 0.4375rem 0.875rem;
-  border-radius: 0;
   border: 2px solid transparent;
-  font-size: 0.875rem;
-  font-weight: 800;
+  border-radius: 0;
+  font-size: 0.8125rem;
+  font-weight: 900;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--foreground);
   text-decoration: none;
   transition: all 0.1s ease;
-  background: none;
+  background: transparent;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .emp-navbar__link:hover {
-  background: #ab47bc;
-  color: white;
-  border-color: var(--border);
-  box-shadow: 4px 4px 0 0 var(--border);
-  transform: translate(-2px, -2px);
+  background: var(--foreground);
+  color: var(--background);
+  border-color: var(--foreground);
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0 0 var(--border);
 }
 
 .emp-navbar__link--active {
-  color: white;
-  background: #ab47bc;
-  border-color: var(--border);
-  box-shadow: 4px 4px 0 0 var(--border);
+  color: white !important;
+  background: #ab47bc !important;
+  border-color: black !important;
+  box-shadow: 4px 4px 0 0 black !important;
   transform: translate(-2px, -2px);
 }
 
-.dark .emp-navbar__link--active,
-.dark .emp-navbar__link:hover {
-  border-color: var(--border);
-  box-shadow: 4px 4px 0 0 #ce93d8;
+.dark .emp-navbar__link--active {
+  color: white !important;
+  border-color: white !important;
+  box-shadow: 4px 4px 0 0 white !important;
 }
 
 .emp-navbar__right {
@@ -141,17 +142,17 @@
   align-items: center;
   justify-content: center;
   border-radius: 0;
-  border: 2px solid var(--border);
-  background: var(--card);
+  border: 2px solid var(--foreground);
+  background: var(--background);
   color: var(--foreground);
   cursor: pointer;
   transition: all 0.1s ease;
-  box-shadow: 4px 4px 0 0 var(--border);
+  box-shadow: 2px 2px 0 0 var(--foreground);
 }
 
 .emp-navbar__icon-btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 0 var(--border);
+  transform: translate(2px, 2px);
+  box-shadow: none;
 }
 
 .emp-navbar__notif-dot {
@@ -169,7 +170,7 @@
   width: 2.125rem;
   height: 2.125rem;
   border-radius: 0;
-  border: 2px solid var(--border);
+  border: 2px solid var(--foreground);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -180,12 +181,12 @@
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.1s ease;
-  box-shadow: 4px 4px 0 0 var(--border);
+  box-shadow: 2px 2px 0 0 var(--foreground);
 }
 
 .emp-navbar__avatar:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 0 var(--border);
+  transform: translate(2px, 2px);
+  box-shadow: none;
 }
 
 /* ── Mobile Menu ── */
@@ -240,17 +241,7 @@
   box-shadow: 8px 8px 0 0 white;
 }
 
-.emp-hero::after {
-  content: "";
-  position: absolute;
-  top: -60%;
-  right: -10%;
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  background: #ba68c81a;
-  pointer-events: none;
-}
+
 
 .emp-hero__text h1 {
   font-family: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
@@ -289,20 +280,20 @@
   font-size: 0.875rem;
   font-weight: 900;
   text-transform: uppercase;
-  color: var(--card);
-  background: var(--foreground);
-  border: 2px solid var(--border);
+  color: var(--foreground);
+  background: var(--card);
+  border: 2px solid var(--foreground);
   border-radius: 0;
   cursor: pointer;
   transition: all 0.1s ease;
-  box-shadow: 4px 4px 0 0 var(--border);
+  box-shadow: 4px 4px 0 0 var(--foreground);
   flex-shrink: 0;
   white-space: nowrap;
 }
 
 .emp-post-btn:hover {
   transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 0 var(--border);
+  box-shadow: 2px 2px 0 0 var(--foreground);
 }
 
 .emp-post-btn:active {
