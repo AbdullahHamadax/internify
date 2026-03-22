@@ -20,6 +20,7 @@ import EmployerDashboard from "@/components/employer/EmployerDashboard";
 
 // Import your new Chatbot component
 import Chatbot from "@/components/Chatbot";
+import { ProfileModalProvider } from "@/components/shared/ProfileModalContext";
 
 /* ═══════════════════════════════════════════════════════════
    HOMEPAGE (landing page for signed-out users)
@@ -100,18 +101,18 @@ export default function Home() {
   // Signed-in employer → show the employer dashboard AND the Chatbot
   if (currentUser.user.role === "employer") {
     return (
-      <>
+      <ProfileModalProvider>
         <EmployerDashboard />
         <Chatbot userRole="employer" />
-      </>
+      </ProfileModalProvider>
     );
   }
 
   // Signed-in student → show student view AND the Chatbot
   return (
-    <>
+    <ProfileModalProvider>
       <StudentDashboard />
       <Chatbot userRole="student" />
-    </>
+    </ProfileModalProvider>
   );
 }
