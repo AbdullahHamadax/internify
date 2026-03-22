@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { useUser } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
+import usePresence from "@convex-dev/presence/react";
 import {
   Search,
   Send,
@@ -12,6 +14,7 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react";
+import { useProfileModal } from "./ProfileModalContext";
 
 function formatTime(timestamp: number) {
   const date = new Date(timestamp);
@@ -36,6 +39,18 @@ function formatMessageTime(timestamp: number) {
   });
 }
 
+function TypingPresence({
+  roomId,
+  userName,
+}: {
+  roomId: string;
+  userName: string;
+}) {
+  // Use a small heartbeat interval (2000ms) so the server expires stale sessions very fast
+  usePresence(api.presence, roomId, userName, 700);
+  return null;
+}
+
 export default function Messages({ role }: { role: "student" | "employer" }) {
   const conversations = useQuery(api.messages.getConversations);
   const messagableUsers = useQuery(api.messages.getMessagableUsers);
@@ -53,11 +68,14 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
   const isEmployer = role === "employer";
+  const { openProfile } = useProfileModal();
   const themeBg = isEmployer ? "bg-[#ab47bc]" : "bg-[#2563EB]";
   const themeOtherBg = isEmployer ? "bg-[#2563EB]" : "bg-[#ab47bc]";
   const themeActiveBg = isEmployer ? "bg-[#ab47bc]/10" : "bg-[#2563EB]/10";
-  const themeBorderLeft = isEmployer ? "border-l-[#ab47bc]" : "border-l-[#2563EB]";
-
+  const themeBorderLeft = isEmployer
+    ? "border-l-[#ab47bc]"
+    : "border-l-[#2563EB]";
+  const themeText = isEmployer ? "text-[#ab47bc]" : "text-[#2563EB]";
 
   const activeMessages = useQuery(
     api.messages.getMessages,
@@ -65,6 +83,56 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
       ? { conversationId: activeConvId as Id<"conversations"> }
       : "skip",
   );
+
+  // ── Presence-based typing indicator ──
+  const { user: clerkUser } = useUser();
+  const userName = clerkUser?.fullName || clerkUser?.username || "User";
+  const typingRoomId = activeConvId ? `typing:${activeConvId}` : "";
+
+  // 1. My local typing state (to broadcast to others)
+  const [isTypingLocally, setIsTypingLocally] = useState(false);
+  const typingLocalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  const handleTyping = () => {
+    setIsTypingLocally(true);
+    if (typingLocalTimeoutRef.current)
+      clearTimeout(typingLocalTimeoutRef.current);
+    typingLocalTimeoutRef.current = setTimeout(() => {
+      setIsTypingLocally(false);
+    }, 1000);
+  };
+
+  useEffect(() => {
+    setIsTypingLocally(false);
+    if (typingLocalTimeoutRef.current)
+      clearTimeout(typingLocalTimeoutRef.current);
+  }, [activeConvId]);
+
+  // 2. Who else is typing in this room?
+  const otherTypists = useQuery(
+    api.presence.listRoom,
+    typingRoomId ? { roomId: typingRoomId } : "skip",
+  );
+
+  const isTyping =
+    (otherTypists?.filter((t) => t.userId !== userName).length ?? 0) > 0;
+  const typingName =
+    otherTypists?.find((t) => t.userId !== userName)?.userId ?? "";
+
+  // 3. Who is typing across all conversations? (For the sidebar)
+  const convIds = useMemo(
+    () => conversations?.map((c) => c._id) ?? [],
+    [conversations],
+  );
+  const typingsAll = useQuery(api.presence.listTypingInConversations, {
+    conversationIds: convIds,
+  });
+
+  // 4. Who is online globally?
+  const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
+  const onlineUsersSet = useMemo(() => new Set(globalPresence?.map((u) => u.userId) ?? []), [globalPresence]);
 
   // Scroll to bottom on new messages (within the chat container only)
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -84,13 +152,13 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
   );
 
   const filteredNewChatUsers = messagableUsers?.filter((u) => {
-    const alreadyHasConvo = conversations?.some(
-      (c) => c.otherUserId === u._id,
-    );
+    const alreadyHasConvo = conversations?.some((c) => c.otherUserId === u._id);
     if (alreadyHasConvo) return false;
     if (!newChatSearch) return true;
     const name = u.name.toLowerCase();
-    const sub = ("companyName" in u ? u.companyName : "title" in u ? u.title : "").toLowerCase();
+    const sub = (
+      "companyName" in u ? u.companyName : "title" in u ? u.title : ""
+    ).toLowerCase();
     return (
       name.includes(newChatSearch.toLowerCase()) ||
       sub.includes(newChatSearch.toLowerCase())
@@ -106,7 +174,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
       setShowNewChat(false);
       setNewChatSearch("");
       setMobileShowChat(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to start conversation:", err);
     }
   };
@@ -215,7 +283,9 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                   onClick={() => handleStartConversation(u._id)}
                   className="w-full flex items-center gap-3 p-2 text-left hover:bg-muted border-2 border-transparent hover:border-black dark:hover:border-white transition-all"
                 >
-                  <div className={`size-8 ${themeBg} text-white border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center justify-center font-black text-xs flex-shrink-0`}>
+                  <div
+                    className={`size-8 ${themeBg} text-white border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center justify-center font-black text-xs flex-shrink-0`}
+                  >
                     {initials(u.name)}
                   </div>
                   <div className="min-w-0">
@@ -261,8 +331,23 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                     : "border-l-4 border-l-transparent hover:bg-muted/50"
                 }`}
               >
-                <div className="size-10 bg-muted border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center justify-center font-black text-sm flex-shrink-0">
-                  {initials(conv.otherName)}
+                <div className="relative shrink-0 size-10">
+                  <div
+                    className="w-full h-full bg-muted border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center justify-center font-black text-sm cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-[#2563EB] transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openProfile(conv.otherUserId);
+                    }}
+                    title={`View ${conv.otherName}'s profile`}
+                  >
+                    {initials(conv.otherName)}
+                  </div>
+                  <span 
+                    className={`absolute -bottom-1 -right-1 size-3 ${
+                      onlineUsersSet.has(conv.otherName) ? "bg-green-500" : "bg-gray-400"
+                    } border-2 border-black dark:border-white shadow-[1px_1px_0_0_#000] dark:shadow-[1px_1px_0_0_#fff] z-10`}
+                    title={onlineUsersSet.has(conv.otherName) ? "Online" : "Offline"}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-1">
@@ -280,11 +365,28 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                       {conv.subtitle}
                     </p>
                   )}
-                  {conv.lastMessageText && (
-                    <p className="text-xs text-muted-foreground truncate font-medium">
-                      {conv.lastMessageText}
-                    </p>
-                  )}
+                  {(() => {
+                    const isOtherTypingHere =
+                      (typingsAll?.[conv._id]?.filter((u) => u !== userName)
+                        .length ?? 0) > 0;
+                    if (isOtherTypingHere) {
+                      return (
+                        <p
+                          className={`text-xs italic font-bold truncate ${themeText}`}
+                        >
+                          Typing...
+                        </p>
+                      );
+                    }
+                    if (conv.lastMessageText) {
+                      return (
+                        <p className="text-xs text-muted-foreground truncate font-medium">
+                          {conv.lastMessageText}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </button>
             ))
@@ -308,10 +410,25 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
               >
                 <ArrowLeft className="size-4" />
               </button>
-              <div className="size-10 bg-muted border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center justify-center font-black text-sm">
-                {initials(activeConv.otherName)}
+              <div className="relative shrink-0 size-10">
+                <div
+                  className="w-full h-full bg-muted border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center justify-center font-black text-sm cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-[#2563EB] transition-all"
+                  onClick={() => openProfile(activeConv.otherUserId)}
+                  title={`View ${activeConv.otherName}'s profile`}
+                >
+                  {initials(activeConv.otherName)}
+                </div>
+                <span 
+                  className={`absolute -bottom-1 -right-1 size-3 ${
+                    onlineUsersSet.has(activeConv.otherName) ? "bg-green-500" : "bg-gray-400"
+                  } border-2 border-black dark:border-white shadow-[1px_1px_0_0_#000] dark:shadow-[1px_1px_0_0_#fff] z-10`}
+                  title={onlineUsersSet.has(activeConv.otherName) ? "Online" : "Offline"}
+                />
               </div>
-              <div>
+              <div
+                className="cursor-pointer hover:underline decoration-2 underline-offset-2"
+                onClick={() => openProfile(activeConv.otherUserId)}
+              >
                 <h4 className="font-black text-sm uppercase tracking-wider">
                   {activeConv.otherName}
                 </h4>
@@ -325,7 +442,10 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
           </div>
 
           {/* Messages Area */}
-          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4"
+          >
             {activeMessages === undefined ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -347,8 +467,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                 </div>
                 {activeMessages.map((msg, i) => {
                   const showTime =
-                    i === 0 ||
-                    activeMessages[i - 1].isMe !== msg.isMe;
+                    i === 0 || activeMessages[i - 1].isMe !== msg.isMe;
 
                   return (
                     <div
@@ -390,6 +509,35 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
             )}
           </div>
 
+          {/* My typing broadcast component */}
+          {isTypingLocally && typingRoomId && (
+            <TypingPresence roomId={typingRoomId} userName={userName} />
+          )}
+
+          {/* Typing Indicator */}
+          {isTyping && typingName && (
+            <div className="px-4 md:px-6 py-2 border-t-2 border-border/50 bg-card">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-0.5">
+                  <span
+                    className={`inline-block w-1.5 h-1.5 rounded-full ${themeBg} animate-bounce [animation-delay:0ms]`}
+                  />
+                  <span
+                    className={`inline-block w-1.5 h-1.5 rounded-full ${themeBg} animate-bounce [animation-delay:150ms]`}
+                  />
+                  <span
+                    className={`inline-block w-1.5 h-1.5 rounded-full ${themeBg} animate-bounce [animation-delay:300ms]`}
+                  />
+                </div>
+                <span
+                  className={`text-xs font-black uppercase tracking-wider ${themeText}`}
+                >
+                  {typingName} is typing
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Input Area */}
           <div className="p-3 md:p-4 border-t-4 border-border bg-card">
             <div className="flex items-end gap-2">
@@ -397,7 +545,10 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                 className="flex-1 bg-background border-2 border-border shadow-[3px_3px_0_0_var(--border)] p-3 min-h-[44px] max-h-32 resize-none focus:outline-none focus:shadow-[3px_3px_0_0_hsl(263,70%,50%)] dark:focus:shadow-[3px_3px_0_0_hsl(290,70%,70%)] transition-all text-sm font-bold placeholder:font-bold placeholder:text-muted-foreground"
                 placeholder="Type a message..."
                 value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
+                onChange={(e) => {
+                  setMessageInput(e.target.value);
+                  handleTyping();
+                }}
                 rows={1}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -430,9 +581,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
             <p className="font-black uppercase tracking-widest text-sm">
               Select a conversation
             </p>
-            <p className="text-xs mt-1 font-bold">
-              Or start a new chat
-            </p>
+            <p className="text-xs mt-1 font-bold">Or start a new chat</p>
           </div>
         </div>
       )}

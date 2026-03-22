@@ -138,8 +138,11 @@ const itemVariants: Variants = {
 
 export default function StudentProfile() {
   const { user } = useUser();
+  const userName = user?.fullName || user?.username || "User";
   const applications = useQuery(api.tasks.getStudentApplications);
   const currentUserData = useQuery(api.users.currentUser);
+  const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
+  const isOnline = globalPresence?.some((u) => u.userId === userName);
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
 
   const studentProfile = currentUserData?.studentProfile;
@@ -314,20 +317,26 @@ export default function StudentProfile() {
 
             <div className="flex flex-col items-center text-center space-y-4 pt-4">
               {/* Brutalist Avatar */}
-              <div className="w-32 h-32 border-4 border-border bg-[#AB47BC] shadow-[4px_4px_0_0_var(--border)] flex items-center justify-center overflow-hidden">
-                {user?.imageUrl ? (
-                  <Image
-                    src={user.imageUrl}
-                    alt="Profile"
-                    width={128}
-                    height={128}
-                    className="w-full h-full object-cover mix-blend-hard-light"
-                  />
-                ) : (
-                  <span className="text-4xl font-black text-white">
-                    {(user?.firstName?.charAt(0) ?? "S").toUpperCase()}
-                  </span>
-                )}
+              <div className="relative shrink-0 w-32 h-32">
+                <div className="w-full h-full border-4 border-border bg-[#AB47BC] shadow-[4px_4px_0_0_var(--border)] flex items-center justify-center overflow-hidden">
+                  {user?.imageUrl ? (
+                    <Image
+                      src={user.imageUrl}
+                      alt="Profile"
+                      width={128}
+                      height={128}
+                      className="w-full h-full object-cover mix-blend-hard-light"
+                    />
+                  ) : (
+                    <span className="text-4xl font-black text-white">
+                      {(user?.firstName?.charAt(0) ?? "S").toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <span 
+                  className={`absolute -bottom-1 -right-1 size-6 ${isOnline ? "bg-green-500" : "bg-gray-400"} border-4 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] z-10`}
+                  title={isOnline ? "Online" : "Offline"}
+                />
               </div>
 
               <div>
