@@ -52,6 +52,11 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
   const [sending, setSending] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
+  const isEmployer = role === "employer";
+  const themeBg = isEmployer ? "bg-[#ab47bc]" : "bg-[#2563EB]";
+  const themeOtherBg = isEmployer ? "bg-[#2563EB]" : "bg-[#ab47bc]";
+  const themeActiveBg = isEmployer ? "bg-[#ab47bc]/10" : "bg-[#2563EB]/10";
+  const themeBorderLeft = isEmployer ? "border-l-[#ab47bc]" : "border-l-[#2563EB]";
 
 
   const activeMessages = useQuery(
@@ -174,7 +179,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
           <button
             type="button"
             onClick={() => setShowNewChat(!showNewChat)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#2563EB] text-white border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:translate-x-[4px] active:translate-y-[4px]"
+            className={`w-full flex items-center justify-center gap-2 py-2.5 ${themeBg} text-white border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:translate-x-[4px] active:translate-y-[4px]`}
           >
             <Plus className="size-4" />
             New Chat
@@ -210,7 +215,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                   onClick={() => handleStartConversation(u._id)}
                   className="w-full flex items-center gap-3 p-2 text-left hover:bg-muted border-2 border-transparent hover:border-black dark:hover:border-white transition-all"
                 >
-                  <div className="size-8 bg-[#2563EB] text-white border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center justify-center font-black text-xs flex-shrink-0">
+                  <div className={`size-8 ${themeBg} text-white border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center justify-center font-black text-xs flex-shrink-0`}>
                     {initials(u.name)}
                   </div>
                   <div className="min-w-0">
@@ -252,7 +257,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                 type="button"
                 className={`w-full p-4 flex gap-3 text-left transition-all border-b-2 border-border/50 last:border-0 ${
                   activeConvId === conv._id
-                    ? "bg-[#2563EB]/10 border-l-4 border-l-[#2563EB]"
+                    ? `${themeActiveBg} border-l-4 ${themeBorderLeft}`
                     : "border-l-4 border-l-transparent hover:bg-muted/50"
                 }`}
               >
@@ -366,8 +371,8 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                         <div
                           className={`px-4 py-2.5 text-sm font-bold ${
                             msg.isMe
-                              ? "bg-[#2563EB] text-white border-2 border-black dark:border-white shadow-[3px_3px_0_0_#000] dark:shadow-[3px_3px_0_0_#fff]"
-                              : "bg-muted text-foreground border-2 border-border shadow-[3px_3px_0_0_var(--border)]"
+                              ? `${themeBg} text-white border-2 border-black dark:border-white shadow-[3px_3px_0_0_#000] dark:shadow-[3px_3px_0_0_#fff]`
+                              : `${themeOtherBg} text-white border-2 border-border shadow-[3px_3px_0_0_var(--border)]`
                           }`}
                         >
                           {msg.text}
@@ -407,7 +412,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                 disabled={!messageInput.trim() || sending}
                 className={`p-3 flex items-center justify-center transition-all ${
                   messageInput.trim() && !sending
-                    ? "bg-[#2563EB] text-white border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
+                    ? `${themeBg} text-white border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[4px] active:translate-y-[4px]`
                     : "bg-muted text-muted-foreground border-4 border-border shadow-[4px_4px_0_0_var(--border)] cursor-not-allowed"
                 }`}
               >
