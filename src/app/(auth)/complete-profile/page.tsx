@@ -338,21 +338,21 @@ export default function CompleteProfilePage() {
                     shouldValidate: true,
                   })
                 }
-                className="grid w-full grid-cols-1 min-[375px]:grid-cols-2 gap-3"
+                className="grid w-full grid-cols-1 sm:grid-cols-2 gap-3"
               >
                 <ToggleGroupItem
                   value="undergraduate"
-                  className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-black hover:-translate-y-1`}
+                  className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 sm:px-3 text-xs sm:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-white hover:-translate-y-1`}
                 >
-                  <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
+                  <GraduationCap className="mr-2 h-4 w-4 shrink-0" />
                   Undergrad
                 </ToggleGroupItem>
 
                 <ToggleGroupItem
                   value="graduate"
-                  className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 min-[375px]:px-3 text-xs min-[375px]:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-black hover:-translate-y-1`}
+                  className={`w-full h-14 rounded-none border-2 border-black dark:border-white justify-center px-2 sm:px-3 text-xs sm:text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] data-[state=on]:translate-x-[2px] data-[state=on]:translate-y-[2px] data-[state=on]:shadow-none data-[state=on]:bg-[#2563EB] data-[state=on]:text-white hover:-translate-y-1`}
                 >
-                  <GraduationCap className="mr-1 min-[375px]:mr-2 h-4 w-4 shrink-0" />
+                  <GraduationCap className="mr-2 h-4 w-4 shrink-0" />
                   Graduate
                 </ToggleGroupItem>
               </ToggleGroup>
@@ -393,7 +393,7 @@ export default function CompleteProfilePage() {
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-2 border-2 border-black dark:border-white bg-[#2563EB] text-white shadow-[2px_2px_0_0_#000]`}
+                    className={`p-2 border-2 border-black dark:border-white bg-[#2563EB] text-white`}
                   >
                     <Upload className="h-5 w-5" />
                   </div>
@@ -409,7 +409,7 @@ export default function CompleteProfilePage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -534,7 +534,7 @@ export default function CompleteProfilePage() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"

@@ -138,13 +138,13 @@ export default function StudentOverview({
       <motion.div variants={itemVariants} className="stu-hero">
         <div className="stu-hero__text">
           <Typography variant="h1" className="text-white">
-            Hello, <span className="stu-hero__accent">{firstName}</span> 👋
+            Hello, <span className="stu-hero__accent">{firstName}</span>
           </Typography>
           <Typography
             variant="p"
             className="text-white opacity-95 text-sm md:text-base leading-relaxed mt-2"
           >
-            Here is your command center. You have{" "}
+            This is your command center. You have{" "}
             <span className="inline-flex items-center justify-center font-black text-black bg-white px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] -rotate-2 text-xl md:text-2xl">
               {activeCount}
             </span>{" "}

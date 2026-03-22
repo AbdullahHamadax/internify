@@ -18,11 +18,21 @@ export default function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeHash, setActiveHash] = useState("");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    
+    // eslint-disable-next-line
+    setActiveHash(window.location.hash);
+    const onHashChange = () => setActiveHash(window.location.hash);
+    window.addEventListener("hashchange", onHashChange);
+    
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("hashchange", onHashChange);
+    };
   }, []);
 
   const handleNavClick = useCallback(
@@ -36,6 +46,8 @@ export default function Navbar() {
           const el = document.getElementById(id);
           if (el) {
             el.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.history.pushState(null, "", href);
+            setActiveHash(href.slice(1));
           }
         }
         // Otherwise let the browser navigate to /#section naturally
@@ -72,22 +84,21 @@ export default function Navbar() {
           {/* Center links – desktop */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className={`rounded-none px-4 py-2 text-sm font-black uppercase tracking-widest transition-all border-2 border-transparent hover:border-black dark:hover:border-white hover:bg-[#AB47BC] hover:text-white hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 ${
+                className={`rounded-none px-4 py-2 text-sm font-black uppercase tracking-widest transition-all border-2 border-transparent hover:border-black dark:hover:border-white hover:bg-[#AB47BC] hover:text-white hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] hover:-translate-y-px hover:-translate-x-px ${
                   pathname === link.href ||
                   (pathname === "/" &&
                     link.href.startsWith("/#") &&
-                    typeof window !== "undefined" &&
-                    window.location.hash === link.href.slice(1))
-                    ? "bg-[#2563EB] text-white border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] -translate-y-1 -translate-x-1"
+                    activeHash === link.href.slice(1))
+                    ? "bg-[#2563EB] text-white border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] -translate-y-[2px] -translate-x-[2px]"
                     : "text-black dark:text-white"
                 }`}
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -131,7 +142,7 @@ export default function Navbar() {
         <div className="md:hidden border-b-4 border-black dark:border-white bg-white dark:bg-black px-4 pb-6 shadow-[0_8px_0_0_#000] dark:shadow-[0_8px_0_0_#fff]">
           <div className="flex flex-col gap-3 pt-3">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
@@ -139,14 +150,13 @@ export default function Navbar() {
                   pathname === link.href ||
                   (pathname === "/" &&
                     link.href.startsWith("/#") &&
-                    typeof window !== "undefined" &&
-                    window.location.hash === link.href.slice(1))
+                    activeHash === link.href.slice(1))
                     ? "bg-[#2563EB] text-white"
                     : "bg-white text-black dark:bg-black dark:text-white hover:bg-[#AB47BC] hover:text-white"
                 }`}
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
             <div className="mt-4 flex flex-col gap-3">
               <Link

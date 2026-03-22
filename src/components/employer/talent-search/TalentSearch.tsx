@@ -119,12 +119,12 @@ export default function TalentSearch() {
     <div className="flex flex-col xl:flex-row gap-8 h-full animate-in fade-in duration-500">
       {/* Sidebar Filters */}
       <aside className="w-full xl:w-72 shrink-0 space-y-6">
-        <div className="bg-card border-4 border-black dark:border-white p-6 shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]">
+        <div className="bg-card border-4 border-border p-6 shadow-[4px_4px_0_0_var(--border)]">
           <div className="flex items-center gap-3 mb-6">
             <Filter className="w-5 h-5 text-foreground" />
             <Typography
               variant="h4"
-              className="text-lg font-black uppercase tracking-widest m-0 px-2 bg-[#2563EB] text-white border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+              className="text-lg font-black uppercase tracking-widest m-0 px-2 bg-[#2563EB] text-white border-2 border-border shadow-[4px_4px_0_0_var(--border)]"
             >
               Filters
             </Typography>
@@ -135,7 +135,7 @@ export default function TalentSearch() {
             <div>
               <Typography
                 variant="span"
-                className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-black dark:border-white pb-1"
+                className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-border pb-1"
               >
                 Availability
               </Typography>
@@ -148,8 +148,8 @@ export default function TalentSearch() {
                     <div
                       className={`size-5 flex items-center justify-center transition-all ${
                         selectedStatuses.includes(status)
-                          ? "bg-[#AB47BC] border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] text-white"
-                          : "bg-white dark:bg-black border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] group-hover:translate-x-0.5 group-hover:translate-y-0.5 group-hover:shadow-none"
+                          ? "bg-[#AB47BC] border-2 border-border shadow-[2px_2px_0_0_var(--border)] text-white"
+                          : "bg-white dark:bg-black border-2 border-border shadow-[2px_2px_0_0_var(--border)] group-hover:translate-x-0.5 group-hover:translate-y-0.5 group-hover:shadow-none"
                       }`}
                     >
                       {selectedStatuses.includes(status) && (
@@ -168,7 +168,7 @@ export default function TalentSearch() {
             <div className="flex flex-col h-full">
               <Typography
                 variant="span"
-                className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-black dark:border-white pb-1"
+                className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-border pb-1"
               >
                 Core Skills
               </Typography>
@@ -179,14 +179,14 @@ export default function TalentSearch() {
                   placeholder="FIND A SKILL..."
                   value={skillSearchQuery}
                   onChange={(e) => setSkillSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-transparent border-2 border-black dark:border-white text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 focus:-translate-y-0.5 focus:-translate-x-0.5 focus:shadow-[4px_4px_0_0_#000] dark:focus:shadow-[4px_4px_0_0_#fff] transition-all shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                  className="w-full pl-9 pr-3 py-2 bg-transparent border-2 border-border text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-all shadow-[2px_2px_0_0_var(--border)] focus:shadow-[4px_4px_0_0_var(--border)]"
                 />
               </div>
               <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto pr-1 pb-2">
                 {skillCategories.filter((skill) =>
                   skill.toLowerCase().includes(skillSearchQuery.toLowerCase()),
                 ).length === 0 ? (
-                  <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground py-4 text-center w-full border-2 border-dashed border-black dark:border-white">
+                  <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground py-4 text-center w-full border-2 border-dashed border-border">
                     No skills found
                   </div>
                 ) : (
@@ -201,7 +201,7 @@ export default function TalentSearch() {
                         key={skill}
                         type="button"
                         onClick={() => toggleSkill(skill)}
-                        className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-black dark:border-white transition-all duration-200 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] focus:outline-none ${
+                        className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-border transition-all duration-200 shadow-[2px_2px_0_0_var(--border)] focus:outline-none ${
                           selectedSkills.includes(skill)
                             ? "bg-[#2563EB] text-white hover:bg-[#1D4ED8] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
                             : "bg-surface text-foreground hover:bg-[#2563EB] hover:text-white hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
@@ -226,7 +226,7 @@ export default function TalentSearch() {
           </div>
           <input
             type="text"
-            className="w-full pl-14 pr-4 py-4 bg-card border-4 border-black dark:border-white text-base md:text-lg font-black uppercase tracking-widest focus:outline-none focus:ring-0 focus:-translate-y-1 focus:-translate-x-1 focus:shadow-[8px_8px_0_0_#000] dark:focus:shadow-[8px_8px_0_0_#fff] transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] text-foreground placeholder-muted-foreground"
+            className="w-full pl-14 pr-4 py-4 bg-card border-4 border-border text-base md:text-lg font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-all shadow-[4px_4px_0_0_var(--border)] focus:shadow-[8px_8px_0_0_var(--border)] text-foreground placeholder-muted-foreground"
             placeholder="Search by role, name, or skill..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

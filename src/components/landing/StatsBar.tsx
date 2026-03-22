@@ -13,7 +13,6 @@ const stats = [
     icon: Users,
     duration: 0.9,
     accent: "bg-[#AB47BC]",
-    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#AB47BC] border-2 border-black dark:border-[#AB47BC]",
   },
   {
     value: 50,
@@ -22,7 +21,6 @@ const stats = [
     icon: Building2,
     duration: 0.7,
     accent: "bg-[#2563EB]",
-    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-[#2563EB]",
   },
   {
     value: 500,
@@ -31,14 +29,12 @@ const stats = [
     icon: ClipboardList,
     duration: 0.8,
     accent: "bg-[#AB47BC]",
-    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#AB47BC] border-2 border-black dark:border-[#AB47BC]",
   },
   {
     value: "AI",
     label: "Powered Feedback",
     icon: Bot,
     accent: "bg-[#2563EB]",
-    glow: "shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#2563EB] border-2 border-black dark:border-[#2563EB]",
   },
 ];
 
@@ -58,16 +54,16 @@ export default function StatsBar() {
             return (
               <AnimateIn key={i} delay={i * 0.1}>
                 <div
-                  className={`group relative rounded-none bg-white dark:bg-gray-950 p-6 ${stat.glow} transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_currentColor] ${offsetClass}`}
+                  className={`group relative rounded-none bg-white dark:bg-gray-950 pt-8 pb-6 px-6 border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] ${offsetClass}`}
                 >
                   <div
-                    className={`absolute top-0 left-0 right-0 h-2 rounded-none border-b-2 border-black dark:border-white ${stat.accent}`}
+                    className={`absolute top-0 left-0 right-0 h-3 rounded-none ${stat.accent} border-b-2 border-black dark:border-white`}
                   />
 
                   <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
-                    {/* Icon with gradient background */}
+                    {/* Icon with background */}
                     <div
-                      className={`shrink-0 flex h-14 w-14 items-center justify-center rounded-none ${stat.accent} border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-transform group-hover:scale-105`}
+                      className={`shrink-0 flex h-14 w-14 items-center justify-center rounded-xl border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${stat.accent} text-white transition-transform group-hover:scale-105`}
                     >
                       <Icon className="h-5 w-5 text-white" />
                     </div>

@@ -307,14 +307,14 @@ export default function StudentProfile() {
         {/* LEFT COLUMN: Identity & Actions (1/3 Width) */}
         <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
           {/* Main Profile Card */}
-          <div className="bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] p-6 relative">
-            <div className="absolute top-0 right-0 p-2 bg-[#2563EB] text-white border-b-4 border-l-4 border-black dark:border-white font-black text-xs uppercase tracking-widest">
+          <div className="bg-card border-4 border-border shadow-[8px_8px_0_0_var(--border)] p-6 relative">
+            <div className="absolute -top-4 -right-4 bg-[#2563EB] text-white border-4 border-black dark:border-white px-3 py-1 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] z-10 rotate-3 hover:rotate-6 transition-transform">
               Available
             </div>
 
             <div className="flex flex-col items-center text-center space-y-4 pt-4">
               {/* Brutalist Avatar */}
-              <div className="w-32 h-32 border-4 border-black dark:border-white bg-[#AB47BC] shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] flex items-center justify-center overflow-hidden">
+              <div className="w-32 h-32 border-4 border-border bg-[#AB47BC] shadow-[4px_4px_0_0_var(--border)] flex items-center justify-center overflow-hidden">
                 {user?.imageUrl ? (
                   <Image
                     src={user.imageUrl}
@@ -364,7 +364,7 @@ export default function StudentProfile() {
               </div>
             </div>
 
-            <div className="mt-6 pt-6 border-t-4 border-black dark:border-white">
+            <div className="mt-6 pt-6 border-t-4 border-border">
               <Typography
                 variant="p"
                 className="text-sm font-medium leading-relaxed max-w-none"
@@ -492,7 +492,7 @@ export default function StudentProfile() {
                   return (
                     <div
                       key={skill}
-                      className="flex items-center gap-2 py-2 px-4 bg-card border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] transition-all cursor-default"
+                      className="flex items-center gap-2 py-2 px-4 bg-card border-4 border-border shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--border)] transition-all cursor-default"
                     >
                       {devicon && <i className={`${devicon} text-lg`} />}
                       <Typography
@@ -523,7 +523,7 @@ export default function StudentProfile() {
 
             <div className="space-y-4">
               {applications === undefined ? (
-                <div className="flex justify-center p-12 bg-card border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
+                <div className="flex justify-center p-12 bg-card border-4 border-border shadow-[4px_4px_0_0_var(--border)]">
                   <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                 </div>
               ) : completedTasks.length === 0 ? (
@@ -540,11 +540,11 @@ export default function StudentProfile() {
                 completedTasks.map((app) => (
                   <div
                     key={app._id}
-                    className="group relative p-5 bg-card border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center"
+                    className="group relative p-5 bg-card border-4 border-border shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center"
                   >
                     <div className="flex-1 w-full min-w-0 pr-0 sm:pr-4">
                       <div className="flex flex-wrap gap-2 mb-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest bg-[#047857] text-white px-2 py-0.5 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] flex items-center gap-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest bg-[#047857] text-white px-2 py-0.5 border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" /> Done
                         </span>
                       </div>
@@ -557,7 +557,7 @@ export default function StudentProfile() {
                       </Typography>
 
                       <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-muted-foreground">
-                        <span className="font-bold text-foreground bg-muted px-2 py-0.5 border border-black dark:border-white">
+                        <span className="font-bold text-foreground bg-muted px-2 py-0.5 border border-border">
                           {app.task.companyName}
                         </span>
                         <span className="hidden sm:inline-block w-1.5 h-1.5 bg-black dark:bg-white rotate-45" />
@@ -569,7 +569,7 @@ export default function StudentProfile() {
                     </div>
 
                     <div className="shrink-0 pt-2 sm:pt-0">
-                      <button className="px-4 py-2 bg-transparent text-foreground border-2 border-black dark:border-white font-black uppercase tracking-widest text-xs hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors">
+                      <button className="px-4 py-2 bg-transparent text-foreground border-2 border-border font-black uppercase tracking-widest text-xs hover:bg-foreground hover:text-background transition-colors">
                         View Details
                       </button>
                     </div>

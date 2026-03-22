@@ -120,9 +120,9 @@ export default function HeroSection() {
                     <Star className="h-4 w-4 fill-current text-yellow-500" />
                     <span className="text-xs font-black ">4.8</span>
                   </div>
-                  <button className="bg-black text-white dark:bg-white dark:text-black border-2 border-transparent px-4 py-2 text-xs font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none">
+                  <Link href="/signup" className="bg-black text-white dark:bg-white dark:text-black border-2 border-black dark:border-white px-4 py-2 text-xs font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none cursor-pointer">
                     View Task
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
