@@ -173,4 +173,29 @@ export default defineSchema({
     .index("by_taskId", ["taskId"])
     .index("by_applicationId", ["applicationId"])
     .index("by_studentId", ["studentId"]),
+
+  /**
+   * CONVERSATIONS TABLE
+   * Tracks unique chat threads between two users.
+   * participantOne is always the employer, participantTwo is the student.
+   */
+  conversations: defineTable({
+    participantOne: v.id("users"),
+    participantTwo: v.id("users"),
+    lastMessageText: v.optional(v.string()),
+    lastMessageAt: v.optional(v.number()),
+  })
+    .index("by_participantOne", ["participantOne"])
+    .index("by_participantTwo", ["participantTwo"]),
+
+  /**
+   * MESSAGES TABLE
+   * Individual chat messages within a conversation.
+   */
+  messages: defineTable({
+    conversationId: v.id("conversations"),
+    senderId: v.id("users"),
+    text: v.string(),
+    sentAt: v.number(),
+  }).index("by_conversationId", ["conversationId"]),
 });

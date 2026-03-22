@@ -41,7 +41,7 @@ import TopStudentsShowcase from "./TopStudentsShowcase";
 import PostTaskModal, { type PostTaskData } from "./PostTaskModal";
 import TaskDetailModal from "./TaskDetailModal";
 import TalentSearch from "./talent-search/TalentSearch";
-import Messages from "./messages/Messages";
+import Messages from "@/components/shared/Messages";
 import EmployerProfile from "./EmployerProfile";
 import SettingsPage from "@/components/shared/Settings";
 import Footer from "@/components/landing/Footer";
@@ -397,7 +397,7 @@ export default function EmployerDashboard() {
 
       <main className="emp-main">
         {activeNav === "talent-search" && <TalentSearch />}
-        {activeNav === "messages" && <Messages />}
+        {activeNav === "messages" && <Messages role="employer" />}
         {activeNav === "profile" && <EmployerProfile />}
         {activeNav === "settings" && <SettingsPage />}
 
