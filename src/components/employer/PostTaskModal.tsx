@@ -158,8 +158,10 @@ export default function PostTaskModal({
     if (!skillLevel) newErrors.skillLevel = "Skill level is required";
     if (!description.trim()) newErrors.description = "Description is required";
     if (!deadline) newErrors.deadline = "Deadline is required";
-    if (maxApplicants && isNaN(Number(maxApplicants))) newErrors.maxApplicants = "Must be a valid number";
-    if (maxApplicants && Number(maxApplicants) < 1) newErrors.maxApplicants = "Must be at least 1";
+    if (maxApplicants && isNaN(Number(maxApplicants)))
+      newErrors.maxApplicants = "Must be a valid number";
+    if (maxApplicants && Number(maxApplicants) < 1)
+      newErrors.maxApplicants = "Must be at least 1";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -587,7 +589,12 @@ export default function PostTaskModal({
         </div>
 
         <div className="emp-modal__footer">
-          <Button variant="outline" onClick={onClose} disabled={isUploading} className="rounded-none border-2 border-border hover:bg-border hover:text-card shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isUploading}
+            className="rounded-none border-2 border-border hover:bg-border hover:text-card shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+          >
             Cancel
           </Button>
           <Button

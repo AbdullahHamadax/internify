@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
 import {
   Bell,
   GraduationCap,
@@ -15,6 +16,8 @@ import {
   LogOut,
 } from "lucide-react";
 import Messages from "@/components/shared/Messages";
+import Notifications from "@/components/shared/Notifications";
+import { api } from "../../../convex/_generated/api";
 
 import {
   DropdownMenu,
@@ -52,6 +55,7 @@ function StudentNavbar({
   const { signOut } = useClerk();
   const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const unreadCount = useQuery(api.notifications.getUnreadCount) ?? 0;
 
   const initials = (user?.firstName?.charAt(0) ?? "S").toUpperCase();
 
@@ -92,10 +96,31 @@ function StudentNavbar({
             type="button"
             className="stu-navbar__icon-btn"
             aria-label="Notifications"
-            // onClick={() => router.push("/student/notifications")}
+            onClick={() => onNavigate("notifications")}
           >
             <Bell className="size-4" />
-            {/* <span className="stu-navbar__notif-dot" /> */}
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: -4,
+                  right: -4,
+                  minWidth: "1.125rem",
+                  height: "1.125rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.625rem",
+                  fontWeight: 900,
+                  background: "#ef4444",
+                  color: "#fff",
+                  border: "2px solid var(--foreground)",
+                  padding: "0 3px",
+                }}
+              >
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -167,8 +192,34 @@ function StudentNavbar({
               type="button"
               className="stu-navbar__icon-btn"
               aria-label="Notifications"
+              onClick={() => {
+                onNavigate("notifications");
+                setMobileOpen(false);
+              }}
             >
               <Bell className="size-4" />
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    right: -4,
+                    minWidth: "1.125rem",
+                    height: "1.125rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.625rem",
+                    fontWeight: 900,
+                    background: "#ef4444",
+                    color: "#fff",
+                    border: "2px solid var(--foreground)",
+                    padding: "0 3px",
+                  }}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </button>
           </div>
 
@@ -227,6 +278,7 @@ export default function StudentDashboard() {
         {activeNav === "profile" && <StudentProfile />}
         {activeNav === "settings" && <SettingsPage />}
         {activeNav === "messages" && <Messages role="student" />}
+        {activeNav === "notifications" && <Notifications role="student" onNavigate={(id) => setActiveNav(id)} />}
       </main>
       <Footer />
     </div>
