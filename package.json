@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.38.0",
+    "@convex-dev/presence": "^0.3.0",
     "@hookform/resolvers": "^5.2.2",
     "@huggingface/inference": "^4.13.15",
     "@pinecone-database/pinecone": "^7.1.0",

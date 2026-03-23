@@ -10,6 +10,7 @@ import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/button";
 import type { Task } from "./TaskManagement";
 import deviconData from "devicon/devicon.json";
+import { useProfileModal } from "@/components/shared/ProfileModalContext";
 
 const ICON_MAPPINGS: Record<string, string> = {
   "Vue": "vuejs",
@@ -34,6 +35,7 @@ export default function TaskDetailModal({
   onDelete,
   onEdit,
 }: TaskDetailModalProps) {
+  const { openProfile } = useProfileModal();
   const submissions = useQuery(
     api.tasks.getTaskSubmissions,
     open && task ? { taskId: task.id as Id<"tasks"> } : "skip",
@@ -265,7 +267,13 @@ export default function TaskDetailModal({
                       <div className="p-1.5 bg-[#2563EB] border border-black dark:border-white">
                         <User className="w-3.5 h-3.5 text-white" />
                       </div>
-                      <span className="font-bold text-sm">{sub.studentName}</span>
+                      <span
+                        className="font-bold text-sm cursor-pointer hover:underline decoration-2 underline-offset-2 hover:text-[#2563EB] transition-colors"
+                        onClick={() => openProfile(sub.studentId)}
+                        title={`View ${sub.studentName}'s profile`}
+                      >
+                        {sub.studentName}
+                      </span>
                       <span className="text-xs text-muted-foreground ml-auto">
                         {new Date(sub.submittedAt).toLocaleString("en-US", {
                           month: "short",

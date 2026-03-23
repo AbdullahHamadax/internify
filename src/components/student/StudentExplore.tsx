@@ -42,6 +42,7 @@ import { Typography } from "@/components/ui/Typography";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { useProfileModal } from "@/components/shared/ProfileModalContext";
 
 // ── Helpers ──
 
@@ -108,6 +109,7 @@ export default function StudentExplore() {
 
   const tasks = useQuery(api.tasks.browseTasks);
   const acceptTask = useMutation(api.tasks.acceptTask);
+  const { openProfile } = useProfileModal();
 
   // Category filter groups — each maps to one or more DB categories
   const categoryFilters: { label: string; match: string[] }[] = [
@@ -373,7 +375,11 @@ export default function StudentExplore() {
                     </Typography>
                     <Typography
                       variant="span"
-                      className="font-medium mt-1 inline-block"
+                      className="font-medium mt-1 inline-block cursor-pointer hover:underline decoration-2 underline-offset-2 hover:text-[#2563EB] transition-colors"
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        if (task.employerId) openProfile(task.employerId);
+                      }}
                     >
                       {task.companyName}
                     </Typography>
@@ -473,7 +479,17 @@ export default function StudentExplore() {
                     variant="p"
                     className="text-sm m-0 text-white/80 flex items-center gap-2 mt-1"
                   >
-                    {selectedTask.companyName} •{" "}
+                    {selectedTask.companyName}
+                    {selectedTask.employerId && (
+                      <button
+                        onClick={() => openProfile(selectedTask.employerId)}
+                        className="underline decoration-2 underline-offset-2 hover:text-white transition-colors"
+                        title={`View ${selectedTask.companyName}'s profile`}
+                      >
+                        View Profile
+                      </button>
+                    )}
+                    •{" "}
                     {capitalize(selectedTask.skillLevel)} •{" "}
                     <span className="flex items-center gap-1">
                       <Users className="w-4 h-4" />{" "}

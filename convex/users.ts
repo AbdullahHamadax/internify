@@ -263,3 +263,75 @@ export const getStudentsForEmployer = query({
     return studentsWithProfiles;
   },
 });
+
+/**
+ * QUERY: getPublicProfile
+ * Fetches any user's public-facing profile by their userId.
+ * Used to show read-only profile modals when clicking avatars/names.
+ */
+export const getPublicProfile = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db.get(args.userId);
+    if (!user) return null;
+
+    const name =
+      [user.firstName, user.lastName].filter(Boolean).join(" ") || "User";
+
+    if (user.role === "student") {
+      const profile = await ctx.db
+        .query("studentProfiles")
+        .withIndex("by_userId", (q) => q.eq("userId", user._id))
+        .unique();
+
+      return {
+        userId: user._id,
+        clerkUserId: user.clerkUserId,
+        name,
+        email: user.email,
+        role: user.role as "student",
+        memberSince: user.createdAt,
+        studentProfile: profile
+          ? {
+              title: profile.title,
+              location: profile.location,
+              description: profile.description,
+              academicStatus: profile.academicStatus,
+              fieldOfStudy: profile.fieldOfStudy,
+              skills: profile.skills ?? [],
+              portfolio: profile.portfolio,
+              github: profile.github,
+              linkedin: profile.linkedin,
+            }
+          : null,
+        employerProfile: null,
+      };
+    }
+
+    // Employer
+    const profile = await ctx.db
+      .query("employerProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    return {
+      userId: user._id,
+      clerkUserId: user.clerkUserId,
+      name,
+      email: user.email,
+      role: user.role as "employer",
+      memberSince: user.createdAt,
+      studentProfile: null,
+      employerProfile: profile
+        ? {
+            companyName: profile.companyName,
+            position: profile.position,
+            rankLevel: profile.rankLevel,
+          }
+        : null,
+    };
+  },
+});

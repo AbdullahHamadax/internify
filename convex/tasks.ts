@@ -200,6 +200,7 @@ export const browseTasks = query({
 
         return {
           _id: task._id,
+          employerId: task.employerId,
           title: task.title,
           description: task.description,
           category: task.category,
