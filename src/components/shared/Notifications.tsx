@@ -11,7 +11,6 @@ import {
   Megaphone,
   Clock,
   Check,
-  Trash2,
 } from "lucide-react";
 
 import { api } from "../../../convex/_generated/api";
@@ -82,7 +81,6 @@ export default function Notifications({
   const notifications = useQuery(api.notifications.getUserNotifications);
   const markAsRead = useMutation(api.notifications.markAsRead);
   const markAllAsRead = useMutation(api.notifications.markAllAsRead);
-  const deleteNotification = useMutation(api.notifications.deleteNotification);
   const { openProfile } = useProfileModal();
 
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
@@ -107,10 +105,6 @@ export default function Notifications({
     }
   };
 
-  const handleDelete = (e: React.MouseEvent, id: Id<"notifications">) => {
-    e.stopPropagation();
-    deleteNotification({ notificationId: id });
-  };
 
   const handleActionClick = (
     e: React.MouseEvent,
@@ -304,14 +298,6 @@ export default function Notifications({
                           <Check className="size-3.5" />
                         </button>
                       )}
-                      <button
-                        type="button"
-                        className="notif-action-icon notif-action-icon--delete"
-                        title="Delete notification"
-                        onClick={(e) => handleDelete(e, notif._id)}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
                     </div>
                   </div>
                   <p className="notif-content__message">
