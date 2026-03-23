@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
 import deviconData from "devicon/devicon.json";
+import { useProfileModal } from "@/components/shared/ProfileModalContext";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -90,6 +91,7 @@ export default function TalentSearch() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [skillSearchQuery, setSkillSearchQuery] = useState("");
+  const { openProfile } = useProfileModal();
 
   const toggleSkill = (skill: string) => {
     setSelectedSkills((prev) =>
@@ -287,13 +289,24 @@ export default function TalentSearch() {
 
                 {/* Card Header & Avatar */}
                 <div className="flex gap-4 items-start mb-5">
-                  <div className="size-14 bg-[#AB47BC] text-white border-4 border-black dark:border-white flex items-center justify-center font-black text-xl uppercase shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] shrink-0">
+                  <div
+                    className="size-14 bg-[#AB47BC] text-white border-4 border-black dark:border-white flex items-center justify-center font-black text-xl uppercase shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] shrink-0 cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-[#AB47BC] transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openProfile(talent.id);
+                    }}
+                    title={`View ${talent.name}'s profile`}
+                  >
                     {talent.avatar}
                   </div>
                   <div className="pt-1">
                     <Typography
                       variant="h3"
-                      className="text-xl font-black uppercase tracking-widest m-0 border-none pb-1 group-hover:text-[#AB47BC] transition-colors leading-none"
+                      className="text-xl font-black uppercase tracking-widest m-0 border-none pb-1 group-hover:text-[#AB47BC] transition-colors leading-none cursor-pointer hover:underline decoration-2 underline-offset-2"
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        openProfile(talent.id);
+                      }}
                     >
                       {talent.name}
                     </Typography>
@@ -403,6 +416,7 @@ export default function TalentSearch() {
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
+                      onClick={() => openProfile(talent.id)}
                       className="flex-1 py-3 bg-[#AB47BC] hover:bg-[#8E24AA] text-white border-4 border-black dark:border-white font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all text-sm"
                     >
                       View Profile
