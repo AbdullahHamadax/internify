@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
@@ -42,6 +41,7 @@ import PostTaskModal, { type PostTaskData } from "./PostTaskModal";
 import TaskDetailModal from "./TaskDetailModal";
 import TalentSearch from "./talent-search/TalentSearch";
 import Messages from "@/components/shared/Messages";
+import Notifications from "@/components/shared/Notifications";
 import EmployerProfile from "./EmployerProfile";
 import SettingsPage from "@/components/shared/Settings";
 import Footer from "@/components/landing/Footer";
@@ -70,10 +70,10 @@ function EmployerNavbar({
   onNavigate: (id: string) => void;
   onPostTask: () => void;
 }) {
-  const router = useRouter();
   const { signOut } = useClerk();
   const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const unreadCount = useQuery(api.notifications.getUnreadCount) ?? 0;
 
   const initials = (user?.firstName?.charAt(0) ?? "E").toUpperCase();
 
@@ -120,10 +120,31 @@ function EmployerNavbar({
             type="button"
             className="emp-navbar__icon-btn"
             aria-label="Notifications"
-            onClick={() => router.push("/employer/notifications")}
+            onClick={() => onNavigate("notifications")}
           >
             <Bell className="size-4" />
-            <span className="emp-navbar__notif-dot" />
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: -4,
+                  right: -4,
+                  minWidth: "1.125rem",
+                  height: "1.125rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.625rem",
+                  fontWeight: 900,
+                  background: "#ef4444",
+                  color: "#fff",
+                  border: "2px solid var(--foreground)",
+                  padding: "0 3px",
+                }}
+              >
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -209,12 +230,33 @@ function EmployerNavbar({
               className="emp-navbar__icon-btn"
               aria-label="Notifications"
               onClick={() => {
-                router.push("/employer/notifications");
+                onNavigate("notifications");
                 setMobileOpen(false);
               }}
             >
               <Bell className="size-4" />
-              <span className="emp-navbar__notif-dot" />
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    right: -4,
+                    minWidth: "1.125rem",
+                    height: "1.125rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.625rem",
+                    fontWeight: 900,
+                    background: "#ef4444",
+                    color: "#fff",
+                    border: "2px solid var(--foreground)",
+                    padding: "0 3px",
+                  }}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </button>
           </div>
 
@@ -400,6 +442,7 @@ export default function EmployerDashboard() {
         {activeNav === "messages" && <Messages role="employer" />}
         {activeNav === "profile" && <EmployerProfile />}
         {activeNav === "settings" && <SettingsPage />}
+        {activeNav === "notifications" && <Notifications role="employer" onNavigate={handleNavigate} />}
 
         {activeNav === "dashboard" && (
           <>

@@ -58,6 +58,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
     api.messages.getOrCreateConversation,
   );
   const sendMessageMutation = useMutation(api.messages.sendMessage);
+  const markConversationRead = useMutation(api.messages.markConversationRead);
 
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -174,6 +175,10 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
       setShowNewChat(false);
       setNewChatSearch("");
       setMobileShowChat(true);
+      // Mark as read immediately
+      markConversationRead({
+        conversationId: convId as Id<"conversations">,
+      });
     } catch (err) {
       console.error("Failed to start conversation:", err);
     }
@@ -323,6 +328,12 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                 onClick={() => {
                   setActiveConvId(conv._id);
                   setMobileShowChat(true);
+                  // Mark conversation as read on open
+                  if (conv.hasUnread) {
+                    markConversationRead({
+                      conversationId: conv._id as Id<"conversations">,
+                    });
+                  }
                 }}
                 type="button"
                 className={`w-full p-4 flex gap-3 text-left transition-all border-b-2 border-border/50 last:border-0 ${
@@ -389,6 +400,12 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                     return null;
                   })()}
                 </div>
+                {/* Unread indicator dot */}
+                {conv.hasUnread && (
+                  <div
+                    className={`size-2.5 flex-shrink-0 self-center ${isEmployer ? "bg-[#d946ef]" : "bg-[#2563EB]"} border-2 border-black dark:border-white shadow-[1px_1px_0_0_#000] dark:shadow-[1px_1px_0_0_#fff]`}
+                  />
+                )}
               </button>
             ))
           )}

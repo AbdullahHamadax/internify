@@ -471,39 +471,45 @@ export default function StudentExplore() {
                 <div className="flex-1 min-w-0 pr-4">
                   <Typography
                     variant="h2"
-                    className="mb-1 font-black uppercase tracking-widest text-2xl text-white wrap-break-word"
+                    className="mb-3 font-black uppercase tracking-widest text-2xl text-white wrap-break-word"
                   >
                     {selectedTask.title}
                   </Typography>
-                  <Typography
-                    variant="p"
-                    className="text-sm m-0 text-white/80 flex items-center gap-2 mt-1"
-                  >
-                    {selectedTask.companyName}
+
+                  {/* Company row */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm font-bold text-white/90">
+                      {selectedTask.companyName}
+                    </span>
                     {selectedTask.employerId && (
                       <button
                         onClick={() => openProfile(selectedTask.employerId)}
-                        className="underline decoration-2 underline-offset-2 hover:text-white transition-colors"
+                        className="text-xs font-black uppercase tracking-wider px-2.5 py-1 border-2 border-white/60 hover:border-white hover:bg-white/10 transition-all"
                         title={`View ${selectedTask.companyName}'s profile`}
                       >
                         View Profile
                       </button>
                     )}
-                    •{" "}
-                    {capitalize(selectedTask.skillLevel)} •{" "}
-                    <span className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />{" "}
+                  </div>
+
+                  {/* Meta badges row */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 border-2 border-white/50 bg-white/15">
+                      {capitalize(selectedTask.skillLevel)}
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 border-2 border-white/50 bg-white/15 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5" />
                       {selectedTask.applicantCount || 0}
                       {selectedTask.maxApplicants
                         ? `/${selectedTask.maxApplicants}`
                         : ""}{" "}
                       Applications
                     </span>
-                  </Typography>
+                  </div>
                 </div>
                 <button
                   onClick={() => setSelectedTask(null)}
-                  className="p-2 border-2 border-black dark:border-white transition-all hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black shrink-0"
+                  className="p-2 border-2 border-white/60 hover:border-white transition-all hover:bg-white hover:text-[#2563EB] dark:hover:bg-white dark:hover:text-black shrink-0"
                 >
                   <X className="w-6 h-6" />
                 </button>

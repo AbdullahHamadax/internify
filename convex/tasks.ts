@@ -104,6 +104,34 @@ export const createTask = mutation({
       updatedAt: now,
     });
 
+    // Notify all students about the new task
+    const employerProfile = await ctx.db
+      .query("employerProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+    const companyName = employerProfile?.companyName ?? "A company";
+
+    const allUsers = await ctx.db.query("users").collect();
+    const students = allUsers.filter(
+      (u) => u.role === "student" && u._id !== user._id,
+    );
+
+    await Promise.all(
+      students.map((student) =>
+        ctx.db.insert("notifications", {
+          userId: student._id,
+          type: "new_task_posted" as const,
+          title: "New Task Available",
+          message: `${companyName} posted "${args.title}" — check it out!`,
+          relatedTaskId: taskId,
+          relatedUserId: user._id,
+          relatedUserName: companyName,
+          isRead: false,
+          createdAt: Date.now(),
+        }),
+      ),
+    );
+
     return taskId;
   },
 });
@@ -579,6 +607,21 @@ export const acceptTask = mutation({
     }
 
     await ctx.db.patch(args.taskId, updates);
+
+    // Notify the employer that a student accepted their task
+    const studentName =
+      [user.firstName, user.lastName].filter(Boolean).join(" ") || "A student";
+    await ctx.db.insert("notifications", {
+      userId: task.employerId,
+      type: "task_accepted",
+      title: "New Applicant",
+      message: `${studentName} accepted your task "${task.title}".`,
+      relatedTaskId: args.taskId,
+      relatedUserId: user._id,
+      relatedUserName: studentName,
+      isRead: false,
+      createdAt: Date.now(),
+    });
   },
 });
 
@@ -742,6 +785,22 @@ export const submitTask = mutation({
     await ctx.db.patch(application.taskId, {
       status: "completed",
       updatedAt: Date.now(),
+    });
+
+    // Notify the employer about the submission
+    const task = await ctx.db.get(application.taskId);
+    const studentName =
+      [user.firstName, user.lastName].filter(Boolean).join(" ") || "A student";
+    await ctx.db.insert("notifications", {
+      userId: task!.employerId,
+      type: "task_submitted",
+      title: "New Submission",
+      message: `${studentName} submitted work for "${task!.title}".`,
+      relatedTaskId: application.taskId,
+      relatedUserId: user._id,
+      relatedUserName: studentName,
+      isRead: false,
+      createdAt: Date.now(),
     });
   },
 });
