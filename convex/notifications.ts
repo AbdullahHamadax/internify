@@ -115,30 +115,3 @@ export const markAllAsRead = mutation({
     );
   },
 });
-
-/**
- * Delete a single notification.
- */
-export const deleteNotification = mutation({
-  args: { notificationId: v.id("notifications") },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
-
-    const notification = await ctx.db.get(args.notificationId);
-    if (!notification) throw new Error("Notification not found");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_tokenIdentifier", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier),
-      )
-      .unique();
-
-    if (!user || notification.userId !== user._id) {
-      throw new Error("Unauthorized");
-    }
-
-    await ctx.db.delete(args.notificationId);
-  },
-});
