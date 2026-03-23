@@ -290,7 +290,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                   </div>
                   <div className="min-w-0">
                     <p className="font-black text-sm truncate">{u.name}</p>
-                    <p className="text-xs text-muted-foreground font-bold truncate">
+                    <p className="text-[9px] text-foreground/70 font-bold uppercase tracking-wider truncate mt-0.5">
                       {"companyName" in u
                         ? u.companyName
                         : "title" in u
@@ -361,7 +361,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                     )}
                   </div>
                   {conv.subtitle && (
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                    <p className="text-[9px] font-bold text-foreground/70 uppercase tracking-wider mb-0.5 truncate">
                       {conv.subtitle}
                     </p>
                   )}
@@ -380,7 +380,8 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                     }
                     if (conv.lastMessageText) {
                       return (
-                        <p className="text-xs text-muted-foreground truncate font-medium">
+                        <p className="text-xs text-foreground/90 truncate font-medium mt-0.5">
+                          <span className="opacity-50 mr-1">↳</span>
                           {conv.lastMessageText}
                         </p>
                       );
@@ -433,7 +434,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                   {activeConv.otherName}
                 </h4>
                 {activeConv.subtitle && (
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+                  <p className="text-[9px] text-foreground/70 font-bold uppercase tracking-wider truncate mt-0.5">
                     {activeConv.subtitle}
                   </p>
                 )}
