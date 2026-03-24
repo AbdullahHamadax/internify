@@ -41,7 +41,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "../../../../convex/_generated/api";
-import { MAX_USER_NAME_FIELD_LENGTH } from "../../../../convex/nameLimits";
+import {
+  MAX_USER_NAME_FIELD_LENGTH,
+  validateSingleNameField,
+} from "../../../../convex/nameLimits";
 
 // ── Schemas ──────────────────────────────────────────────
 
@@ -67,18 +70,20 @@ const step1Schema = z.object({
     .string()
     .trim()
     .min(1, "First name is required")
-    .max(
-      MAX_USER_NAME_FIELD_LENGTH,
-      `First name must be at most ${MAX_USER_NAME_FIELD_LENGTH} characters`,
-    ),
+    .superRefine((val, ctx) => {
+      const err = validateSingleNameField(val, "First name");
+      if (err)
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: err });
+    }),
   lastName: z
     .string()
     .trim()
     .min(1, "Last name is required")
-    .max(
-      MAX_USER_NAME_FIELD_LENGTH,
-      `Last name must be at most ${MAX_USER_NAME_FIELD_LENGTH} characters`,
-    ),
+    .superRefine((val, ctx) => {
+      const err = validateSingleNameField(val, "Last name");
+      if (err)
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: err });
+    }),
   email: z
     .string()
     .min(1, "Email is required")

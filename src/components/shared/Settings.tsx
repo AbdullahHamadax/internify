@@ -168,8 +168,9 @@ export default function Settings() {
               </div>
             </div>
             <Typography variant="p" color="muted" className="text-xs font-medium mb-6">
-              First and last name: up to {MAX_USER_NAME_FIELD_LENGTH} characters each
-              (extra spaces are trimmed when you save).
+              Use your real name: 2–{MAX_USER_NAME_FIELD_LENGTH} characters each, letters
+              only (hyphens, apostrophes, spaces OK). No keyboard mash or long repeated
+              letters. Extra spaces are trimmed when you save.
             </Typography>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
