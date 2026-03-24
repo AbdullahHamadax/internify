@@ -55,10 +55,11 @@ const itemVariants: Variants = {
 
 export default function EmployerProfile() {
   const { user } = useUser();
-  const userName = user?.fullName || user?.username || "User";
   const currentUserData = useQuery(api.users.currentUser);
   const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
-  const isOnline = globalPresence?.some((u) => u.userId === userName);
+  const isOnline = globalPresence?.some(
+    (u) => u.userId === currentUserData?.user?._id,
+  );
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
   const employerStats = useQuery(api.tasks.getEmployerStats);
 

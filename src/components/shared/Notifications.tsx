@@ -122,8 +122,12 @@ export default function Notifications({
       onNavigate("messages");
     } else if (type === "task_accepted" && notif.relatedUserId) {
       openProfile(notif.relatedUserId as Id<"users">);
-    } else if (type === "task_submitted" && notif.relatedUserId) {
-      openProfile(notif.relatedUserId as Id<"users">);
+    } else if (type === "task_submitted" && onNavigate) {
+      if (notif.relatedTaskId) {
+        onNavigate(`task:${notif.relatedTaskId}`);
+      } else {
+        onNavigate("dashboard");
+      }
     } else if (
       (type === "new_task_posted" ||
         type === "task_completed" ||

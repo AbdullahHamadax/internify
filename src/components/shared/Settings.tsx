@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Typography } from "@/components/ui/Typography";
 import { Loader2, Save, Shield, Github, Linkedin, Mail } from "lucide-react";
@@ -23,6 +23,7 @@ export default function Settings() {
   const { user, isLoaded } = useUser();
   const { openUserProfile } = useClerk();
   const currentUser = useQuery(api.users.currentUser);
+  const syncCurrentUserNames = useMutation(api.users.syncCurrentUserNames);
 
   const role = (currentUser?.user?.role as "student" | "employer") || "student";
   const theme = THEME[role];
@@ -59,6 +60,11 @@ export default function Settings() {
     setMessage(null);
     try {
       await user.update({ firstName, lastName });
+      await syncCurrentUserNames({
+        firstName,
+        lastName,
+        email: user.primaryEmailAddress?.emailAddress,
+      });
       setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (error) {
       console.error(error);

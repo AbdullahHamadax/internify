@@ -138,11 +138,12 @@ const itemVariants: Variants = {
 
 export default function StudentProfile() {
   const { user } = useUser();
-  const userName = user?.fullName || user?.username || "User";
   const applications = useQuery(api.tasks.getStudentApplications);
   const currentUserData = useQuery(api.users.currentUser);
   const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
-  const isOnline = globalPresence?.some((u) => u.userId === userName);
+  const isOnline = globalPresence?.some(
+    (u) => u.userId === currentUserData?.user?._id,
+  );
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
 
   const studentProfile = currentUserData?.studentProfile;

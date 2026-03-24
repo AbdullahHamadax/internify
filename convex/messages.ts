@@ -1,6 +1,10 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { components } from "./_generated/api";
+import { Presence } from "@convex-dev/presence";
+
+const presence = new Presence(components.presence);
 
 /**
  * Get users the current user can message.
@@ -346,7 +350,8 @@ export const sendMessage = mutation({
       lastMessageSenderId: user._id,
     });
 
-    // Create notification for the recipient
+    // Create notification for the recipient only if they do not have
+    // this conversation open right now.
     const recipientId =
       conv.participantOne === user._id
         ? conv.participantTwo
@@ -354,16 +359,28 @@ export const sendMessage = mutation({
     const senderName =
       [user.firstName, user.lastName].filter(Boolean).join(" ") || "Someone";
 
-    await ctx.db.insert("notifications", {
-      userId: recipientId,
-      type: "new_message" as const,
-      title: "New Message",
-      message: `${senderName} sent you a message: "${args.text.length > 60 ? args.text.slice(0, 60) + "…" : args.text}"`,
-      relatedUserId: user._id,
-      relatedUserName: senderName,
-      isRead: false,
-      createdAt: now,
-    });
+    const openChatUsers = await presence.listRoom(
+      ctx,
+      `chat-open:${args.conversationId}`,
+      true,
+      20,
+    );
+    const isRecipientViewingChat = openChatUsers.some(
+      (u) => u.userId === (recipientId as string),
+    );
+
+    if (!isRecipientViewingChat) {
+      await ctx.db.insert("notifications", {
+        userId: recipientId,
+        type: "new_message" as const,
+        title: "New Message",
+        message: `${senderName} sent you a message: "${args.text.length > 60 ? args.text.slice(0, 60) + "…" : args.text}"`,
+        relatedUserId: user._id,
+        relatedUserName: senderName,
+        isRead: false,
+        createdAt: now,
+      });
+    }
   },
 });
 
