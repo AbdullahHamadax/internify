@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import {
@@ -262,23 +262,40 @@ function StudentNavbar({
 /* ── Main Dashboard Container ── */
 export default function StudentDashboard() {
   const [activeNav, setActiveNav] = useState("dashboard");
+  const [exploreFocusTaskId, setExploreFocusTaskId] = useState<string | null>(
+    null,
+  );
+
+  const handleNavigate = useCallback((id: string) => {
+    if (id.startsWith("explore-task:")) {
+      setExploreFocusTaskId(id.slice("explore-task:".length));
+      setActiveNav("explore");
+      return;
+    }
+    setExploreFocusTaskId(null);
+    setActiveNav(id);
+  }, []);
 
   return (
     <div className="stu-dashboard">
-      <StudentNavbar
-        activeNav={activeNav}
-        onNavigate={(id) => setActiveNav(id)}
-      />
+      <StudentNavbar activeNav={activeNav} onNavigate={handleNavigate} />
 
       <main className="stu-main">
         {activeNav === "dashboard" && (
-          <StudentOverview onNavigate={(id) => setActiveNav(id)} />
+          <StudentOverview onNavigate={handleNavigate} />
         )}
-        {activeNav === "explore" && <StudentExplore />}
+        {activeNav === "explore" && (
+          <StudentExplore
+            focusTaskId={exploreFocusTaskId}
+            onFocusTaskConsumed={() => setExploreFocusTaskId(null)}
+          />
+        )}
         {activeNav === "profile" && <StudentProfile />}
         {activeNav === "settings" && <SettingsPage />}
         {activeNav === "messages" && <Messages role="student" />}
-        {activeNav === "notifications" && <Notifications role="student" onNavigate={(id) => setActiveNav(id)} />}
+        {activeNav === "notifications" && (
+          <Notifications role="student" onNavigate={handleNavigate} />
+        )}
       </main>
       <Footer />
     </div>
