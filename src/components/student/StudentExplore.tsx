@@ -24,7 +24,7 @@ function getDeviconClass(skillName: string) {
   return match ? `devicon-${match.name}-plain colored` : null;
 }
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Search,
   Filter,
@@ -94,7 +94,16 @@ const itemVariants: Variants = {
   },
 };
 
-export default function StudentExplore() {
+export type StudentExploreProps = {
+  /** When set (e.g. from notifications), opens this task’s detail drawer once it appears in browse results. */
+  focusTaskId?: string | null;
+  onFocusTaskConsumed?: () => void;
+};
+
+export default function StudentExplore({
+  focusTaskId = null,
+  onFocusTaskConsumed,
+}: StudentExploreProps = {}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeSkillLevels, setActiveSkillLevels] = useState<string[]>([]);
@@ -104,14 +113,15 @@ export default function StudentExplore() {
   const [isAccepting, setIsAccepting] = useState(false);
   const [showAcceptSuccess, setShowAcceptSuccess] = useState(false);
 
-  const openTaskDetail = (task: NonNullable<typeof selectedTask>) => {
+  const openTaskDetail = useCallback((task: NonNullable<typeof selectedTask>) => {
     setShowAcceptSuccess(false);
     setSelectedTask(task);
-  };
-  const closeTaskDetail = () => {
+  }, []);
+
+  const closeTaskDetail = useCallback(() => {
     setSelectedTask(null);
     setShowAcceptSuccess(false);
-  };
+  }, []);
   const [previewAttachment, setPreviewAttachment] = useState<{
     url: string;
     type: string;
@@ -121,6 +131,15 @@ export default function StudentExplore() {
   const tasks = useQuery(api.tasks.browseTasks);
   const acceptTask = useMutation(api.tasks.acceptTask);
   const { openProfile } = useProfileModal();
+
+  useEffect(() => {
+    if (!focusTaskId || tasks === undefined) return;
+    const match = tasks.find((t) => String(t._id) === focusTaskId);
+    if (match) {
+      openTaskDetail(match);
+    }
+    onFocusTaskConsumed?.();
+  }, [focusTaskId, tasks, onFocusTaskConsumed, openTaskDetail]);
 
   // Category filter groups — each maps to one or more DB categories
   const categoryFilters: { label: string; match: string[] }[] = [

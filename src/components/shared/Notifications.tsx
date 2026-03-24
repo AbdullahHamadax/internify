@@ -135,7 +135,11 @@ export default function Notifications({
       onNavigate
     ) {
       if (role === "student") {
-        onNavigate("explore");
+        if (notif.relatedTaskId) {
+          onNavigate(`explore-task:${notif.relatedTaskId}`);
+        } else {
+          onNavigate("explore");
+        }
       } else {
         onNavigate("dashboard");
       }
@@ -332,6 +336,8 @@ export default function Notifications({
                         >
                           {notif.relatedUserName}
                         </span>
+                        {/* Strip name once; keep a visual space before the rest (trimStart alone removed it) */}
+                        {" "}
                         {notif.message
                           .replace(notif.relatedUserName, "")
                           .trimStart()}
