@@ -24,7 +24,7 @@ function getDeviconClass(skillName: string) {
   return match ? `devicon-${match.name}-plain colored` : null;
 }
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Search,
   Filter,
@@ -44,6 +44,8 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useProfileModal } from "@/components/shared/ProfileModalContext";
+import { SKILL_CATALOG } from "@/lib/skillCatalog";
+import { entityMatchesSkillFilter, skillMatchKey } from "@/lib/skillMatching";
 
 // ── Helpers ──
 
@@ -107,6 +109,8 @@ export default function StudentExplore({
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeSkillLevels, setActiveSkillLevels] = useState<string[]>([]);
+  const [selectedCoreSkills, setSelectedCoreSkills] = useState<string[]>([]);
+  const [skillSearchQuery, setSkillSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
@@ -160,6 +164,33 @@ export default function StudentExplore({
     );
   };
 
+  const toggleCoreSkill = (skill: string) => {
+    setSelectedCoreSkills((prev) =>
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
+    );
+  };
+
+  // Render master skills + any extra skills that currently exist in browse results.
+  // Extras only show up if they're not already present in the master catalog.
+  const skillOptionsSorted = useMemo(() => {
+    const byNorm = new Map<string, string>();
+
+    for (const skill of SKILL_CATALOG) {
+      byNorm.set(skillMatchKey(skill), skill);
+    }
+
+    for (const task of tasks ?? []) {
+      for (const skill of task.skills ?? []) {
+        const norm = skillMatchKey(skill);
+        if (!byNorm.has(norm)) byNorm.set(norm, skill);
+      }
+    }
+
+    return Array.from(byNorm.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" }),
+    );
+  }, [tasks]);
+
   // Apply client-side filtering + sorting
   const filteredTasks = (tasks ?? [])
     .filter((task) => {
@@ -182,7 +213,17 @@ export default function StudentExplore({
         activeSkillLevels.length === 0 ||
         activeSkillLevels.includes(task.skillLevel);
 
-      return matchesSearch && matchesCategory && matchesSkillLevel;
+      const matchesCoreSkills = entityMatchesSkillFilter(
+        task.skills,
+        selectedCoreSkills,
+      );
+
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesSkillLevel &&
+        matchesCoreSkills
+      );
     })
     .sort((a, b) =>
       sortOrder === "newest"
@@ -200,11 +241,12 @@ export default function StudentExplore({
       {/* Search Header */}
       <motion.div
         variants={itemVariants}
-        className="max-w-6xl mx-auto px-6 md:px-12 pt-6"
+        className="max-w-7xl mx-auto px-6 md:px-12 pt-6"
       >
         <div className="stu-hero flex-col lg:flex-row w-full items-start lg:items-center gap-6 lg:gap-12">
           <Typography
             variant="h1"
+            color="white"
             className="tracking-tight leading-none shrink-0 text-3xl md:text-5xl"
           >
             Find Your Next <br />
@@ -231,87 +273,150 @@ export default function StudentExplore({
         </div>
       </motion.div>
 
-      {/* Main Content Layout */}
-      <div className="max-w-6xl mx-auto p-6 md:px-12 md:py-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Sidebar Filters */}
-        <motion.div variants={itemVariants} className="lg:col-span-1 space-y-8">
-          <div>
-            <Typography
-              variant="label"
-              className="uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2"
-            >
-              <Filter className="w-5 h-5" strokeWidth={2.5} /> CATEGORY
-            </Typography>
-            <div className="space-y-1 mt-4">
-              {categoryFilters.map((f) => (
-                <button
-                  key={f.label}
-                  onClick={() => setActiveCategory(f.label)}
-                  className={`w-full text-left px-4 py-3 text-sm font-black uppercase tracking-wider transition-all border-2 ${
-                    activeCategory === f.label
-                      ? "bg-[#AB47BC] text-white border-black dark:bg-[#2563EB] shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]"
-                      : "bg-white dark:bg-black text-black dark:text-white border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-900"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+      {/* Main Content Layout — aligned with employer Talent Search filter panel */}
+      <div className="max-w-7xl mx-auto p-6 md:px-12 md:py-10 flex flex-col xl:flex-row gap-8">
+        <motion.div
+          variants={itemVariants}
+          className="w-full xl:w-72 shrink-0"
+          role="complementary"
+          aria-label="Task filters"
+        >
+          <div className="bg-card border-4 border-border p-6 shadow-[4px_4px_0_0_var(--border)]">
+            <div className="flex items-center gap-3 mb-6">
+              <Filter className="w-5 h-5 text-foreground" />
+              <Typography
+                variant="h4"
+                className="text-lg font-black uppercase tracking-widest m-0 px-2 bg-[#2563EB] text-white border-2 border-border shadow-[4px_4px_0_0_var(--border)]"
+              >
+                Filters
+              </Typography>
             </div>
-          </div>
 
-          <div className="pt-6 border-t border-border/50">
-            <Typography
-              variant="label"
-              className="uppercase tracking-widest text-muted-foreground mb-4 block font-black"
-            >
-              Skill Level
-            </Typography>
-            <div className="space-y-3 mt-4">
-              {(["beginner", "intermediate", "advanced"] as const).map(
-                (level) => {
-                  const isChecked = activeSkillLevels.includes(level);
-                  return (
+            <div className="space-y-6">
+              <div>
+                <Typography
+                  variant="span"
+                  className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-border pb-1"
+                >
+                  Category
+                </Typography>
+                <div className="space-y-2 mt-3">
+                  {categoryFilters.map((f) => (
                     <button
-                      key={level}
-                      onClick={() => toggleSkillLevel(level)}
-                      className="flex items-center gap-3 cursor-pointer group w-full text-left"
+                      key={f.label}
+                      type="button"
+                      onClick={() => setActiveCategory(f.label)}
+                      className={`w-full text-left px-4 py-3 text-xs font-black uppercase tracking-widest transition-all border-2 border-border ${
+                        activeCategory === f.label
+                          ? "bg-[#AB47BC] text-white shadow-[4px_4px_0_0_var(--border)]"
+                          : "bg-surface text-foreground hover:bg-muted shadow-none"
+                      }`}
                     >
-                      <div
-                        className={`w-6 h-6 border-2 transition-colors flex items-center justify-center rounded-none ${
-                          isChecked
-                            ? "bg-[#AB47BC] border-black text-white dark:bg-[#AB47BC] dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
-                            : "bg-white dark:bg-black border-black dark:border-white"
-                        }`}
-                      >
-                        {isChecked && (
-                          <svg
-                            className="w-3 h-3"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                          >
-                            <path
-                              d="M2.5 6L5 8.5L9.5 3.5"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                      <span className="text-sm font-black uppercase tracking-wider group-hover:underline decoration-2 transition-all">
-                        {level}
-                      </span>
+                      {f.label.toUpperCase()}
                     </button>
-                  );
-                },
-              )}
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Typography
+                  variant="span"
+                  className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-border pb-1"
+                >
+                  Skill Level
+                </Typography>
+                <div className="space-y-3">
+                  {(["beginner", "intermediate", "advanced"] as const).map(
+                    (level) => {
+                      const isChecked = activeSkillLevels.includes(level);
+                      return (
+                        <label
+                          key={level}
+                          className="flex items-center gap-3 cursor-pointer group"
+                        >
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={isChecked} 
+                            onChange={() => toggleSkillLevel(level)} 
+                          />
+                          <div
+                            className={`size-5 flex shrink-0 items-center justify-center transition-all ${
+                              isChecked
+                                ? "bg-[#AB47BC] border-2 border-border shadow-[2px_2px_0_0_var(--border)] text-white"
+                                : "bg-white dark:bg-black border-2 border-border shadow-[2px_2px_0_0_var(--border)] group-hover:translate-x-0.5 group-hover:translate-y-0.5 group-hover:shadow-none"
+                            }`}
+                          >
+                            {isChecked && (
+                              <CheckCircle2 className="size-3" strokeWidth={4} />
+                            )}
+                          </div>
+                          <span className="text-sm font-bold uppercase tracking-wider text-foreground/80 group-hover:text-foreground transition-colors">
+                            {level}
+                          </span>
+                        </label>
+                      );
+                    },
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col">
+                <Typography
+                  variant="span"
+                  className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-border pb-1"
+                >
+                  Core Skills
+                </Typography>
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground" />
+                  <input
+                    type="text"
+                    placeholder="FIND A SKILL..."
+                    value={skillSearchQuery}
+                    onChange={(e) => setSkillSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-transparent border-2 border-border text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-all shadow-[2px_2px_0_0_var(--border)] focus:shadow-[4px_4px_0_0_var(--border)]"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2 max-h-[280px] overflow-y-auto pr-1 pb-2">
+                  {skillOptionsSorted.filter((skill) =>
+                    skill
+                      .toLowerCase()
+                      .includes(skillSearchQuery.toLowerCase()),
+                  ).length === 0 ? (
+                    <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground py-4 text-center w-full border-2 border-dashed border-border">
+                      No skills found
+                    </div>
+                  ) : (
+                    skillOptionsSorted
+                      .filter((skill) =>
+                        skill
+                          .toLowerCase()
+                          .includes(skillSearchQuery.toLowerCase()),
+                      )
+                      .map((skill) => (
+                        <button
+                          key={skill}
+                          type="button"
+                          onClick={() => toggleCoreSkill(skill)}
+                          className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-border transition-all duration-200 shadow-[2px_2px_0_0_var(--border)] focus:outline-none ${
+                            selectedCoreSkills.includes(skill)
+                              ? "bg-[#2563EB] text-white hover:bg-[#1D4ED8] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
+                              : "bg-surface text-foreground hover:bg-[#2563EB] hover:text-white hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
+                          }`}
+                        >
+                          {skill.toUpperCase()}
+                        </button>
+                      ))
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
 
         {/* Task Feed */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="flex-1 min-w-0 space-y-6">
           <motion.div
             variants={itemVariants}
             className="flex items-center justify-between mb-2"
@@ -360,10 +465,29 @@ export default function StudentExplore({
               <Typography variant="p" color="muted">
                 {searchQuery ||
                 activeCategory !== "All" ||
-                activeSkillLevels.length > 0
+                activeSkillLevels.length > 0 ||
+                selectedCoreSkills.length > 0
                   ? "Try adjusting your search or filters."
                   : "Check back later — new tasks are posted regularly."}
               </Typography>
+              {(searchQuery ||
+                activeCategory !== "All" ||
+                activeSkillLevels.length > 0 ||
+                selectedCoreSkills.length > 0) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setActiveCategory("All");
+                    setActiveSkillLevels([]);
+                    setSelectedCoreSkills([]);
+                    setSkillSearchQuery("");
+                  }}
+                  className="mt-6 px-6 py-3 bg-[#2563EB] text-white border-2 border-black dark:border-white font-black uppercase tracking-widest text-xs shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-0.5 hover:-translate-x-0.5 transition-all"
+                >
+                  Clear all filters
+                </button>
+              )}
             </motion.div>
           )}
 
