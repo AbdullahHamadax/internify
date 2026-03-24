@@ -44,6 +44,21 @@ function validateAttachments(
   }
 }
 
+/** Minimum window from posting time until deadline (not in the past; not “same-day rush”). */
+const MIN_TASK_DEADLINE_LEAD_MS = 24 * 60 * 60 * 1000;
+
+function validateTaskDeadline(deadline: number) {
+  const now = Date.now();
+  if (deadline <= now) {
+    throw new Error("Deadline must be in the future.");
+  }
+  if (deadline - now < MIN_TASK_DEADLINE_LEAD_MS) {
+    throw new Error(
+      "Deadline must be at least 24 hours from now so students have reasonable time to complete the work.",
+    );
+  }
+}
+
 export const generateUploadUrl = mutation(async (ctx) => {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) {
@@ -83,6 +98,7 @@ export const createTask = mutation({
 
     // Server-side attachment validation
     validateAttachments(args.attachments);
+    validateTaskDeadline(args.deadline);
 
     const now = Date.now();
 
@@ -496,6 +512,7 @@ export const updateTask = mutation({
 
     // Server-side attachment validation
     validateAttachments(args.attachments);
+    validateTaskDeadline(args.deadline);
 
     // Clean up removed legacy image storage IDs
     const newLegacySet = new Set(

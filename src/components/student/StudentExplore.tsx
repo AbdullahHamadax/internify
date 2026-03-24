@@ -34,6 +34,7 @@ import {
   Inbox,
   X,
   FileText,
+  CheckCircle2,
   Users,
   Download,
   Image as ImageIcon,
@@ -101,6 +102,16 @@ export default function StudentExplore() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [showAcceptSuccess, setShowAcceptSuccess] = useState(false);
+
+  const openTaskDetail = (task: NonNullable<typeof selectedTask>) => {
+    setShowAcceptSuccess(false);
+    setSelectedTask(task);
+  };
+  const closeTaskDetail = () => {
+    setSelectedTask(null);
+    setShowAcceptSuccess(false);
+  };
   const [previewAttachment, setPreviewAttachment] = useState<{
     url: string;
     type: string;
@@ -342,7 +353,7 @@ export default function StudentExplore() {
             {filteredTasks.map((task) => (
               <div
                 key={task._id}
-                onClick={() => setSelectedTask(task)}
+                onClick={() => openTaskDetail(task)}
                 className="group w-full min-w-0 bg-white dark:bg-black border-2 border-black dark:border-white p-6 transition-all cursor-pointer shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#2563EB] hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#2563EB] block"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
@@ -436,7 +447,7 @@ export default function StudentExplore() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedTask(task);
+                      openTaskDetail(task);
                     }}
                     className="px-6 py-3 bg-[#2563EB] text-white dark:bg-[#2563EB]  border-2 border-black dark:border-white font-black text-sm uppercase tracking-widest hover:translate-y-1 hover:translate-x-1 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:shadow-none"
                   >
@@ -457,7 +468,7 @@ export default function StudentExplore() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setSelectedTask(null)}
+              onClick={closeTaskDetail}
               className="fixed inset-0 bg-black/40 backdrop-blur-sm z-100"
             />
             <motion.div
@@ -508,7 +519,7 @@ export default function StudentExplore() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setSelectedTask(null)}
+                  onClick={closeTaskDetail}
                   className="p-2 border-2 border-white/60 hover:border-white transition-all hover:bg-white hover:text-[#2563EB] dark:hover:bg-white dark:hover:text-black shrink-0"
                 >
                   <X className="w-6 h-6" />
@@ -602,36 +613,64 @@ export default function StudentExplore() {
               </div>
 
               <div className="p-6 border-t-4 border-black dark:border-white bg-card">
-                <button
-                  disabled={isAccepting}
-                  onClick={async () => {
-                    if (!selectedTask) return;
-                    setIsAccepting(true);
-                    try {
-                      await acceptTask({ taskId: selectedTask._id });
-                      setSelectedTask(null);
-                    } catch (err: unknown) {
-                      const message =
-                        err instanceof Error
-                          ? err.message
-                          : "Failed to accept task";
-                      alert(message);
-                    } finally {
-                      setIsAccepting(false);
-                    }
-                  }}
-                  className="w-full py-4 bg-[#2563EB] hover:bg-[#2563EB] text-white border-4 border-black dark:border-white font-black transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0_0_#000] dark:hover:shadow-[8px_8px_0_0_#fff] flex items-center justify-center gap-2 text-base uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isAccepting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" /> Accepting…
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="w-5 h-5" /> Accept Task
-                    </>
-                  )}
-                </button>
+                {showAcceptSuccess ? (
+                  <div className="space-y-4">
+                    <div className="flex gap-3 p-4 border-4 border-black dark:border-white bg-[#A7F3D0] text-black shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
+                      <CheckCircle2
+                        className="w-8 h-8 shrink-0"
+                        strokeWidth={2.5}
+                        aria-hidden
+                      />
+                      <div className="min-w-0">
+                        <p className="font-black uppercase tracking-widest text-sm">
+                          Task accepted
+                        </p>
+                        <p className="text-sm font-bold mt-1 leading-snug">
+                          &ldquo;{selectedTask.title}&rdquo; is now yours. Open
+                          your dashboard to track it in your active pipeline.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={closeTaskDetail}
+                      className="w-full py-4 bg-black dark:bg-white text-white dark:text-black border-4 border-black dark:border-white font-black transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 flex items-center justify-center gap-2 text-base uppercase tracking-widest"
+                    >
+                      Close
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    disabled={isAccepting}
+                    onClick={async () => {
+                      if (!selectedTask) return;
+                      setIsAccepting(true);
+                      try {
+                        await acceptTask({ taskId: selectedTask._id });
+                        setShowAcceptSuccess(true);
+                      } catch (err: unknown) {
+                        const message =
+                          err instanceof Error
+                            ? err.message
+                            : "Failed to accept task";
+                        alert(message);
+                      } finally {
+                        setIsAccepting(false);
+                      }
+                    }}
+                    className="w-full py-4 bg-[#2563EB] hover:bg-[#2563EB] text-white border-4 border-black dark:border-white font-black transition-all shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0_0_#000] dark:hover:shadow-[8px_8px_0_0_#fff] flex items-center justify-center gap-2 text-base uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isAccepting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" /> Accepting…
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-5 h-5" /> Accept Task
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </motion.div>
           </>
