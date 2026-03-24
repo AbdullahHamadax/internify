@@ -340,8 +340,12 @@ export default function StudentProfile() {
                 />
               </div>
 
-              <div>
-                <Typography variant="h2" className="mt-2 tracking-tighter">
+              <div className="min-w-0 w-full max-w-full px-1">
+                <Typography
+                  variant="h2"
+                  className="mt-2 tracking-tighter break-words line-clamp-3"
+                  title={user?.fullName ?? undefined}
+                >
                   {user?.fullName ?? "Student Name"}
                 </Typography>
                 <Typography
