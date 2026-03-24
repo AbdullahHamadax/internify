@@ -5,6 +5,7 @@ import {
   academicStatusValidator,
   rankLevelValidator,
 } from "./schema";
+import { assertValidUserNameFields } from "./nameLimits";
 
 /**
  * QUERY: currentUser
@@ -97,6 +98,10 @@ export const upsertCurrentUser = mutation({
     if (!email) {
       throw new Error("No email was provided by Clerk.");
     }
+
+    const resolvedFirst = args.firstName ?? identity.givenName;
+    const resolvedLast = args.lastName ?? identity.familyName;
+    assertValidUserNameFields(resolvedFirst, resolvedLast);
 
     // Check if the user already exists in our database
     const existingUser = await ctx.db
@@ -252,9 +257,13 @@ export const syncCurrentUserNames = mutation({
       throw new Error("User not found");
     }
 
+    const nextFirst = args.firstName ?? identity.givenName ?? user.firstName;
+    const nextLast = args.lastName ?? identity.familyName ?? user.lastName;
+    assertValidUserNameFields(nextFirst, nextLast);
+
     await ctx.db.patch(user._id, {
-      firstName: args.firstName ?? identity.givenName ?? user.firstName,
-      lastName: args.lastName ?? identity.familyName ?? user.lastName,
+      firstName: nextFirst,
+      lastName: nextLast,
       email: args.email ?? identity.email ?? user.email,
       updatedAt: Date.now(),
     });

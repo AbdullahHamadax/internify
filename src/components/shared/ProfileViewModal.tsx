@@ -155,7 +155,11 @@ export default function ProfileViewModal({
                     />
                   </div>
                   <div className="min-w-0">
-                    <Typography variant="h2" className="tracking-tighter">
+                    <Typography
+                      variant="h2"
+                      className="tracking-tighter break-words line-clamp-3"
+                      title={profile.name}
+                    >
                       {profile.name}
                     </Typography>
                     {sp?.title && (
@@ -331,7 +335,11 @@ export default function ProfileViewModal({
                     />
                   </div>
                   <div className="min-w-0">
-                    <Typography variant="h2" className="tracking-tighter">
+                    <Typography
+                      variant="h2"
+                      className="tracking-tighter break-words line-clamp-3"
+                      title={profile.name}
+                    >
                       {profile.name}
                     </Typography>
                     {ep?.position && (
