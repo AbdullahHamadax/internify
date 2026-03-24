@@ -19,6 +19,7 @@ import {
   GraduationCap,
   Zap,
   Loader2,
+  Star,
 } from "lucide-react";
 import deviconData from "devicon/devicon.json";
 
@@ -55,7 +56,7 @@ export default function ProfileViewModal({
 }: ProfileViewModalProps) {
   const profile = useQuery(api.users.getPublicProfile, { userId });
   const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
-  const isOnline = globalPresence?.some(u => u.userId === profile?.name);
+  const isOnline = globalPresence?.some((u) => u.userId === profile?.userId);
 
   // close on Escape
   useEffect(() => {
@@ -166,6 +167,17 @@ export default function ProfileViewModal({
                         <Briefcase className="w-3.5 h-3.5" />
                         {sp.title}
                       </Typography>
+                    )}
+                    {profile.rating > 0 && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                        <Typography variant="span" className="text-sm font-black">
+                          {profile.rating.toFixed(1)}
+                        </Typography>
+                        <Typography variant="span" color="muted" className="text-xs">
+                          ({profile.completedTasks} completed)
+                        </Typography>
+                      </div>
                     )}
                     {sp?.location && (
                       <Typography

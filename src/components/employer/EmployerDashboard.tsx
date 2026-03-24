@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
@@ -319,28 +319,32 @@ export default function EmployerDashboard() {
 
   const [now] = useState(() => Date.now());
 
-  const tasks: Task[] =
-    employerTasks?.map((t: any) => ({
-      id: t._id,
-      title: t.title,
-      category: t.category,
-      skillLevel: t.skillLevel.charAt(0).toUpperCase() + t.skillLevel.slice(1),
-      status: t.status as TaskStatus,
-      applications: t.applicantCount || 0,
-      maxApplicants: t.maxApplicants,
-      daysLeft: Math.max(
-        0,
-        Math.ceil((t.deadline - now) / (1000 * 60 * 60 * 24)),
-      ),
-      deadline: t.deadline,
-      createdAt: t.createdAt,
-      description: t.description,
-      skills: t.skills,
-      imageStorageIds: t.imageStorageIds,
-      imageUrls: t.imageUrls,
-      resolvedAttachments: t.resolvedAttachments,
-      acceptedBy: t.acceptedBy,
-    })) || [];
+  const tasks: Task[] = useMemo(
+    () =>
+      employerTasks?.map((t) => ({
+        id: t._id,
+        title: t.title,
+        category: t.category,
+        skillLevel:
+          t.skillLevel.charAt(0).toUpperCase() + t.skillLevel.slice(1),
+        status: t.status as TaskStatus,
+        applications: t.applicantCount || 0,
+        maxApplicants: t.maxApplicants,
+        daysLeft: Math.max(
+          0,
+          Math.ceil((t.deadline - now) / (1000 * 60 * 60 * 24)),
+        ),
+        deadline: t.deadline,
+        createdAt: t.createdAt,
+        description: t.description,
+        skills: t.skills,
+        imageStorageIds: t.imageStorageIds,
+        imageUrls: t.imageUrls,
+        resolvedAttachments: t.resolvedAttachments,
+        acceptedBy: t.acceptedBy,
+      })) || [],
+    [employerTasks, now],
+  );
 
   const stats: DashboardStats = employerStats || {
     activeTasks: 0,
@@ -351,9 +355,21 @@ export default function EmployerDashboard() {
 
   const firstName = currentUser?.user?.firstName || user?.firstName || "there";
 
-  const handleNavigate = useCallback((id: string) => {
-    setActiveNav(id);
-  }, []);
+  const handleNavigate = useCallback(
+    (id: string) => {
+      if (id.startsWith("task:")) {
+        const taskId = id.slice("task:".length);
+        const targetTask = tasks.find((t) => t.id === taskId);
+        setActiveNav("dashboard");
+        if (targetTask) {
+          setSelectedTask(targetTask);
+        }
+        return;
+      }
+      setActiveNav(id);
+    },
+    [tasks],
+  );
 
   const handleViewTask = useCallback((task: Task) => {
     setSelectedTask(task);
