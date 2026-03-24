@@ -26,6 +26,7 @@ import deviconData from "devicon/devicon.json";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { SKILL_CATALOG } from "@/lib/skillCatalog";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -63,60 +64,6 @@ const DEFAULT_PROFILE = {
   rating: 0,
   reviewsCount: 0,
 };
-
-const SKILL_CATALOG = [
-  "JavaScript",
-  "TypeScript",
-  "Python",
-  "Java",
-  "Csharp",
-  "Go",
-  "Rust",
-  "PHP",
-  "Ruby",
-  "Swift",
-  "Kotlin",
-  "Dart",
-  "React",
-  "Nextjs",
-  "Vue",
-  "Angular",
-  "Svelte",
-  "HTML",
-  "CSS",
-  "Tailwindcss",
-  "Sass",
-  "Nodejs",
-  "Express",
-  "Django",
-  "Flask",
-  "Spring",
-  "Laravel",
-  "Rails",
-  "Flutter",
-  "React Native",
-  "Docker",
-  "Kubernetes",
-  "AWS",
-  "Azure",
-  "GCP",
-  "Git",
-  "GitHub",
-  "Linux",
-  "PostgreSQL",
-  "MongoDB",
-  "MySQL",
-  "Redis",
-  "Firebase",
-  "GraphQL",
-  "Figma",
-  "Photoshop",
-  "Illustrator",
-  "Blender",
-  "Unity",
-  "TensorFlow",
-  "PyTorch",
-];
 
 // Motion Variants
 const containerVariants: Variants = {

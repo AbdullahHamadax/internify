@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import {
@@ -17,6 +17,8 @@ import {
 import { Typography } from "@/components/ui/Typography";
 import deviconData from "devicon/devicon.json";
 import { useProfileModal } from "@/components/shared/ProfileModalContext";
+import { SKILL_CATALOG } from "@/lib/skillCatalog";
+import { entityMatchesSkillFilter, skillMatchKey } from "@/lib/skillMatching";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -83,9 +85,34 @@ export default function TalentSearch() {
       })
     : [];
 
-  const skillCategories = Array.from(
-    new Set(talentData.flatMap((t) => t.skills)),
-  ).sort();
+  const masterSkillsSorted = useMemo(
+    () =>
+      [...SKILL_CATALOG].sort((a, b) =>
+        a.localeCompare(b, undefined, { sensitivity: "base" }),
+      ),
+    [],
+  );
+
+  // Render master skills + any extra skills that currently exist in student profiles,
+  // but only add extras that aren't already present in the master catalog.
+  const skillOptionsSorted = useMemo(() => {
+    const byNorm = new Map<string, string>();
+
+    for (const skill of masterSkillsSorted) {
+      byNorm.set(skillMatchKey(skill), skill);
+    }
+
+    for (const talent of talentData) {
+      for (const skill of talent.skills) {
+        const norm = skillMatchKey(skill);
+        if (!byNorm.has(norm)) byNorm.set(norm, skill);
+      }
+    }
+
+    return Array.from(byNorm.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" }),
+    );
+  }, [talentData, masterSkillsSorted]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
@@ -107,9 +134,10 @@ export default function TalentSearch() {
         s.toLowerCase().includes(searchQuery.toLowerCase()),
       );
 
-    const matchesSkills =
-      selectedSkills.length === 0 ||
-      selectedSkills.some((skill) => talent.skills.includes(skill));
+    const matchesSkills = entityMatchesSkillFilter(
+      talent.skills,
+      selectedSkills,
+    );
 
     const matchesStatus =
       selectedStatuses.length === 0 || selectedStatuses.includes(talent.status);
@@ -185,14 +213,16 @@ export default function TalentSearch() {
                 />
               </div>
               <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto pr-1 pb-2">
-                {skillCategories.filter((skill) =>
-                  skill.toLowerCase().includes(skillSearchQuery.toLowerCase()),
+                {skillOptionsSorted.filter((skill) =>
+                  skill
+                    .toLowerCase()
+                    .includes(skillSearchQuery.toLowerCase()),
                 ).length === 0 ? (
                   <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground py-4 text-center w-full border-2 border-dashed border-border">
                     No skills found
                   </div>
                 ) : (
-                  skillCategories
+                  skillOptionsSorted
                     .filter((skill) =>
                       skill
                         .toLowerCase()
@@ -209,7 +239,7 @@ export default function TalentSearch() {
                             : "bg-surface text-foreground hover:bg-[#2563EB] hover:text-white hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
                         }`}
                       >
-                        {skill}
+                        {skill.toUpperCase()}
                       </button>
                     ))
                 )}
@@ -270,6 +300,7 @@ export default function TalentSearch() {
                   setSearchQuery("");
                   setSelectedSkills([]);
                   setSelectedStatuses([]);
+                  setSkillSearchQuery("");
                 }}
                 className="mt-6 px-6 py-3 bg-[#AB47BC] text-white border-2 border-black dark:border-white font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all"
               >
