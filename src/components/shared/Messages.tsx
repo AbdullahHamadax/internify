@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { useUser } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import usePresence from "@convex-dev/presence/react";
@@ -41,13 +40,24 @@ function formatMessageTime(timestamp: number) {
 
 function TypingPresence({
   roomId,
-  userName,
+  userId,
 }: {
   roomId: string;
-  userName: string;
+  userId: string;
 }) {
   // Use a small heartbeat interval (2000ms) so the server expires stale sessions very fast
-  usePresence(api.presence, roomId, userName, 700);
+  usePresence(api.presence, roomId, userId, 700);
+  return null;
+}
+
+function ChatOpenPresence({
+  roomId,
+  userId,
+}: {
+  roomId: string;
+  userId: string;
+}) {
+  usePresence(api.presence, roomId, userId, 2000);
   return null;
 }
 
@@ -58,6 +68,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
     api.messages.getOrCreateConversation,
   );
   const sendMessageMutation = useMutation(api.messages.sendMessage);
+  const markConversationRead = useMutation(api.messages.markConversationRead);
 
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,8 +96,8 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
   );
 
   // ── Presence-based typing indicator ──
-  const { user: clerkUser } = useUser();
-  const userName = clerkUser?.fullName || clerkUser?.username || "User";
+  const currentUser = useQuery(api.users.currentUser);
+  const currentUserId = currentUser?.user?._id ?? "";
   const typingRoomId = activeConvId ? `typing:${activeConvId}` : "";
 
   // 1. My local typing state (to broadcast to others)
@@ -117,9 +128,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
   );
 
   const isTyping =
-    (otherTypists?.filter((t) => t.userId !== userName).length ?? 0) > 0;
-  const typingName =
-    otherTypists?.find((t) => t.userId !== userName)?.userId ?? "";
+    (otherTypists?.filter((t) => t.userId !== currentUserId).length ?? 0) > 0;
 
   // 3. Who is typing across all conversations? (For the sidebar)
   const convIds = useMemo(
@@ -133,6 +142,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
   // 4. Who is online globally?
   const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
   const onlineUsersSet = useMemo(() => new Set(globalPresence?.map((u) => u.userId) ?? []), [globalPresence]);
+  const chatOpenRoomId = activeConvId ? `chat-open:${activeConvId}` : "";
 
   // Scroll to bottom on new messages (within the chat container only)
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -174,6 +184,10 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
       setShowNewChat(false);
       setNewChatSearch("");
       setMobileShowChat(true);
+      // Mark as read immediately
+      markConversationRead({
+        conversationId: convId as Id<"conversations">,
+      });
     } catch (err) {
       console.error("Failed to start conversation:", err);
     }
@@ -323,6 +337,12 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                 onClick={() => {
                   setActiveConvId(conv._id);
                   setMobileShowChat(true);
+                  // Mark conversation as read on open
+                  if (conv.hasUnread) {
+                    markConversationRead({
+                      conversationId: conv._id as Id<"conversations">,
+                    });
+                  }
                 }}
                 type="button"
                 className={`w-full p-4 flex gap-3 text-left transition-all border-b-2 border-border/50 last:border-0 ${
@@ -344,9 +364,9 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                   </div>
                   <span 
                     className={`absolute -bottom-1 -right-1 size-3 ${
-                      onlineUsersSet.has(conv.otherName) ? "bg-green-500" : "bg-gray-400"
+                      onlineUsersSet.has(conv.otherUserId) ? "bg-green-500" : "bg-gray-400"
                     } border-2 border-black dark:border-white shadow-[1px_1px_0_0_#000] dark:shadow-[1px_1px_0_0_#fff] z-10`}
-                    title={onlineUsersSet.has(conv.otherName) ? "Online" : "Offline"}
+                    title={onlineUsersSet.has(conv.otherUserId) ? "Online" : "Offline"}
                   />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -367,7 +387,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                   )}
                   {(() => {
                     const isOtherTypingHere =
-                      (typingsAll?.[conv._id]?.filter((u) => u !== userName)
+                      (typingsAll?.[conv._id]?.filter((u) => u !== currentUserId)
                         .length ?? 0) > 0;
                     if (isOtherTypingHere) {
                       return (
@@ -389,6 +409,12 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                     return null;
                   })()}
                 </div>
+                {/* Unread indicator dot */}
+                {conv.hasUnread && (
+                  <div
+                    className={`size-2.5 flex-shrink-0 self-center ${isEmployer ? "bg-[#d946ef]" : "bg-[#2563EB]"} border-2 border-black dark:border-white shadow-[1px_1px_0_0_#000] dark:shadow-[1px_1px_0_0_#fff]`}
+                  />
+                )}
               </button>
             ))
           )}
@@ -421,9 +447,9 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                 </div>
                 <span 
                   className={`absolute -bottom-1 -right-1 size-3 ${
-                    onlineUsersSet.has(activeConv.otherName) ? "bg-green-500" : "bg-gray-400"
+                    onlineUsersSet.has(activeConv.otherUserId) ? "bg-green-500" : "bg-gray-400"
                   } border-2 border-black dark:border-white shadow-[1px_1px_0_0_#000] dark:shadow-[1px_1px_0_0_#fff] z-10`}
-                  title={onlineUsersSet.has(activeConv.otherName) ? "Online" : "Offline"}
+                  title={onlineUsersSet.has(activeConv.otherUserId) ? "Online" : "Offline"}
                 />
               </div>
               <div
@@ -511,12 +537,17 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
           </div>
 
           {/* My typing broadcast component */}
-          {isTypingLocally && typingRoomId && (
-            <TypingPresence roomId={typingRoomId} userName={userName} />
+          {isTypingLocally && typingRoomId && currentUserId && (
+            <TypingPresence roomId={typingRoomId} userId={currentUserId} />
+          )}
+
+          {/* Keep track of who has this chat open for notification suppression */}
+          {chatOpenRoomId && currentUserId && (
+            <ChatOpenPresence roomId={chatOpenRoomId} userId={currentUserId} />
           )}
 
           {/* Typing Indicator */}
-          {isTyping && typingName && (
+          {isTyping && (
             <div className="px-4 md:px-6 py-2 border-t-2 border-border/50 bg-card">
               <div className="flex items-center gap-2">
                 <div className="flex gap-0.5">
@@ -533,7 +564,7 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
                 <span
                   className={`text-xs font-black uppercase tracking-wider ${themeText}`}
                 >
-                  {typingName} is typing
+                  {activeConv.otherName} is typing
                 </span>
               </div>
             </div>

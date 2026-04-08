@@ -41,6 +41,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "../../../../convex/_generated/api";
+import {
+  MAX_USER_NAME_FIELD_LENGTH,
+  validateSingleNameField,
+} from "../../../../convex/nameLimits";
 
 // ── Schemas ──────────────────────────────────────────────
 
@@ -62,8 +66,24 @@ type PendingSignupPayload =
     };
 
 const step1Schema = z.object({
-  firstName: z.string().min(1, "First name is required").trim(),
-  lastName: z.string().min(1, "Last name is required").trim(),
+  firstName: z
+    .string()
+    .trim()
+    .min(1, "First name is required")
+    .superRefine((val, ctx) => {
+      const err = validateSingleNameField(val, "First name");
+      if (err)
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: err });
+    }),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, "Last name is required")
+    .superRefine((val, ctx) => {
+      const err = validateSingleNameField(val, "Last name");
+      if (err)
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: err });
+    }),
   email: z
     .string()
     .min(1, "Email is required")
@@ -655,6 +675,7 @@ export default function SignUpPage() {
                     <Input
                       id="firstName"
                       placeholder="John"
+                      maxLength={MAX_USER_NAME_FIELD_LENGTH}
                       {...step1Form.register("firstName")}
                     />
                     <div className="min-h-5">
@@ -674,6 +695,7 @@ export default function SignUpPage() {
                     <Input
                       id="lastName"
                       placeholder="Doe"
+                      maxLength={MAX_USER_NAME_FIELD_LENGTH}
                       {...step1Form.register("lastName")}
                     />
                     <div className="min-h-5">

@@ -3,61 +3,7 @@
 import { useState, useRef, useMemo, type KeyboardEvent } from "react";
 import { X, Tag, Plus, Search } from "lucide-react";
 import deviconData from "devicon/devicon.json";
-
-/* ── Curated skill catalog ── */
-const SKILL_CATALOG = [
-  "JavaScript",
-  "TypeScript",
-  "Python",
-  "Java",
-  "Csharp",
-  "Go",
-  "Rust",
-  "PHP",
-  "Ruby",
-  "Swift",
-  "Kotlin",
-  "Dart",
-  "React",
-  "Nextjs",
-  "Vue",
-  "Angular",
-  "Svelte",
-  "HTML",
-  "CSS",
-  "Tailwindcss",
-  "Sass",
-  "Nodejs",
-  "Express",
-  "Django",
-  "Flask",
-  "Spring",
-  "Laravel",
-  "Rails",
-  "Flutter",
-  "React Native",
-  "Docker",
-  "Kubernetes",
-  "AWS",
-  "Azure",
-  "GCP",
-  "Git",
-  "GitHub",
-  "Linux",
-  "PostgreSQL",
-  "MongoDB",
-  "MySQL",
-  "Redis",
-  "Firebase",
-  "GraphQL",
-  "Figma",
-  "Photoshop",
-  "Illustrator",
-  "Blender",
-  "Unity",
-  "TensorFlow",
-  "PyTorch",
-];
+import { SKILL_CATALOG } from "@/lib/skillCatalog";
 
 /**
  * Get the devicon class name for a skill, if available.
@@ -99,14 +45,15 @@ export default function SkillPicker({ skills, onChange }: SkillPickerProps) {
   /* Filter catalog by query (case-insensitive substring match) */
   const filteredCatalog = useMemo(() => {
     const q = normalize(query);
-    if (!q) return SKILL_CATALOG;
-    return SKILL_CATALOG.filter((skill) => normalize(skill).includes(q));
+    const list = [...SKILL_CATALOG];
+    if (!q) return list;
+    return list.filter((skill) => normalize(skill).includes(q));
   }, [query]);
 
   /* Does the user's query NOT match any catalog item? → show "add custom" */
   const trimmedQuery = query.trim();
   const queryNorm = normalize(trimmedQuery);
-  const exactCatalogMatch = SKILL_CATALOG.some(
+  const exactCatalogMatch = [...SKILL_CATALOG].some(
     (s) => normalize(s) === queryNorm,
   );
   const alreadySelected = skills.some((s) => normalize(s) === queryNorm);

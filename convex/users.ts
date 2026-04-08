@@ -5,6 +5,7 @@ import {
   academicStatusValidator,
   rankLevelValidator,
 } from "./schema";
+import { assertValidUserNameFields } from "./nameLimits";
 
 /**
  * QUERY: currentUser
@@ -97,6 +98,10 @@ export const upsertCurrentUser = mutation({
     if (!email) {
       throw new Error("No email was provided by Clerk.");
     }
+
+    const resolvedFirst = args.firstName ?? identity.givenName;
+    const resolvedLast = args.lastName ?? identity.familyName;
+    assertValidUserNameFields(resolvedFirst, resolvedLast);
 
     // Check if the user already exists in our database
     const existingUser = await ctx.db
@@ -226,6 +231,46 @@ export const upsertCurrentUser = mutation({
 });
 
 /**
+ * MUTATION: syncCurrentUserNames
+ * Keeps Convex user names aligned with Clerk settings updates.
+ */
+export const syncCurrentUserNames = mutation({
+  args: {
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    email: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const nextFirst = args.firstName ?? identity.givenName ?? user.firstName;
+    const nextLast = args.lastName ?? identity.familyName ?? user.lastName;
+    assertValidUserNameFields(nextFirst, nextLast);
+
+    await ctx.db.patch(user._id, {
+      firstName: nextFirst,
+      lastName: nextLast,
+      email: args.email ?? identity.email ?? user.email,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
  * QUERY: getStudentsForEmployer
  * Fetches all student users and their profiles for the talent search.
  */
@@ -286,6 +331,15 @@ export const getPublicProfile = query({
         .query("studentProfiles")
         .withIndex("by_userId", (q) => q.eq("userId", user._id))
         .unique();
+      const applications = await ctx.db
+        .query("applications")
+        .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+        .collect();
+      const completedTasks = applications.filter(
+        (app) => app.status === "completed",
+      ).length;
+      const rating =
+        completedTasks > 0 ? 4.5 + Math.min(completedTasks * 0.1, 0.5) : 0;
 
       return {
         userId: user._id,
@@ -294,6 +348,8 @@ export const getPublicProfile = query({
         email: user.email,
         role: user.role as "student",
         memberSince: user.createdAt,
+        rating,
+        completedTasks,
         studentProfile: profile
           ? {
               title: profile.title,

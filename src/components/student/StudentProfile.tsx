@@ -26,6 +26,7 @@ import deviconData from "devicon/devicon.json";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { SKILL_CATALOG } from "@/lib/skillCatalog";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -64,60 +65,6 @@ const DEFAULT_PROFILE = {
   reviewsCount: 0,
 };
 
-const SKILL_CATALOG = [
-  "JavaScript",
-  "TypeScript",
-  "Python",
-  "Java",
-  "Csharp",
-  "Go",
-  "Rust",
-  "PHP",
-  "Ruby",
-  "Swift",
-  "Kotlin",
-  "Dart",
-  "React",
-  "Nextjs",
-  "Vue",
-  "Angular",
-  "Svelte",
-  "HTML",
-  "CSS",
-  "Tailwindcss",
-  "Sass",
-  "Nodejs",
-  "Express",
-  "Django",
-  "Flask",
-  "Spring",
-  "Laravel",
-  "Rails",
-  "Flutter",
-  "React Native",
-  "Docker",
-  "Kubernetes",
-  "AWS",
-  "Azure",
-  "GCP",
-  "Git",
-  "GitHub",
-  "Linux",
-  "PostgreSQL",
-  "MongoDB",
-  "MySQL",
-  "Redis",
-  "Firebase",
-  "GraphQL",
-  "Figma",
-  "Photoshop",
-  "Illustrator",
-  "Blender",
-  "Unity",
-  "TensorFlow",
-  "PyTorch",
-];
-
 // Motion Variants
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -138,11 +85,12 @@ const itemVariants: Variants = {
 
 export default function StudentProfile() {
   const { user } = useUser();
-  const userName = user?.fullName || user?.username || "User";
   const applications = useQuery(api.tasks.getStudentApplications);
   const currentUserData = useQuery(api.users.currentUser);
   const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
-  const isOnline = globalPresence?.some((u) => u.userId === userName);
+  const isOnline = globalPresence?.some(
+    (u) => u.userId === currentUserData?.user?._id,
+  );
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
 
   const studentProfile = currentUserData?.studentProfile;
@@ -339,8 +287,12 @@ export default function StudentProfile() {
                 />
               </div>
 
-              <div>
-                <Typography variant="h2" className="mt-2 tracking-tighter">
+              <div className="min-w-0 w-full max-w-full px-1">
+                <Typography
+                  variant="h2"
+                  className="mt-2 tracking-tighter break-words line-clamp-3"
+                  title={user?.fullName ?? undefined}
+                >
                   {user?.fullName ?? "Student Name"}
                 </Typography>
                 <Typography
