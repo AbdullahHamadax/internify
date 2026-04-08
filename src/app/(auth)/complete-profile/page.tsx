@@ -8,7 +8,7 @@ import { Typography } from "@/components/ui/Typography";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useClerk, useUser } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
+import { useConvex, useMutation, useQuery } from "convex/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -35,6 +35,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "../../../../convex/_generated/api";
+import {
+  useConvexTokenReady,
+} from "@/lib/convexAuth";
 
 // ── Types & Schemas ──────────────────────────────────────
 
@@ -66,9 +69,14 @@ type EmployerProfileData = z.infer<typeof employerProfileSchema>;
 export default function CompleteProfilePage() {
   const { isLoaded, user } = useUser();
   const { signOut } = useClerk();
+  const convex = useConvex();
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
-  const currentUser = useQuery(api.users.currentUser);
   const router = useRouter();
+  const isConvexTokenReady = useConvexTokenReady();
+  const currentUser = useQuery(
+    api.users.currentUser,
+    isConvexTokenReady ? {} : "skip",
+  );
 
   const [step, setStep] = useState<Step>(0);
   const [role, setRole] = useState<Role | null>(null);
@@ -105,13 +113,20 @@ export default function CompleteProfilePage() {
       return;
     }
 
+    if (!isConvexTokenReady || currentUser === undefined) {
+      return;
+    }
+
     if (currentUser?.user?.role) {
       router.replace("/");
     }
-  }, [isLoaded, user, currentUser, router]);
+  }, [isLoaded, user, isConvexTokenReady, currentUser, router]);
 
   // ── Loading ──
-  if (!isLoaded || currentUser === undefined) {
+  if (
+    !isLoaded ||
+    (user && (!isConvexTokenReady || currentUser === undefined))
+  ) {
     return (
       <div className="flex min-h-[300px] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -125,6 +140,53 @@ export default function CompleteProfilePage() {
   }
 
   // ── Helpers ──
+
+  async function sleep(ms: number) {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function waitForConvexSession() {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      try {
+        await convex.query(api.users.requireCurrentIdentity, {});
+        return true;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : String(error ?? "");
+
+        if (!message.includes("Unauthorized")) {
+          throw error;
+        }
+      }
+
+      await sleep(250);
+    }
+
+    return false;
+  }
+
+  async function persistProfileWithRetry(action: () => Promise<unknown>) {
+    let lastError: unknown = null;
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      try {
+        await action();
+        return;
+      } catch (error) {
+        lastError = error;
+        const message =
+          error instanceof Error ? error.message : String(error ?? "");
+
+        if (!message.includes("Unauthorized")) {
+          throw error;
+        }
+
+        await sleep(250);
+      }
+    }
+
+    throw lastError;
+  }
 
   function selectRole(r: Role) {
     setRole(r);
@@ -152,17 +214,26 @@ export default function CompleteProfilePage() {
     setIsSubmitting(true);
 
     try {
-      await upsertCurrentUser({
-        role: "student",
-        firstName: user?.firstName ?? undefined,
-        lastName: user?.lastName ?? undefined,
-        email: user?.primaryEmailAddress?.emailAddress ?? undefined,
-        studentProfile: {
-          academicStatus: data.academicStatus,
-          fieldOfStudy: data.fieldOfStudy,
-          cvFileName: cvFile?.name ?? undefined,
-        },
-      });
+      const hasConvexSession = await waitForConvexSession();
+      if (!hasConvexSession) {
+        throw new Error(
+          "Clerk signed you in, but Convex still could not verify this browser session. Please refresh and try again.",
+        );
+      }
+
+      await persistProfileWithRetry(() =>
+        upsertCurrentUser({
+          role: "student",
+          firstName: user?.firstName ?? undefined,
+          lastName: user?.lastName ?? undefined,
+          email: user?.primaryEmailAddress?.emailAddress ?? undefined,
+          studentProfile: {
+            academicStatus: data.academicStatus,
+            fieldOfStudy: data.fieldOfStudy,
+            cvFileName: cvFile?.name ?? undefined,
+          },
+        }),
+      );
       router.push("/");
     } catch (error) {
       const message =
@@ -178,17 +249,26 @@ export default function CompleteProfilePage() {
     setIsSubmitting(true);
 
     try {
-      await upsertCurrentUser({
-        role: "employer",
-        firstName: user?.firstName ?? undefined,
-        lastName: user?.lastName ?? undefined,
-        email: user?.primaryEmailAddress?.emailAddress ?? undefined,
-        employerProfile: {
-          companyName: data.companyName,
-          position: data.position,
-          rankLevel: data.rankLevel,
-        },
-      });
+      const hasConvexSession = await waitForConvexSession();
+      if (!hasConvexSession) {
+        throw new Error(
+          "Clerk signed you in, but Convex still could not verify this browser session. Please refresh and try again.",
+        );
+      }
+
+      await persistProfileWithRetry(() =>
+        upsertCurrentUser({
+          role: "employer",
+          firstName: user?.firstName ?? undefined,
+          lastName: user?.lastName ?? undefined,
+          email: user?.primaryEmailAddress?.emailAddress ?? undefined,
+          employerProfile: {
+            companyName: data.companyName,
+            position: data.position,
+            rankLevel: data.rankLevel,
+          },
+        }),
+      );
       router.push("/");
     } catch (error) {
       const message =

@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/card";
 import { PasswordInput } from "@/components/ui/password-input";
 import { api } from "../../../../convex/_generated/api";
+import { useConvexTokenReady } from "@/lib/convexAuth";
 
 const loginSchema = z.object({
   email: z
@@ -40,13 +41,40 @@ const loginSchema = z.object({
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
+type EmailCodeSecondFactor = {
+  strategy: "email_code";
+  emailAddressId: string;
+  safeIdentifier: string;
+};
+
+function isEmailCodeSecondFactor(
+  factor: unknown,
+): factor is EmailCodeSecondFactor {
+  if (!factor || typeof factor !== "object") return false;
+
+  const candidate = factor as {
+    strategy?: string;
+    emailAddressId?: string;
+    safeIdentifier?: string;
+  };
+
+  return (
+    candidate.strategy === "email_code" &&
+    typeof candidate.emailAddressId === "string" &&
+    typeof candidate.safeIdentifier === "string"
+  );
+}
 
 export default function LoginPage() {
   const { isLoaded, setActive, signIn } = useSignIn();
   const { signOut } = useClerk();
   const { isLoaded: isUserLoaded, isSignedIn } = useUser();
   const convex = useConvex();
-  const currentUser = useQuery(api.users.currentUser);
+  const isConvexTokenReady = useConvexTokenReady();
+  const currentUser = useQuery(
+    api.users.currentUser,
+    isConvexTokenReady ? {} : "skip",
+  );
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -54,7 +82,13 @@ export default function LoginPage() {
   const isEmployer = role === "employer";
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [secondFactorCode, setSecondFactorCode] = useState("");
+  const [secondFactorEmailAddressId, setSecondFactorEmailAddressId] =
+    useState<string | null>(null);
+  const [secondFactorSafeIdentifier, setSecondFactorSafeIdentifier] =
+    useState<string | null>(null);
   const isSubmittingRef = useRef(false);
+  const isAwaitingSecondFactor = !!secondFactorEmailAddressId;
 
   const {
     register,
@@ -73,23 +107,14 @@ export default function LoginPage() {
     if (!isUserLoaded || !isSignedIn) return;
     // Don't interfere while the login form's onSubmit is still running
     if (isSubmittingRef.current) return;
-
-    // currentUser is undefined while loading, null if no Convex record exists
-    if (currentUser === undefined) {
-      // Convex is still loading (or WebSocket is down).
-      // Timeout fallback: redirect to / which has its own guard.
-      const timer = setTimeout(() => {
-        router.replace("/");
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
+    if (!isConvexTokenReady || currentUser === undefined) return;
 
     if (currentUser?.user?.role) {
       router.replace("/");
     } else {
       router.replace("/complete-profile");
     }
-  }, [isUserLoaded, isSignedIn, currentUser, router]);
+  }, [isUserLoaded, isSignedIn, isConvexTokenReady, currentUser, router]);
 
   // Catches errors passed in the URL after a forced sign-out
   useEffect(() => {
@@ -116,8 +141,16 @@ export default function LoginPage() {
     );
   }
 
+  function resetSecondFactorState() {
+    setSecondFactorCode("");
+    setSecondFactorEmailAddressId(null);
+    setSecondFactorSafeIdentifier(null);
+  }
+
   function handleRoleChange(value: string) {
     if (value !== "student" && value !== "employer") return;
+    resetSecondFactorState();
+    setSubmitError(null);
 
     const params = new URLSearchParams(searchParams.toString());
     params.set("role", value);
@@ -129,6 +162,8 @@ export default function LoginPage() {
 
   function signInWithOAuth(strategy: OAuthStrategy) {
     if (!signIn) return;
+    resetSecondFactorState();
+    setSubmitError(null);
     signIn
       .authenticateWithRedirect({
         strategy,
@@ -145,8 +180,32 @@ export default function LoginPage() {
     await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  // Returns `null` after 8 tries instead of throwing an error.
+  async function waitForConvexSession() {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      try {
+        await convex.query(api.users.requireCurrentIdentity, {});
+        return true;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : String(error ?? "");
+        if (!message.includes("Unauthorized")) {
+          throw error;
+        }
+      }
+
+      await sleep(250);
+    }
+
+    return false;
+  }
+
   async function getSignedInAccountRoleWithRetry() {
+    const hasConvexSession = await waitForConvexSession();
+
+    if (!hasConvexSession) {
+      throw new Error("Convex session unavailable");
+    }
+
     for (let attempt = 0; attempt < 8; attempt += 1) {
       try {
         const currentUser = await convex.query(api.users.currentUser, {});
@@ -155,7 +214,7 @@ export default function LoginPage() {
           return currentUser.user.role;
         }
 
-        throw new Error("Unauthorized - Waiting for token sync");
+        return null;
       } catch (error) {
         const message =
           error instanceof Error ? error.message : String(error ?? "");
@@ -192,6 +251,32 @@ export default function LoginPage() {
     return true;
   }
 
+  async function finalizeSignIn(createdSessionId: string) {
+    await setActive?.({
+      session: createdSessionId,
+      navigate: async () => {},
+    });
+
+    const actualRole = await getSignedInAccountRoleWithRetry();
+
+    if (!actualRole) {
+      router.push("/complete-profile");
+      return;
+    }
+
+    if (actualRole !== role) {
+      const errorMsg = encodeURIComponent(
+        `This account is registered as a ${actualRole}. Please sign in using the correct tab.`,
+      );
+      await signOut({
+        redirectUrl: `${pathname}?role=${actualRole}&error=${errorMsg}`,
+      });
+      return;
+    }
+
+    router.push("/");
+  }
+
   async function onSubmit(data: LoginFormData) {
     if (!isLoaded || !signIn) {
       setSubmitError("Authentication is still loading. Please try again.");
@@ -211,49 +296,46 @@ export default function LoginPage() {
         password: data.password,
       });
 
+      if (signInAttempt.status === "needs_second_factor") {
+        const emailCodeFactor = signInAttempt.supportedSecondFactors?.find(
+          isEmailCodeSecondFactor,
+        );
+
+        if (!emailCodeFactor) {
+          const supportedSecondFactors =
+            signInAttempt.supportedSecondFactors
+              ?.map((factor) => factor.strategy)
+              .join(", ") || "none";
+
+          setSubmitError(
+            `This account requires a second factor we do not support yet. Available second factors: ${supportedSecondFactors}.`,
+          );
+          return;
+        }
+
+        await signInAttempt.prepareSecondFactor({
+          strategy: "email_code",
+          emailAddressId: emailCodeFactor.emailAddressId,
+        });
+
+        setSecondFactorEmailAddressId(emailCodeFactor.emailAddressId);
+        setSecondFactorSafeIdentifier(emailCodeFactor.safeIdentifier);
+        setSecondFactorCode("");
+        return;
+      }
+
       if (
         signInAttempt.status !== "complete" ||
         !signInAttempt.createdSessionId
       ) {
         setSubmitError(
-          "Sign in requires an extra verification step in Clerk dashboard.",
+          `Clerk sign-in is not complete yet. Status: ${signInAttempt.status}.`,
         );
         return;
       }
 
-      // 1. Clerk let them in
-      await setActive?.({
-        session: signInAttempt.createdSessionId,
-        navigate: async () => {},
-      });
-
-      // 2. They are officially inside Clerk!
       sessionActivated = true;
-
-      // 3. Ask Convex for the role
-      const actualRole = await getSignedInAccountRoleWithRetry();
-
-      // 4. No role found? Send them to complete their profile.
-      //    This happens when a user exists in Clerk (e.g. via Google OAuth)
-      //    but never finished the Convex profile setup.
-      if (!actualRole) {
-        router.push("/complete-profile");
-        return;
-      }
-
-      // 5. Wrong tab? Auto-switch them and kick them back to login.
-      if (actualRole !== role) {
-        const errorMsg = encodeURIComponent(
-          `This account is registered as a ${actualRole}. Please sign in using the correct tab.`,
-        );
-        await signOut({
-          redirectUrl: `${pathname}?role=${actualRole}&error=${errorMsg}`,
-        });
-        return;
-      }
-
-      // 6. Success!
-      router.push("/");
+      await finalizeSignIn(signInAttempt.createdSessionId);
     } catch (error) {
       // If the app crashes HERE, ONLY kick them out if they successfully passed Clerk.
       // This stops normal "Wrong Password" errors from accidentally calling signOut().
@@ -266,7 +348,7 @@ export default function LoginPage() {
       }
 
       if (isClerkAPIResponseError(error)) {
-        if (handleRateLimitError(error)) {
+      if (handleRateLimitError(error)) {
           return;
         }
 
@@ -277,10 +359,11 @@ export default function LoginPage() {
         );
       } else if (
         error instanceof Error &&
-        error.message.includes("Unauthorized")
+        (error.message.includes("Unauthorized") ||
+          error.message.includes("Convex session unavailable"))
       ) {
         setSubmitError(
-          "Signed in, but role validation failed. Check Clerk JWT template name 'convex' with audience 'convex'.",
+          "Clerk signed you in, but Convex still could not verify this browser session. Please refresh and try again.",
         );
       } else {
         setSubmitError("Something went wrong while signing in.");
@@ -288,6 +371,106 @@ export default function LoginPage() {
     } finally {
       setIsSubmitting(false);
       isSubmittingRef.current = false;
+    }
+  }
+
+  async function onSecondFactorSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    if (!isLoaded || !signIn || !secondFactorEmailAddressId) {
+      setSubmitError("The verification step is not ready. Please try again.");
+      return;
+    }
+
+    setSubmitError(null);
+    setIsSubmitting(true);
+    isSubmittingRef.current = true;
+
+    let sessionActivated = false;
+
+    try {
+      const verificationAttempt = await signIn.attemptSecondFactor({
+        strategy: "email_code",
+        code: secondFactorCode.trim(),
+      });
+
+      if (
+        verificationAttempt.status !== "complete" ||
+        !verificationAttempt.createdSessionId
+      ) {
+        setSubmitError(
+          `Verification is still incomplete. Status: ${verificationAttempt.status}.`,
+        );
+        return;
+      }
+
+      sessionActivated = true;
+      await finalizeSignIn(verificationAttempt.createdSessionId);
+    } catch (error) {
+      if (sessionActivated) {
+        try {
+          await signOut();
+        } catch (signOutError) {
+          console.error("Emergency sign out failed", signOutError);
+        }
+      }
+
+      if (isClerkAPIResponseError(error)) {
+        if (handleRateLimitError(error)) {
+          return;
+        }
+
+        setSubmitError(
+          error.errors[0]?.longMessage ??
+            error.errors[0]?.message ??
+            "Invalid verification code.",
+        );
+      } else if (
+        error instanceof Error &&
+        (error.message.includes("Unauthorized") ||
+          error.message.includes("Convex session unavailable"))
+      ) {
+        setSubmitError(
+          "Your email was verified, but Convex still could not verify this browser session. Please refresh and try again.",
+        );
+      } else {
+        setSubmitError("Something went wrong while verifying your code.");
+      }
+    } finally {
+      setIsSubmitting(false);
+      isSubmittingRef.current = false;
+    }
+  }
+
+  async function resendSecondFactorCode() {
+    if (!signIn || !secondFactorEmailAddressId) return;
+
+    setSubmitError(null);
+    setIsSubmitting(true);
+
+    try {
+      await signIn.prepareSecondFactor({
+        strategy: "email_code",
+        emailAddressId: secondFactorEmailAddressId,
+      });
+    } catch (error) {
+      if (isClerkAPIResponseError(error)) {
+        if (handleRateLimitError(error)) {
+          return;
+        }
+
+        setSubmitError(
+          error.errors[0]?.longMessage ??
+            error.errors[0]?.message ??
+            "Could not resend the verification code.",
+        );
+      } else {
+        setSubmitError("Could not resend the verification code.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -350,7 +533,85 @@ export default function LoginPage() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+        {isAwaitingSecondFactor && (
+          <form onSubmit={onSecondFactorSubmit} className="mt-6 space-y-4">
+            <div className="rounded-none border-2 border-black dark:border-white bg-muted/30 px-4 py-3 text-center">
+              <Typography
+                variant="p"
+                className="text-sm font-bold uppercase tracking-widest"
+              >
+                Check your email
+              </Typography>
+              <Typography
+                variant="p"
+                className="mt-2 text-sm text-muted-foreground"
+              >
+                Enter the verification code sent to{" "}
+                <span className="font-semibold text-foreground">
+                  {secondFactorSafeIdentifier ?? "your email"}
+                </span>
+                .
+              </Typography>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="second-factor-code">Verification code</Label>
+              <Input
+                id="second-factor-code"
+                value={secondFactorCode}
+                onChange={(event) => setSecondFactorCode(event.target.value)}
+                placeholder="Enter the code from your email"
+                autoComplete="one-time-code"
+              />
+            </div>
+
+            {submitError && (
+              <Typography
+                variant="p"
+                className="text-sm text-red-500 text-center"
+              >
+                {submitError}
+              </Typography>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isSubmitting || secondFactorCode.trim().length === 0}
+              className={`w-full h-11 text-base rounded-none border-2 border-black dark:border-white font-black uppercase tracking-widest text-white transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] ${
+                isEmployer ? "bg-[#AB47BC]" : "bg-[#2563EB]"
+              }`}
+            >
+              {isSubmitting ? "Verifying..." : "Verify code"}
+            </Button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={resendSecondFactorCode}
+                className="h-11 rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none bg-white dark:bg-black font-black uppercase tracking-widest"
+              >
+                Resend code
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={() => {
+                  resetSecondFactorState();
+                  setSubmitError(null);
+                }}
+                className="h-11 rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none bg-white dark:bg-black font-black uppercase tracking-widest"
+              >
+                Start over
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {!isAwaitingSecondFactor && (
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -491,13 +752,14 @@ export default function LoginPage() {
           <Typography variant="span" className="block text-center pt-2">
             Don&apos;t have an account?{" "}
             <Link
-              href={`/signup?role=${role}`}
+              href="/signup"
               className="font-semibold text-primary hover:underline"
             >
               Sign up
             </Link>
           </Typography>
-        </form>
+          </form>
+        )}
       </CardContent>
     </Card>
   );

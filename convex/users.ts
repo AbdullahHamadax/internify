@@ -53,6 +53,22 @@ export const currentUser = query({
   },
 });
 
+export const requireCurrentIdentity = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    return {
+      email: identity.email ?? null,
+      subject: identity.subject,
+      tokenIdentifier: identity.tokenIdentifier,
+    };
+  },
+});
+
 /**
  * MUTATION: upsertCurrentUser
  * "Upsert" means "Update or Insert". This saves user info to the database.

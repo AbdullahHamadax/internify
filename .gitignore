@@ -45,3 +45,7 @@ next-env.d.ts
 
 # TestSprite generated tests, reports, and tmp artifacts
 /testsprite_tests/
+
+
+# convex generated
+convex/_generated

@@ -9,9 +9,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Typography } from "@/components/ui/Typography";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth, useSignUp, useUser } from "@clerk/nextjs";
+import { useSignUp, useUser } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
-import { useMutation, useQuery } from "convex/react";
+import { useConvex, useMutation, useQuery } from "convex/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -45,6 +45,9 @@ import {
   MAX_USER_NAME_FIELD_LENGTH,
   validateSingleNameField,
 } from "../../../../convex/nameLimits";
+import {
+  useConvexTokenReady,
+} from "@/lib/convexAuth";
 
 // ── Schemas ──────────────────────────────────────────────
 
@@ -119,23 +122,20 @@ type EmployerStep2Data = z.infer<typeof employerStep2Schema>;
 // ── Component ────────────────────────────────────────────
 
 export default function SignUpPage() {
-  const { getToken } = useAuth();
   const { isLoaded, setActive, signUp } = useSignUp();
   const { isLoaded: isUserLoaded, isSignedIn } = useUser();
+  const convex = useConvex();
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
-  const currentUser = useQuery(api.users.currentUser);
+  const isConvexTokenReady = useConvexTokenReady();
+  const currentUser = useQuery(
+    api.users.currentUser,
+    isConvexTokenReady ? {} : "skip",
+  );
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  const initialRoleFromQuery = searchParams.get("role");
-  const initialRole: Role | null =
-    initialRoleFromQuery === "student" || initialRoleFromQuery === "employer"
-      ? initialRoleFromQuery
-      : null;
-
-  const [step, setStep] = useState<Step>(initialRole ? 1 : 0);
-  const [role, setRole] = useState<Role | null>(initialRole);
+  const [step, setStep] = useState<Step>(0);
+  const [role, setRole] = useState<Role | null>(null);
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -203,16 +203,13 @@ export default function SignUpPage() {
   // ── Already-signed-in guard ──
   useEffect(() => {
     if (!isUserLoaded || !isSignedIn) return;
-    if (currentUser === undefined) {
-      const timer = setTimeout(() => router.replace("/"), 3000);
-      return () => clearTimeout(timer);
-    }
+    if (!isConvexTokenReady || currentUser === undefined) return;
     if (currentUser?.user?.role) {
       router.replace("/");
     } else {
       router.replace("/complete-profile");
     }
-  }, [isUserLoaded, isSignedIn, currentUser, router]);
+  }, [isUserLoaded, isSignedIn, isConvexTokenReady, currentUser, router]);
 
   // Show spinner while Clerk is loading OR if already signed in (redirect pending)
   if (!isUserLoaded || isSignedIn) {
@@ -294,16 +291,24 @@ export default function SignUpPage() {
     await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async function waitForConvexToken(timeoutMs = 5000) {
-    const start = Date.now();
-    while (Date.now() - start < timeoutMs) {
-      const token = await getToken({ template: "convex", skipCache: true });
-      if (token) {
-        return token;
+  async function waitForConvexSession() {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      try {
+        await convex.query(api.users.requireCurrentIdentity, {});
+        return true;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : String(error ?? "");
+
+        if (!message.includes("Unauthorized")) {
+          throw error;
+        }
       }
+
       await sleep(250);
     }
-    return null;
+
+    return false;
   }
 
   async function persistProfile(payload: PendingSignupPayload) {
@@ -336,15 +341,8 @@ export default function SignUpPage() {
   }
 
   async function persistProfileWithRetry(payload: PendingSignupPayload) {
-    const token = await waitForConvexToken();
-    if (!token) {
-      throw new Error(
-        "Missing Convex auth token. In Clerk, create JWT template named 'convex' with audience 'convex'.",
-      );
-    }
-
     let lastError: unknown = null;
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
       try {
         await persistProfile(payload);
         return;
@@ -355,7 +353,7 @@ export default function SignUpPage() {
         if (!message.includes("Unauthorized")) {
           throw error;
         }
-        await sleep(300 * (attempt + 1));
+        await sleep(250);
       }
     }
 
@@ -384,6 +382,13 @@ export default function SignUpPage() {
         signUpAttempt.createdSessionId
       ) {
         await setActive?.({ session: signUpAttempt.createdSessionId });
+        const hasConvexSession = await waitForConvexSession();
+        if (!hasConvexSession) {
+          setSubmitError(
+            "Clerk created the account, but Convex still could not verify this browser session. Please refresh and try again.",
+          );
+          return;
+        }
         await persistProfileWithRetry(payload);
         router.push("/");
         return;
@@ -406,10 +411,11 @@ export default function SignUpPage() {
         );
       } else if (
         error instanceof Error &&
-        error.message.includes("Unauthorized")
+        (error.message.includes("Unauthorized") ||
+          error.message.includes("Convex session unavailable"))
       ) {
         setSubmitError(
-          "Signed in, but Convex auth failed. Check Clerk JWT template name 'convex' and audience 'convex'.",
+          "Clerk created the account, but Convex still could not verify this browser session. Please refresh and try again.",
         );
       } else if (error instanceof Error && error.message.includes("convex")) {
         setSubmitError(error.message);
@@ -483,6 +489,13 @@ export default function SignUpPage() {
       }
 
       await setActive?.({ session: verificationAttempt.createdSessionId });
+      const hasConvexSession = await waitForConvexSession();
+      if (!hasConvexSession) {
+        setSubmitError(
+          "Your email was verified, but Convex still could not verify this browser session. Please refresh and try again.",
+        );
+        return;
+      }
       await persistProfileWithRetry(pendingSignupPayload);
       router.push("/");
     } catch (error) {
@@ -498,10 +511,11 @@ export default function SignUpPage() {
         );
       } else if (
         error instanceof Error &&
-        error.message.includes("Unauthorized")
+        (error.message.includes("Unauthorized") ||
+          error.message.includes("Convex session unavailable"))
       ) {
         setSubmitError(
-          "Email verified, but Convex auth failed. Check Clerk JWT template name 'convex' and audience 'convex'.",
+          "Your email was verified, but Convex still could not verify this browser session. Please refresh and try again.",
         );
       } else if (error instanceof Error && error.message.includes("convex")) {
         setSubmitError(error.message);
