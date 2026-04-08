@@ -1,6 +1,10 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { components } from "./_generated/api";
+import { Presence } from "@convex-dev/presence";
+
+const presence = new Presence(components.presence);
 
 /**
  * Get users the current user can message.
@@ -127,10 +131,10 @@ export const getConversations = query({
     // Enrich with the OTHER participant's info
     const enriched = await Promise.all(
       all.map(async (conv) => {
-        const otherId =
-          conv.participantOne === user._id
-            ? conv.participantTwo
-            : conv.participantOne;
+        const isParticipantOne = conv.participantOne === user._id;
+        const otherId = isParticipantOne
+          ? conv.participantTwo
+          : conv.participantOne;
         const otherUser = await ctx.db.get(otherId as Id<"users">);
 
         let otherName = "User";
@@ -157,6 +161,14 @@ export const getConversations = query({
           }
         }
 
+        // Determine unread status
+        const myLastRead = isParticipantOne
+          ? conv.lastReadByParticipantOne ?? 0
+          : conv.lastReadByParticipantTwo ?? 0;
+        const hasUnread =
+          (conv.lastMessageAt ?? 0) > myLastRead &&
+          conv.lastMessageSenderId !== user._id;
+
         return {
           _id: conv._id,
           otherUserId: otherId,
@@ -164,6 +176,7 @@ export const getConversations = query({
           subtitle,
           lastMessageText: conv.lastMessageText ?? "",
           lastMessageAt: conv.lastMessageAt ?? 0,
+          hasUnread,
         };
       }),
     );
@@ -330,10 +343,78 @@ export const sendMessage = mutation({
       sentAt: now,
     });
 
-    // Update conversation preview
+    // Update conversation preview + sender tracking
     await ctx.db.patch(args.conversationId, {
       lastMessageText: args.text,
       lastMessageAt: now,
+      lastMessageSenderId: user._id,
     });
+
+    // Create notification for the recipient only if they do not have
+    // this conversation open right now.
+    const recipientId =
+      conv.participantOne === user._id
+        ? conv.participantTwo
+        : conv.participantOne;
+    const senderName =
+      [user.firstName, user.lastName].filter(Boolean).join(" ") || "Someone";
+
+    const openChatUsers = await presence.listRoom(
+      ctx,
+      `chat-open:${args.conversationId}`,
+      true,
+      20,
+    );
+    const isRecipientViewingChat = openChatUsers.some(
+      (u) => u.userId === (recipientId as string),
+    );
+
+    if (!isRecipientViewingChat) {
+      await ctx.db.insert("notifications", {
+        userId: recipientId,
+        type: "new_message" as const,
+        title: "New Message",
+        message: `${senderName} sent you a message: "${args.text.length > 60 ? args.text.slice(0, 60) + "…" : args.text}"`,
+        relatedUserId: user._id,
+        relatedUserName: senderName,
+        isRead: false,
+        createdAt: now,
+      });
+    }
+  },
+});
+
+/**
+ * Mark a conversation as read by the current user.
+ */
+export const markConversationRead = mutation({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) throw new Error("User not found");
+
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) throw new Error("Conversation not found");
+
+    const now = Date.now();
+
+    if (conv.participantOne === user._id) {
+      await ctx.db.patch(args.conversationId, {
+        lastReadByParticipantOne: now,
+      });
+    } else if (conv.participantTwo === user._id) {
+      await ctx.db.patch(args.conversationId, {
+        lastReadByParticipantTwo: now,
+      });
+    }
   },
 });

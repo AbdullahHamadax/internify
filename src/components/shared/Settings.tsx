@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import {
+  MAX_USER_NAME_FIELD_LENGTH,
+  validateUserNameFields,
+} from "../../../convex/nameLimits";
 import { Typography } from "@/components/ui/Typography";
 import { Loader2, Save, Shield, Github, Linkedin, Mail } from "lucide-react";
 
@@ -23,6 +27,7 @@ export default function Settings() {
   const { user, isLoaded } = useUser();
   const { openUserProfile } = useClerk();
   const currentUser = useQuery(api.users.currentUser);
+  const syncCurrentUserNames = useMutation(api.users.syncCurrentUserNames);
 
   const role = (currentUser?.user?.role as "student" | "employer") || "student";
   const theme = THEME[role];
@@ -55,10 +60,22 @@ export default function Settings() {
 
   const handleSaveProfile = async () => {
     if (!user) return;
+    const fn = firstName.trim();
+    const ln = lastName.trim();
+    const nameErr = validateUserNameFields(fn, ln);
+    if (nameErr) {
+      setMessage({ type: "error", text: nameErr });
+      return;
+    }
     setIsSaving(true);
     setMessage(null);
     try {
-      await user.update({ firstName, lastName });
+      await user.update({ firstName: fn, lastName: ln });
+      await syncCurrentUserNames({
+        firstName: fn,
+        lastName: ln,
+        email: user.primaryEmailAddress?.emailAddress,
+      });
       setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (error) {
       console.error(error);
@@ -123,6 +140,7 @@ export default function Settings() {
                 <input
                   type="text"
                   value={firstName}
+                  maxLength={MAX_USER_NAME_FIELD_LENGTH}
                   onChange={(e) => setFirstName(e.target.value)}
                   className="w-full bg-transparent border-2 border-black dark:border-white p-3 font-medium focus:outline-none focus:ring-0 transition-colors"
                   style={{ borderColor: undefined }}
@@ -139,6 +157,7 @@ export default function Settings() {
                 <input
                   type="text"
                   value={lastName}
+                  maxLength={MAX_USER_NAME_FIELD_LENGTH}
                   onChange={(e) => setLastName(e.target.value)}
                   className="w-full bg-transparent border-2 border-black dark:border-white p-3 font-medium focus:outline-none focus:ring-0 transition-colors"
                   onFocus={(e) =>
@@ -148,6 +167,11 @@ export default function Settings() {
                 />
               </div>
             </div>
+            <Typography variant="p" color="muted" className="text-xs font-medium mb-6">
+              Use your real name: 2–{MAX_USER_NAME_FIELD_LENGTH} characters each, letters
+              only (hyphens, apostrophes, spaces OK). No keyboard mash or long repeated
+              letters. Extra spaces are trimmed when you save.
+            </Typography>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="w-full sm:w-auto">
@@ -164,7 +188,8 @@ export default function Settings() {
                 onClick={handleSaveProfile}
                 disabled={
                   isSaving ||
-                  (firstName === user?.firstName && lastName === user?.lastName)
+                  (firstName.trim() === (user?.firstName ?? "").trim() &&
+                    lastName.trim() === (user?.lastName ?? "").trim())
                 }
                 className="w-full sm:w-auto px-6 py-3 text-white border-2 border-black dark:border-white font-black uppercase tracking-widest hover:translate-y-1 hover:translate-x-1 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0_0_#000] dark:disabled:hover:shadow-[4px_4px_0_0_#fff] flex items-center justify-center gap-2"
                 style={{ backgroundColor: theme.accent }}

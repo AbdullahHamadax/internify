@@ -55,10 +55,11 @@ const itemVariants: Variants = {
 
 export default function EmployerProfile() {
   const { user } = useUser();
-  const userName = user?.fullName || user?.username || "User";
   const currentUserData = useQuery(api.users.currentUser);
   const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
-  const isOnline = globalPresence?.some((u) => u.userId === userName);
+  const isOnline = globalPresence?.some(
+    (u) => u.userId === currentUserData?.user?._id,
+  );
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
   const employerStats = useQuery(api.tasks.getEmployerStats);
 
@@ -161,8 +162,12 @@ export default function EmployerProfile() {
                 />
               </div>
 
-              <div>
-                <Typography variant="h2" className="mt-2 tracking-tighter">
+              <div className="min-w-0 w-full max-w-full px-1">
+                <Typography
+                  variant="h2"
+                  className="mt-2 tracking-tighter break-words line-clamp-3"
+                  title={user?.fullName ?? undefined}
+                >
                   {user?.fullName ?? "Employer Name"}
                 </Typography>
                 <Typography

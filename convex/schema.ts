@@ -184,6 +184,9 @@ export default defineSchema({
     participantTwo: v.id("users"),
     lastMessageText: v.optional(v.string()),
     lastMessageAt: v.optional(v.number()),
+    lastMessageSenderId: v.optional(v.id("users")),
+    lastReadByParticipantOne: v.optional(v.number()),
+    lastReadByParticipantTwo: v.optional(v.number()),
   })
     .index("by_participantOne", ["participantOne"])
     .index("by_participantTwo", ["participantTwo"]),
@@ -198,4 +201,29 @@ export default defineSchema({
     text: v.string(),
     sentAt: v.number(),
   }).index("by_conversationId", ["conversationId"]),
+
+  /**
+   * NOTIFICATIONS TABLE
+   * In-app notifications for key events (task accepted, submitted, etc.).
+   */
+  notifications: defineTable({
+    userId: v.id("users"),
+    type: v.union(
+      v.literal("task_accepted"),
+      v.literal("task_submitted"),
+      v.literal("new_message"),
+      v.literal("task_completed"),
+      v.literal("new_task_posted"),
+      v.literal("deadline_approaching"),
+    ),
+    title: v.string(),
+    message: v.string(),
+    relatedTaskId: v.optional(v.id("tasks")),
+    relatedUserId: v.optional(v.id("users")),
+    relatedUserName: v.optional(v.string()),
+    isRead: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_isRead", ["userId", "isRead"]),
 });

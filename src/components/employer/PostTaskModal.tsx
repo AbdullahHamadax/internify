@@ -34,6 +34,15 @@ export interface PostTaskData {
     type: string;
   }[];
 }
+
+/** Matches convex/tasks.ts — deadlines must be future and at least this far ahead. */
+const MIN_TASK_DEADLINE_LEAD_MS = 24 * 60 * 60 * 1000;
+
+function toDatetimeLocalValue(d: Date) {
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 const CATEGORIES = [
   "Web Development",
   "Mobile Development",
@@ -134,6 +143,12 @@ export default function PostTaskModal({
     };
   }, [previewUrls]);
 
+  const minDeadlineInput = useMemo(
+    () =>
+      toDatetimeLocalValue(new Date(Date.now() + MIN_TASK_DEADLINE_LEAD_MS)),
+    [open],
+  );
+
   if (!open) return null;
 
   const resetForm = () => {
@@ -158,8 +173,24 @@ export default function PostTaskModal({
     if (!skillLevel) newErrors.skillLevel = "Skill level is required";
     if (!description.trim()) newErrors.description = "Description is required";
     if (!deadline) newErrors.deadline = "Deadline is required";
-    if (maxApplicants && isNaN(Number(maxApplicants))) newErrors.maxApplicants = "Must be a valid number";
-    if (maxApplicants && Number(maxApplicants) < 1) newErrors.maxApplicants = "Must be at least 1";
+    else {
+      const ts = new Date(deadline).getTime();
+      if (Number.isNaN(ts)) {
+        newErrors.deadline = "Invalid date and time";
+      } else {
+        const now = Date.now();
+        if (ts <= now) {
+          newErrors.deadline = "Deadline cannot be in the past.";
+        } else if (ts - now < MIN_TASK_DEADLINE_LEAD_MS) {
+          newErrors.deadline =
+            "Deadline must be at least 24 hours from now — shorter windows are not allowed.";
+        }
+      }
+    }
+    if (maxApplicants && isNaN(Number(maxApplicants)))
+      newErrors.maxApplicants = "Must be a valid number";
+    if (maxApplicants && Number(maxApplicants) < 1)
+      newErrors.maxApplicants = "Must be at least 1";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -383,9 +414,14 @@ export default function PostTaskModal({
           {/* Deadline */}
           <div className="emp-modal__field">
             <Label htmlFor="task-deadline">Deadline (Date & Time)</Label>
+            <p className="text-sm text-muted-foreground mb-1.5">
+              Must be in the future, at least 24 hours from now. Earlier times are
+              greyed out in the picker.
+            </p>
             <Input
               id="task-deadline"
               type="datetime-local"
+              min={minDeadlineInput}
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
               aria-invalid={!!errors.deadline}
@@ -587,7 +623,12 @@ export default function PostTaskModal({
         </div>
 
         <div className="emp-modal__footer">
-          <Button variant="outline" onClick={onClose} disabled={isUploading} className="rounded-none border-2 border-border hover:bg-border hover:text-card shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isUploading}
+            className="rounded-none border-2 border-border hover:bg-border hover:text-card shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+          >
             Cancel
           </Button>
           <Button

@@ -9,6 +9,8 @@
  */
 
 import type * as messages from "../messages.js";
+import type * as nameLimits from "../nameLimits.js";
+import type * as notifications from "../notifications.js";
 import type * as presence from "../presence.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
@@ -21,6 +23,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   messages: typeof messages;
+  nameLimits: typeof nameLimits;
+  notifications: typeof notifications;
   presence: typeof presence;
   tasks: typeof tasks;
   users: typeof users;
