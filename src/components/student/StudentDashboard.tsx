@@ -35,6 +35,7 @@ import StudentExplore from "./StudentExplore";
 import StudentProfile from "./StudentProfile";
 import SettingsPage from "@/components/shared/Settings";
 import Footer from "@/components/landing/Footer";
+import { useConvexTokenReady } from "@/lib/convexAuth";
 
 import "./student-dashboard.css";
 
@@ -55,7 +56,15 @@ function StudentNavbar({
   const { signOut } = useClerk();
   const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const unreadCount = useQuery(api.notifications.getUnreadCount) ?? 0;
+  const isConvexTokenReady = useConvexTokenReady();
+  const unreadCount =
+    useQuery(
+      api.notifications.getUnreadCount,
+      isConvexTokenReady ? {} : "skip",
+    ) ?? 0;
+  const handleSignOut = useCallback(async () => {
+    await signOut({ redirectUrl: "/login?role=student" });
+  }, [signOut]);
 
   const initials = (user?.firstName?.charAt(0) ?? "S").toUpperCase();
 
@@ -153,7 +162,7 @@ function StudentNavbar({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => signOut()}
+              onClick={() => void handleSignOut()}
               className="cursor-pointer text-red-600 focus:text-red-600"
             >
               <LogOut className="mr-2 size-4" />
@@ -249,7 +258,7 @@ function StudentNavbar({
               color: "hsl(0 72% 51%)",
               marginTop: "0.5rem",
             }}
-            onClick={() => signOut()}
+            onClick={() => void handleSignOut()}
           >
             Logout
           </button>
@@ -261,6 +270,7 @@ function StudentNavbar({
 
 /* ── Main Dashboard Container ── */
 export default function StudentDashboard() {
+  const isConvexTokenReady = useConvexTokenReady();
   const [activeNav, setActiveNav] = useState("dashboard");
   const [exploreFocusTaskId, setExploreFocusTaskId] = useState<string | null>(
     null,
@@ -275,6 +285,14 @@ export default function StudentDashboard() {
     setExploreFocusTaskId(null);
     setActiveNav(id);
   }, []);
+
+  if (!isConvexTokenReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="stu-dashboard">

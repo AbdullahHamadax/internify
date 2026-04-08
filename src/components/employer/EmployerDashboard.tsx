@@ -45,6 +45,7 @@ import Notifications from "@/components/shared/Notifications";
 import EmployerProfile from "./EmployerProfile";
 import SettingsPage from "@/components/shared/Settings";
 import Footer from "@/components/landing/Footer";
+import { useConvexTokenReady } from "@/lib/convexAuth";
 
 import "./employer-dashboard.css";
 
@@ -73,7 +74,15 @@ function EmployerNavbar({
   const { signOut } = useClerk();
   const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const unreadCount = useQuery(api.notifications.getUnreadCount) ?? 0;
+  const isConvexTokenReady = useConvexTokenReady();
+  const unreadCount =
+    useQuery(
+      api.notifications.getUnreadCount,
+      isConvexTokenReady ? {} : "skip",
+    ) ?? 0;
+  const handleSignOut = useCallback(async () => {
+    await signOut({ redirectUrl: "/login?role=employer" });
+  }, [signOut]);
 
   const initials = (user?.firstName?.charAt(0) ?? "E").toUpperCase();
 
@@ -177,7 +186,7 @@ function EmployerNavbar({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => signOut()}
+              onClick={() => void handleSignOut()}
               className="cursor-pointer text-red-600 focus:text-red-600"
             >
               <LogOut className="mr-2 size-4" />
@@ -290,7 +299,7 @@ function EmployerNavbar({
               color: "hsl(0 72% 51%)",
               marginTop: "0.5rem",
             }}
-            onClick={() => signOut()}
+            onClick={() => void handleSignOut()}
           >
             Logout
           </button>
@@ -304,10 +313,20 @@ function EmployerNavbar({
 
 export default function EmployerDashboard() {
   const { user } = useUser();
-  const currentUser = useQuery(api.users.currentUser);
+  const isConvexTokenReady = useConvexTokenReady();
+  const currentUser = useQuery(
+    api.users.currentUser,
+    isConvexTokenReady ? {} : "skip",
+  );
 
-  const employerTasks = useQuery(api.tasks.getEmployerTasks);
-  const employerStats = useQuery(api.tasks.getEmployerStats);
+  const employerTasks = useQuery(
+    api.tasks.getEmployerTasks,
+    isConvexTokenReady ? {} : "skip",
+  );
+  const employerStats = useQuery(
+    api.tasks.getEmployerStats,
+    isConvexTokenReady ? {} : "skip",
+  );
   const createTask = useMutation(api.tasks.createTask);
   const deleteTask = useMutation(api.tasks.deleteTask);
   const updateTask = useMutation(api.tasks.updateTask);
@@ -444,6 +463,14 @@ export default function EmployerDashboard() {
   const hour = new Date().getHours();
   const timeGreeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
+  if (!isConvexTokenReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="emp-dashboard">
