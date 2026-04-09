@@ -205,7 +205,7 @@ export default function SignUpPage() {
     if (!isUserLoaded || !isSignedIn) return;
     if (!isConvexTokenReady || currentUser === undefined) return;
     if (currentUser?.user?.role) {
-      router.replace("/");
+      router.replace("/dashboard");
     } else {
       router.replace("/complete-profile");
     }
@@ -390,7 +390,7 @@ export default function SignUpPage() {
           return;
         }
         await persistProfileWithRetry(payload);
-        router.push("/");
+        router.push("/dashboard");
         return;
       }
 
@@ -497,7 +497,7 @@ export default function SignUpPage() {
         return;
       }
       await persistProfileWithRetry(pendingSignupPayload);
-      router.push("/");
+      router.push("/dashboard");
     } catch (error) {
       if (isClerkAPIResponseError(error)) {
         if (handleRateLimitError(error)) {

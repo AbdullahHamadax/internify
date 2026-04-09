@@ -47,6 +47,15 @@
   text-decoration: none;
   color: inherit;
   flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.stu-navbar__brand:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 4px;
 }
 
 .stu-navbar__brand-icon {

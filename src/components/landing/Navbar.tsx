@@ -1,9 +1,27 @@
 "use client";
 
+import { useClerk, useUser } from "@clerk/nextjs";
 import ThemeToggle from "@/components/ThemeToggle";
-import { GraduationCap, Menu, X } from "lucide-react";
+import AccountAvatar from "@/components/shared/AccountAvatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  GraduationCap,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Settings,
+  User,
+  X,
+} from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Typography } from "@/components/ui/Typography";
 
@@ -14,21 +32,31 @@ const navLinks = [
   { label: "About", href: "/about" },
 ];
 
-export default function Navbar() {
+type NavbarProps = {
+  authenticatedRole?: "student" | "employer";
+};
+
+export default function Navbar({ authenticatedRole }: NavbarProps) {
+  const { signOut } = useClerk();
+  const { isLoaded, isSignedIn, user } = useUser();
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [activeHash, setActiveHash] = useState("");
+  const [activeHash, setActiveHash] = useState(() =>
+    typeof window !== "undefined" ? window.location.hash : "",
+  );
+
+  const isAuthenticated = Boolean(isLoaded && isSignedIn && authenticatedRole);
+  const accountRole = authenticatedRole ?? "student";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll, { passive: true });
-    
-    // eslint-disable-next-line
-    setActiveHash(window.location.hash);
+
     const onHashChange = () => setActiveHash(window.location.hash);
     window.addEventListener("hashchange", onHashChange);
-    
+
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("hashchange", onHashChange);
@@ -37,39 +65,53 @@ export default function Navbar() {
 
   const handleNavClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-      // Hash links like "/#how-it-works"
-      if (href.startsWith("/#")) {
-        const id = href.slice(2);
-        // If already on the homepage, smooth-scroll to the section
-        if (pathname === "/") {
-          e.preventDefault();
-          const el = document.getElementById(id);
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-            window.history.pushState(null, "", href);
-            setActiveHash(href.slice(1));
-          }
-        }
-        // Otherwise let the browser navigate to /#section naturally
+      if (!href.startsWith("/#")) {
         setMobileOpen(false);
+        return;
       }
+
+      const id = href.slice(2);
+      if (pathname === "/") {
+        e.preventDefault();
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          window.history.pushState(null, "", href);
+          setActiveHash(href.slice(1));
+        }
+      }
+
+      setMobileOpen(false);
     },
     [pathname],
   );
 
+  const handleDashboardNavigation = useCallback(
+    (tab?: "profile" | "settings") => {
+      const target = tab ? `/dashboard?tab=${tab}` : "/dashboard";
+      setMobileOpen(false);
+      router.push(target);
+    },
+    [router],
+  );
+
+  const handleSignOut = useCallback(async () => {
+    setMobileOpen(false);
+    await signOut({ redirectUrl: "/" });
+  }, [signOut]);
+
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white dark:bg-black shadow-[0_4px_0_0_#000] dark:shadow-[0_4px_0_0_#fff] border-b-4 border-black dark:border-white"
-          : "bg-white dark:bg-black border-b-4 border-transparent dark:border-transparent"
+          ? "border-b-4 border-black bg-white shadow-[0_4px_0_0_#000] dark:border-white dark:bg-black dark:shadow-[0_4px_0_0_#fff]"
+          : "border-b-4 border-transparent bg-white dark:border-transparent dark:bg-black"
       }`}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="bg-[#2563EB] rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] p-1.5">
+            <div className="rounded-none border-2 border-black bg-[#2563EB] p-1.5 shadow-[2px_2px_0_0_#000] dark:border-white">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <Typography
@@ -81,19 +123,18 @@ export default function Navbar() {
             </Typography>
           </Link>
 
-          {/* Center links – desktop */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className={`rounded-none px-4 py-2 text-sm font-black uppercase tracking-widest transition-all border-2 border-transparent hover:border-black dark:hover:border-white hover:bg-[#AB47BC] hover:text-white hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] hover:-translate-y-px hover:-translate-x-px ${
+                className={`rounded-none border-2 border-transparent px-4 py-2 text-sm font-black uppercase tracking-widest transition-all hover:-translate-x-px hover:-translate-y-px hover:border-black hover:bg-[#AB47BC] hover:text-white hover:shadow-[2px_2px_0_0_#000] dark:hover:border-white dark:hover:shadow-[2px_2px_0_0_#fff] ${
                   pathname === link.href ||
                   (pathname === "/" &&
                     link.href.startsWith("/#") &&
                     activeHash === link.href.slice(1))
-                    ? "bg-[#2563EB] text-white border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] -translate-y-[2px] -translate-x-[2px]"
+                    ? "border-black bg-[#2563EB] text-white shadow-[4px_4px_0_0_#000] -translate-x-[2px] -translate-y-[2px] dark:border-white dark:shadow-[4px_4px_0_0_#fff]"
                     : "text-black dark:text-white"
                 }`}
               >
@@ -102,29 +143,82 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Right actions – desktop */}
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
-            <Link
-              href="/login"
-              className="bg-white text-black dark:bg-black dark:text-white border-2 border-black dark:border-white px-5 py-2.5 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
-            >
-              Log In
-            </Link>
-            <Link
-              href="/signup"
-              className="bg-[#2563EB] text-white border-2 border-black dark:border-white px-5 py-2.5 text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
-            >
-              Get Started
-            </Link>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center border-0 bg-transparent p-0 align-middle leading-none"
+                    aria-label="Open account menu"
+                    title={user?.fullName ?? "Account"}
+                  >
+                    <AccountAvatar
+                      role={accountRole}
+                      name={user?.firstName ?? user?.fullName}
+                      imageUrl={user?.hasImage ? user.imageUrl : null}
+                    />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="mt-2 w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => handleDashboardNavigation()}
+                  >
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => handleDashboardNavigation("profile")}
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => handleDashboardNavigation("settings")}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer text-red-600 focus:text-red-600"
+                    onClick={() => void handleSignOut()}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="border-2 border-black bg-white px-5 py-2.5 text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:bg-black dark:text-white dark:shadow-[4px_4px_0_0_#fff]"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="border-2 border-black bg-[#2563EB] px-5 py-2.5 text-sm font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:shadow-[4px_4px_0_0_#fff]"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
 
-          {/* Mobile menu toggle */}
           <div className="flex items-center gap-2 md:hidden">
             <ThemeToggle />
             <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="rounded-none border-2 border-black dark:border-white p-2 text-black dark:text-white bg-white dark:bg-black transition-all shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:-translate-y-px hover:-translate-x-px hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff]"
+              type="button"
+              onClick={() => setMobileOpen((open) => !open)}
+              className="rounded-none border-2 border-black bg-white p-2 text-black shadow-[2px_2px_0_0_#000] transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0_0_#000] dark:border-white dark:bg-black dark:text-white dark:shadow-[2px_2px_0_0_#fff] dark:hover:shadow-[4px_4px_0_0_#fff]"
               aria-label="Toggle menu"
             >
               {mobileOpen ? (
@@ -137,41 +231,92 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-b-4 border-black dark:border-white bg-white dark:bg-black px-4 pb-6 shadow-[0_8px_0_0_#000] dark:shadow-[0_8px_0_0_#fff]">
+        <div className="border-b-4 border-black bg-white px-4 pb-6 shadow-[0_8px_0_0_#000] dark:border-white dark:bg-black dark:shadow-[0_8px_0_0_#fff] md:hidden">
           <div className="flex flex-col gap-3 pt-3">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className={`rounded-none border-2 border-black dark:border-white px-4 py-3 text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] ${
+                className={`rounded-none border-2 border-black px-4 py-3 text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] dark:border-white dark:shadow-[4px_4px_0_0_#fff] dark:hover:shadow-[6px_6px_0_0_#fff] ${
                   pathname === link.href ||
                   (pathname === "/" &&
                     link.href.startsWith("/#") &&
                     activeHash === link.href.slice(1))
                     ? "bg-[#2563EB] text-white"
-                    : "bg-white text-black dark:bg-black dark:text-white hover:bg-[#AB47BC] hover:text-white"
+                    : "bg-white text-black hover:bg-[#AB47BC] hover:text-white dark:bg-black dark:text-white"
                 }`}
               >
                 {link.label}
               </Link>
             ))}
-            <div className="mt-4 flex flex-col gap-3">
-              <Link
-                href="/login"
-                className="bg-white text-black dark:bg-black dark:text-white border-2 border-black dark:border-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
-              >
-                Log In
-              </Link>
-              <Link
-                href="/signup"
-                className="bg-[#2563EB] text-white border-2 border-black dark:border-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
-              >
-                Get Started
-              </Link>
-            </div>
+
+            {isAuthenticated ? (
+              <div className="mt-4 flex flex-col gap-3 border-t-4 border-black pt-4 dark:border-white">
+                <div className="flex items-center gap-3 border-2 border-black bg-white p-3 shadow-[4px_4px_0_0_#000] dark:border-white dark:bg-black dark:shadow-[4px_4px_0_0_#fff]">
+                  <AccountAvatar
+                    role={accountRole}
+                    name={user?.firstName ?? user?.fullName}
+                    imageUrl={user?.hasImage ? user.imageUrl : null}
+                  />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-black uppercase tracking-widest text-black dark:text-white">
+                      {user?.firstName ?? user?.fullName ?? "Account"}
+                    </div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      {accountRole}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleDashboardNavigation()}
+                  className="border-2 border-black bg-[#2563EB] px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:shadow-[4px_4px_0_0_#fff]"
+                >
+                  Dashboard
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDashboardNavigation("profile")}
+                  className="border-2 border-black bg-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:bg-black dark:text-white dark:shadow-[4px_4px_0_0_#fff]"
+                >
+                  Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDashboardNavigation("settings")}
+                  className="border-2 border-black bg-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:bg-black dark:text-white dark:shadow-[4px_4px_0_0_#fff]"
+                >
+                  Settings
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSignOut()}
+                  className="border-2 border-black bg-[#FF3366] px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:shadow-[4px_4px_0_0_#fff]"
+                >
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <div className="mt-4 flex flex-col gap-3">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="border-2 border-black bg-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:bg-black dark:text-white dark:shadow-[4px_4px_0_0_#fff]"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileOpen(false)}
+                  className="border-2 border-black bg-[#2563EB] px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:shadow-[4px_4px_0_0_#fff]"
+                >
+                  Get Started
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
