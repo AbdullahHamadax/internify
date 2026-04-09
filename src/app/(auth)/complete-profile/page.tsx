@@ -100,7 +100,7 @@ export default function CompleteProfilePage() {
   const employerForm = useForm<EmployerProfileData>({
     resolver: zodResolver(employerProfileSchema),
     mode: "onTouched",
-    defaultValues: { companyName: "", position: "" },
+    defaultValues: { companyName: "", position: "", rankLevel: "mid" },
   });
 
   useEffect(() => {

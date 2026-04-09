@@ -16,7 +16,7 @@ import {
   LogOut,
   House,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Messages from "@/components/shared/Messages";
 import Notifications from "@/components/shared/Notifications";
 import HomeButton from "@/components/shared/HomeButton";
@@ -290,13 +290,10 @@ function StudentNavbar({
 /* ── Main Dashboard Container ── */
 export default function StudentDashboard() {
   const isConvexTokenReady = useConvexTokenReady();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const routeTab = searchParams.get("tab");
-  const [activeNav, setActiveNav] = useState("dashboard");
-  const [exploreFocusTaskId, setExploreFocusTaskId] = useState<string | null>(
-    null,
-  );
-
   const normalizedRouteTab =
     routeTab &&
     ["dashboard", "explore", "profile", "settings", "messages", "notifications"].includes(
@@ -304,6 +301,10 @@ export default function StudentDashboard() {
     )
       ? routeTab
       : "dashboard";
+  const [activeNav, setActiveNav] = useState(normalizedRouteTab);
+  const [exploreFocusTaskId, setExploreFocusTaskId] = useState<string | null>(
+    null,
+  );
 
   const handleNavigate = useCallback((id: string) => {
     if (id.startsWith("explore-task:")) {
@@ -318,6 +319,18 @@ export default function StudentDashboard() {
   useEffect(() => {
     setActiveNav(normalizedRouteTab);
   }, [normalizedRouteTab]);
+
+  useEffect(() => {
+    const currentTab = searchParams.get("tab");
+    const nextTab = activeNav === "dashboard" ? null : activeNav;
+
+    if (currentTab === nextTab || (!currentTab && nextTab === null)) {
+      return;
+    }
+
+    const nextUrl = nextTab ? `${pathname}?tab=${nextTab}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }, [activeNav, pathname, router, searchParams]);
 
   if (!isConvexTokenReady) {
     return (

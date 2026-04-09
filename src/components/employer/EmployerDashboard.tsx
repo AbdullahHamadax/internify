@@ -19,7 +19,7 @@ import {
   Settings,
   House,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   DropdownMenu,
@@ -333,6 +333,8 @@ function EmployerNavbar({
 export default function EmployerDashboard() {
   const { user } = useUser();
   const isConvexTokenReady = useConvexTokenReady();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentUser = useQuery(
     api.users.currentUser,
@@ -350,14 +352,7 @@ export default function EmployerDashboard() {
   const createTask = useMutation(api.tasks.createTask);
   const deleteTask = useMutation(api.tasks.deleteTask);
   const updateTask = useMutation(api.tasks.updateTask);
-
   const routeTab = searchParams.get("tab");
-  const [activeNav, setActiveNav] = useState("dashboard");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-
-  const [now] = useState(() => Date.now());
   const normalizedRouteTab =
     routeTab &&
     [
@@ -370,6 +365,12 @@ export default function EmployerDashboard() {
     ].includes(routeTab)
       ? routeTab
       : "dashboard";
+  const [activeNav, setActiveNav] = useState(normalizedRouteTab);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  const [now] = useState(() => Date.now());
 
   const tasks: Task[] = useMemo(
     () =>
@@ -430,6 +431,18 @@ export default function EmployerDashboard() {
   useEffect(() => {
     setActiveNav(normalizedRouteTab);
   }, [normalizedRouteTab]);
+
+  useEffect(() => {
+    const currentTab = searchParams.get("tab");
+    const nextTab = activeNav === "dashboard" ? null : activeNav;
+
+    if (currentTab === nextTab || (!currentTab && nextTab === null)) {
+      return;
+    }
+
+    const nextUrl = nextTab ? `${pathname}?tab=${nextTab}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }, [activeNav, pathname, router, searchParams]);
 
   const handleDeleteTask = useCallback(
     async (taskId: string) => {

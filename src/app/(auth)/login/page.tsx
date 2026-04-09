@@ -642,6 +642,7 @@ export default function LoginPage() {
             </div>
             <PasswordInput
               id="password"
+              autoComplete="current-password"
               placeholder="••••••••"
               {...register("password")}
               aria-invalid={!!errors.password}

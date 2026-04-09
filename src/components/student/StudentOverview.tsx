@@ -106,15 +106,23 @@ export default function StudentOverview({
 }: {
   onNavigate?: (id: string) => void;
 }) {
-  const { user } = useUser();
-  const firstName = user?.firstName || "there";
-
-  const [selectedApp, setSelectedApp] = useState<{
+  type SelectedApplication = {
     _id: string;
     taskId: string;
     hasSubmission: boolean;
-    task: { title: string; companyName: string };
-  } | null>(null);
+    task: {
+      title: string;
+      companyName: string;
+      deadline: number;
+    };
+  };
+
+  const { user } = useUser();
+  const firstName = user?.firstName || "there";
+
+  const [selectedApp, setSelectedApp] = useState<SelectedApplication | null>(
+    null,
+  );
 
   const applications = useQuery(api.tasks.getStudentApplications);
   const activeCount = applications
@@ -225,7 +233,7 @@ export default function StudentOverview({
                 <div
                   key={app._id}
                   className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-card border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none min-h-[100px] w-full min-w-0 cursor-pointer"
-                  onClick={() => setSelectedApp(app as any)}
+                  onClick={() => setSelectedApp(app)}
                 >
                   <div className="flex-1 w-full space-y-1 mb-4 sm:mb-0 min-w-0 pr-0 sm:pr-4">
                     <Typography
@@ -362,6 +370,7 @@ export default function StudentOverview({
           applicationId={selectedApp._id}
           taskTitle={selectedApp.task.title}
           companyName={selectedApp.task.companyName}
+          deadline={selectedApp.task.deadline}
           hasSubmission={selectedApp.hasSubmission}
           onClose={() => setSelectedApp(null)}
           onSubmitted={() => setSelectedApp(null)}
