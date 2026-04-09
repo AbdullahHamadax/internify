@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { X, Upload, FileText, Trash2, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  X,
+  Upload,
+  FileText,
+  Trash2,
+  Loader2,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -12,6 +20,7 @@ interface SubmitTaskModalProps {
   applicationId: string;
   taskTitle: string;
   companyName: string;
+  deadline: number;
   hasSubmission: boolean;
   onClose: () => void;
   onSubmitted: () => void;
@@ -27,6 +36,7 @@ export default function SubmitTaskModal({
   applicationId,
   taskTitle,
   companyName,
+  deadline,
   hasSubmission,
   onClose,
   onSubmitted,
@@ -39,6 +49,7 @@ export default function SubmitTaskModal({
 
   const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
   const submitTask = useMutation(api.tasks.submitTask);
+  const isExpired = deadline <= Date.now();
 
   if (!open) return null;
 
@@ -92,8 +103,12 @@ export default function SubmitTaskModal({
       setNote("");
       onSubmitted();
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
     } finally {
       setUploading(false);
     }
@@ -118,7 +133,11 @@ export default function SubmitTaskModal({
         <div className="flex items-center justify-between p-5 border-b-4 border-black dark:border-white">
           <div className="min-w-0 flex-1 pr-4">
             <Typography variant="h3" className="uppercase font-black tracking-tight truncate">
-              {hasSubmission ? "Submission Complete" : "Submit Work"}
+              {hasSubmission
+                ? "Submission Complete"
+                : isExpired
+                  ? "Deadline Passed"
+                  : "Submit Work"}
             </Typography>
             <Typography variant="span" color="muted" className="text-sm truncate block mt-1">
               {taskTitle} • {companyName}
@@ -145,6 +164,18 @@ export default function SubmitTaskModal({
               </Typography>
               <Typography variant="p" color="muted" className="text-center text-sm max-w-xs">
                 You have already submitted your work for this task. The employer will review it soon.
+              </Typography>
+            </div>
+          ) : isExpired ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-4">
+              <div className="p-4 bg-red-100 dark:bg-red-900/30 border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
+                <Clock className="w-12 h-12 text-red-600 dark:text-red-400" />
+              </div>
+              <Typography variant="h4" className="text-center font-black uppercase">
+                Submission Closed
+              </Typography>
+              <Typography variant="p" color="muted" className="text-center text-sm max-w-xs">
+                This task deadline has passed, so new submissions are no longer accepted. It will be removed automatically after the grace period.
               </Typography>
             </div>
           ) : (
@@ -225,7 +256,7 @@ export default function SubmitTaskModal({
         </div>
 
         {/* Footer */}
-        {!hasSubmission && (
+        {!hasSubmission && !isExpired && (
           <div className="p-5 border-t-4 border-black dark:border-white flex justify-end gap-3">
             <button
               type="button"

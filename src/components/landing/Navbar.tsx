@@ -1,6 +1,7 @@
 "use client";
 
 import { useClerk, useUser } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccountAvatar from "@/components/shared/AccountAvatar";
 import {
@@ -24,6 +25,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Typography } from "@/components/ui/Typography";
+import { api } from "../../../convex/_generated/api";
 
 const navLinks = [
   { label: "How it Works", href: "/#how-it-works" },
@@ -36,29 +38,35 @@ type NavbarProps = {
   authenticatedRole?: "student" | "employer";
 };
 
+function resolveRoleFromMetadata(
+  value: unknown,
+): "student" | "employer" | undefined {
+  return value === "student" || value === "employer" ? value : undefined;
+}
+
 export default function Navbar({ authenticatedRole }: NavbarProps) {
   const { signOut } = useClerk();
   const { isLoaded, isSignedIn, user } = useUser();
+  const currentUser = useQuery(api.users.currentUser);
   const pathname = usePathname();
   const router = useRouter();
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeHash, setActiveHash] = useState(() =>
     typeof window !== "undefined" ? window.location.hash : "",
   );
 
-  const isAuthenticated = Boolean(isLoaded && isSignedIn && authenticatedRole);
-  const accountRole = authenticatedRole ?? "student";
+  const metadataRole =
+    resolveRoleFromMetadata(user?.publicMetadata?.role) ??
+    resolveRoleFromMetadata(user?.unsafeMetadata?.role);
+  const accountRole =
+    authenticatedRole ?? currentUser?.user.role ?? metadataRole ?? "student";
+  const isAuthenticated = Boolean(isLoaded && isSignedIn);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-
     const onHashChange = () => setActiveHash(window.location.hash);
     window.addEventListener("hashchange", onHashChange);
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("hashchange", onHashChange);
     };
   }, []);
@@ -102,11 +110,7 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
 
   return (
     <nav
-      className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "border-b-4 border-black bg-white shadow-[0_4px_0_0_#000] dark:border-white dark:bg-black dark:shadow-[0_4px_0_0_#fff]"
-          : "border-b-4 border-transparent bg-white dark:border-transparent dark:bg-black"
-      }`}
+      className="fixed left-0 right-0 top-0 z-50 border-b-4 border-black bg-white shadow-[0_4px_0_0_#000] transition-all duration-300 dark:border-white dark:bg-black dark:shadow-[0_4px_0_0_#fff]"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
@@ -146,7 +150,7 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
             {isAuthenticated ? (
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"

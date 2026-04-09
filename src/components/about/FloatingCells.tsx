@@ -1,89 +1,78 @@
 "use client";
 
-import { useMemo } from "react";
-
-/* ═══════════════════════════════════════════════════════════
-   FLOATING CELLS — ambient agar.io-style background blobs
-   Blue = students · Purple = employers
-   ═══════════════════════════════════════════════════════════ */
-
-interface Cell {
-  id: number;
-  x: number;          // % from left
-  y: number;          // % from top
-  size: number;       // px
+export type FloatingShape = {
+  id: string;
+  x: string;
+  y: string;
+  size: number;
   color: string;
-  opacity: number;
-  duration: number;   // seconds
-  delay: number;      // seconds
-  driftX: number;     // px translate range
-  driftY: number;     // px translate range
-}
+  shape: "sparkle" | "burst" | "diamond";
+  opacity?: number;
+  duration?: number;
+  delay?: number;
+  driftX?: number;
+  driftY?: number;
+  rotate?: number;
+};
 
-const BLUE = "#2563EB";
-const PURPLE = "#9333EA";
+const shapePoints: Record<FloatingShape["shape"], string> = {
+  sparkle:
+    "50,2 61,35 98,50 61,65 50,98 39,65 2,50 39,35",
+  burst:
+    "50,3 59,24 81,10 76,32 97,41 76,50 90,72 68,67 59,97 50,76 41,97 32,67 10,72 24,50 3,41 24,32 10,10 41,24",
+  diamond: "50,4 95,50 50,96 5,50",
+};
 
-function seededRandom(seed: number) {
-  const x = Math.sin(seed * 9301 + 49297) * 49297;
-  return x - Math.floor(x);
-}
-
-function generateCells(count: number): Cell[] {
-  const cells: Cell[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const isBlue = i % 2 === 0;
-    const r1 = seededRandom(i + 1);
-    const r2 = seededRandom(i + 100);
-    const r3 = seededRandom(i + 200);
-    const r4 = seededRandom(i + 300);
-    const r5 = seededRandom(i + 400);
-
-    cells.push({
-      id: i,
-      x: r1 * 90 + 5,                     // 5–95%
-      y: r2 * 85 + 5,                     // 5–90%
-      size: 40 + r3 * 100,                // 40–140px
-      color: isBlue ? BLUE : PURPLE,
-      opacity: 0.08 + r4 * 0.14,          // 8–22%
-      duration: 20 + r5 * 18,             // 20–38s
-      delay: -(r1 * 20),                  // negative for instant start variety
-      driftX: 30 + r3 * 50,               // 30–80px
-      driftY: 20 + r4 * 40,               // 20–60px
-    });
-  }
-
-  return cells;
-}
-
-export default function FloatingCells() {
-  const cells = useMemo(() => generateCells(14), []);
-
+export default function FloatingCells({
+  shapes,
+  className = "",
+}: {
+  shapes: FloatingShape[];
+  className?: string;
+}) {
   return (
     <div
-      className="fixed inset-0 overflow-hidden pointer-events-none"
-      style={{ zIndex: 0 }}
+      className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`.trim()}
       aria-hidden="true"
     >
-      {cells.map((cell) => (
+      {shapes.map((shape) => (
         <div
-          key={cell.id}
-          className="absolute rounded-full cell-drift"
-          style={{
-            left: `${cell.x}%`,
-            top: `${cell.y}%`,
-            width: cell.size,
-            height: cell.size,
-            backgroundColor: cell.color,
-            opacity: cell.opacity,
-            filter: `blur(${cell.size * 0.25}px)`,
-            animationDuration: `${cell.duration}s`,
-            animationDelay: `${cell.delay}s`,
-            // @ts-expect-error CSS custom properties for drift range
-            "--drift-x": `${cell.driftX}px`,
-            "--drift-y": `${cell.driftY}px`,
-          }}
-        />
+          key={shape.id}
+          className="about-shape-float absolute"
+          style={
+            {
+              left: shape.x,
+              top: shape.y,
+              width: `${shape.size}px`,
+              height: `${shape.size}px`,
+              opacity: shape.opacity ?? 0.95,
+              animationDuration: `${shape.duration ?? 18}s`,
+              animationDelay: `${shape.delay ?? 0}s`,
+              "--drift-x": `${shape.driftX ?? 24}px`,
+              "--drift-y": `${shape.driftY ?? 20}px`,
+            } as React.CSSProperties
+          }
+        >
+          <svg
+            viewBox="0 0 100 100"
+            className="about-shape-spin h-full w-full overflow-visible"
+            style={
+              {
+                animationDuration: `${(shape.duration ?? 18) * 1.35}s`,
+                animationDelay: `${shape.delay ?? 0}s`,
+                "--base-rotate": `${shape.rotate ?? 0}deg`,
+              } as React.CSSProperties
+            }
+          >
+            <polygon
+              points={shapePoints[shape.shape]}
+              fill={shape.color}
+              stroke="#0B0B0B"
+              strokeWidth="6"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
       ))}
     </div>
   );
