@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
@@ -17,7 +17,9 @@ import {
   LogOut,
   User,
   Settings,
+  House,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import {
   DropdownMenu,
@@ -43,6 +45,8 @@ import TalentSearch from "./talent-search/TalentSearch";
 import Messages from "@/components/shared/Messages";
 import Notifications from "@/components/shared/Notifications";
 import EmployerProfile from "./EmployerProfile";
+import HomeButton from "@/components/shared/HomeButton";
+import AccountAvatar from "@/components/shared/AccountAvatar";
 import SettingsPage from "@/components/shared/Settings";
 import Footer from "@/components/landing/Footer";
 import { useConvexTokenReady } from "@/lib/convexAuth";
@@ -84,13 +88,11 @@ function EmployerNavbar({
     await signOut({ redirectUrl: "/login?role=employer" });
   }, [signOut]);
 
-  const initials = (user?.firstName?.charAt(0) ?? "E").toUpperCase();
-
   return (
     <nav className="emp-navbar">
       <div className="emp-navbar__left">
         {/* Brand */}
-        <div className="emp-navbar__brand">
+        <div className="emp-navbar__brand" aria-hidden="true">
           <div className="emp-navbar__brand-icon">
             <GraduationCap className="size-4.5 text-white" />
           </div>
@@ -123,6 +125,7 @@ function EmployerNavbar({
       <div className="emp-navbar__right">
         {/* Hidden on mobile, shown on md screens */}
         <div className="hidden md:flex items-center gap-2">
+          <HomeButton href="/" />
           <ThemeToggle />
 
           <button
@@ -161,15 +164,27 @@ function EmployerNavbar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="emp-navbar__avatar cursor-pointer"
+              className="inline-flex items-center justify-center border-0 bg-transparent p-0 align-middle leading-none"
               title={user?.fullName ?? "Profile"}
+              aria-label="Open employer account menu"
             >
-              {initials}
+              <AccountAvatar
+                role="employer"
+                name={user?.firstName ?? user?.fullName}
+                imageUrl={user?.hasImage ? user.imageUrl : null}
+              />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 mt-2">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onNavigate("dashboard")}
+            >
+              <House className="mr-2 size-4" />
+              <span>Dashboard</span>
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer"
               onClick={() => onNavigate("profile")}
@@ -228,6 +243,10 @@ function EmployerNavbar({
               Appearance
             </span>
             <ThemeToggle />
+          </div>
+
+          <div className="mb-2 pb-3 border-b border-border md:hidden">
+            <HomeButton href="/" className="w-full justify-center" />
           </div>
 
           <div className="flex items-center justify-between mb-2 pb-3 border-b border-border md:hidden">
@@ -314,6 +333,7 @@ function EmployerNavbar({
 export default function EmployerDashboard() {
   const { user } = useUser();
   const isConvexTokenReady = useConvexTokenReady();
+  const searchParams = useSearchParams();
   const currentUser = useQuery(
     api.users.currentUser,
     isConvexTokenReady ? {} : "skip",
@@ -331,12 +351,25 @@ export default function EmployerDashboard() {
   const deleteTask = useMutation(api.tasks.deleteTask);
   const updateTask = useMutation(api.tasks.updateTask);
 
+  const routeTab = searchParams.get("tab");
   const [activeNav, setActiveNav] = useState("dashboard");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const [now] = useState(() => Date.now());
+  const normalizedRouteTab =
+    routeTab &&
+    [
+      "dashboard",
+      "talent-search",
+      "messages",
+      "profile",
+      "settings",
+      "notifications",
+    ].includes(routeTab)
+      ? routeTab
+      : "dashboard";
 
   const tasks: Task[] = useMemo(
     () =>
@@ -393,6 +426,10 @@ export default function EmployerDashboard() {
   const handleViewTask = useCallback((task: Task) => {
     setSelectedTask(task);
   }, []);
+
+  useEffect(() => {
+    setActiveNav(normalizedRouteTab);
+  }, [normalizedRouteTab]);
 
   const handleDeleteTask = useCallback(
     async (taskId: string) => {
