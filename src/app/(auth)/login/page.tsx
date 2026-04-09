@@ -110,7 +110,7 @@ export default function LoginPage() {
     if (!isConvexTokenReady || currentUser === undefined) return;
 
     if (currentUser?.user?.role) {
-      router.replace("/");
+      router.replace("/dashboard");
     } else {
       router.replace("/complete-profile");
     }
@@ -168,7 +168,7 @@ export default function LoginPage() {
       .authenticateWithRedirect({
         strategy,
         redirectUrl: "/login/sso-callback",
-        redirectUrlComplete: "/",
+        redirectUrlComplete: "/dashboard",
       })
       .catch((err) => {
         console.error("OAuth error:", err);
@@ -274,7 +274,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
+    router.push("/dashboard");
   }
 
   async function onSubmit(data: LoginFormData) {
@@ -642,6 +642,7 @@ export default function LoginPage() {
             </div>
             <PasswordInput
               id="password"
+              autoComplete="current-password"
               placeholder="••••••••"
               {...register("password")}
               aria-invalid={!!errors.password}

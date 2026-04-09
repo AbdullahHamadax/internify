@@ -1,8 +1,8 @@
 // app/(auth)/layout.tsx
 import { AuthHero } from "@/components/auth/auth-hero";
+import HomeButton from "@/components/shared/HomeButton";
 import ThemeToggle from "@/components/ThemeToggle";
-import { ArrowLeft, GraduationCap, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { GraduationCap, Loader2 } from "lucide-react";
 import { Suspense } from "react";
 
 export default function AuthLayout({
@@ -14,13 +14,7 @@ export default function AuthLayout({
     <div className="relative min-h-screen bg-background text-foreground dark:bg-gray-950">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-end p-4 sm:p-6">
         <div className="pointer-events-auto flex items-center gap-2">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-none border-2 border-black dark:border-white bg-white text-black dark:bg-black dark:text-white px-4 py-2 text-sm font-black uppercase tracking-widest transition-all shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:-translate-y-px hover:-translate-x-px hover:shadow-[4px_4px_0_0_#000] dark:hover:shadow-[4px_4px_0_0_#fff]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Home
-          </Link>
+          <HomeButton href="/" />
           <ThemeToggle />
         </div>
       </div>

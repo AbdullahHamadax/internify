@@ -100,7 +100,7 @@ export default function CompleteProfilePage() {
   const employerForm = useForm<EmployerProfileData>({
     resolver: zodResolver(employerProfileSchema),
     mode: "onTouched",
-    defaultValues: { companyName: "", position: "" },
+    defaultValues: { companyName: "", position: "", rankLevel: "mid" },
   });
 
   useEffect(() => {
@@ -118,7 +118,7 @@ export default function CompleteProfilePage() {
     }
 
     if (currentUser?.user?.role) {
-      router.replace("/");
+      router.replace("/dashboard");
     }
   }, [isLoaded, user, isConvexTokenReady, currentUser, router]);
 
@@ -234,7 +234,7 @@ export default function CompleteProfilePage() {
           },
         }),
       );
-      router.push("/");
+      router.push("/dashboard");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Could not save your profile.";
@@ -269,7 +269,7 @@ export default function CompleteProfilePage() {
           },
         }),
       );
-      router.push("/");
+      router.push("/dashboard");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Could not save your profile.";

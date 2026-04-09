@@ -15,6 +15,8 @@ interface ChatbotProps {
   userRole: ChatbotRole;
 }
 
+const DALIL_DISPLAY_NAME = "Dalil (دَلِيل)";
+
 // Theme configuration for different roles
 const roleThemes = {
   employer: {
@@ -29,7 +31,7 @@ const roleThemes = {
     toggleBtnHoverBg: "bg-purple-700",
     accent: "text-purple-600 dark:text-purple-400",
     emptyIconBg: "bg-purple-600",
-    nameStr: "Dalil ( دليل ) - Employer",
+    nameStr: `${DALIL_DISPLAY_NAME} - Employer`,
   },
   student: {
     headerBg: "bg-blue-600",
@@ -42,7 +44,7 @@ const roleThemes = {
     toggleBtnHoverBg: "bg-blue-700",
     accent: "text-blue-600 dark:text-blue-400",
     emptyIconBg: "bg-blue-600",
-    nameStr: "Dalil ( دليل ) - Student",
+    nameStr: `${DALIL_DISPLAY_NAME} - Student`,
   },
   guest: {
     headerBg: "bg-black",
@@ -55,7 +57,7 @@ const roleThemes = {
     toggleBtnHoverBg: "bg-zinc-800",
     accent: "text-black dark:text-white",
     emptyIconBg: "bg-black",
-    nameStr: "Dalil ( دليل )",
+    nameStr: DALIL_DISPLAY_NAME,
   },
 };
 
@@ -169,7 +171,7 @@ export default function Chatbot({ userRole }: ChatbotProps) {
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity" />
                   <Image
                     src="/dalil.jpg"
-                    alt="Dalil Logo"
+                    alt={`${DALIL_DISPLAY_NAME} Logo`}
                     width={512}
                     height={512}
                     className="size-13 group-hover:rotate-12 transition-transform object-cover"
@@ -180,7 +182,7 @@ export default function Chatbot({ userRole }: ChatbotProps) {
               </div>
               <div className="flex flex-col">
                 <h3 className="font-bold font-sora tracking-tight text-lg leading-tight flex items-center gap-2">
-                  Dalil
+                  {DALIL_DISPLAY_NAME}
                   <span className="text-[10px] font-black bg-black text-white px-1.5 py-0.5 uppercase tracking-wider hidden sm:inline-block border border-white/20">
                     AI
                   </span>
@@ -234,7 +236,7 @@ export default function Chatbot({ userRole }: ChatbotProps) {
                   className={`flex flex-col gap-1 max-w-[85%] ${msg.role === "user" ? "items-end" : "items-start"}`}
                 >
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">
-                    {msg.role === "user" ? "You" : "Dalil"}
+                    {msg.role === "user" ? "You" : DALIL_DISPLAY_NAME}
                   </span>
                   <div
                     className={`px-4 py-3 text-sm font-bold border-[2.5px] border-black dark:border-white leading-relaxed shadow-[4px_4px_0_0_#111] ${
@@ -253,7 +255,7 @@ export default function Chatbot({ userRole }: ChatbotProps) {
               <div className="flex justify-start">
                 <div className="flex flex-col gap-1 max-w-[85%] items-start">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">
-                    Dalil
+                    {DALIL_DISPLAY_NAME}
                   </span>
                   <div
                     className={`px-4 py-3 border-[2.5px] border-black dark:border-white ${theme.botBubbleBg} shadow-[4px_4px_0_0_#111] flex items-center gap-2`}

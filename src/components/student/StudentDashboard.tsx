@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import {
@@ -14,9 +14,13 @@ import {
   User,
   Settings,
   LogOut,
+  House,
 } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Messages from "@/components/shared/Messages";
 import Notifications from "@/components/shared/Notifications";
+import HomeButton from "@/components/shared/HomeButton";
+import AccountAvatar from "@/components/shared/AccountAvatar";
 import { api } from "../../../convex/_generated/api";
 
 import {
@@ -66,13 +70,11 @@ function StudentNavbar({
     await signOut({ redirectUrl: "/login?role=student" });
   }, [signOut]);
 
-  const initials = (user?.firstName?.charAt(0) ?? "S").toUpperCase();
-
   return (
     <nav className="stu-navbar">
       <div className="stu-navbar__left">
         {/* Brand */}
-        <div className="stu-navbar__brand">
+        <div className="stu-navbar__brand" aria-hidden="true">
           <div className="stu-navbar__brand-icon">
             <GraduationCap className="size-4.5 text-white" />
           </div>
@@ -99,6 +101,7 @@ function StudentNavbar({
       <div className="stu-navbar__right">
         {/* Hidden on mobile, shown on md screens */}
         <div className="hidden md:flex items-center gap-2">
+          <HomeButton href="/" />
           <ThemeToggle />
 
           <button
@@ -137,15 +140,27 @@ function StudentNavbar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="stu-navbar__avatar cursor-pointer"
+              className="inline-flex items-center justify-center border-0 bg-transparent p-0 align-middle leading-none"
               title={user?.fullName ?? "Profile"}
+              aria-label="Open student account menu"
             >
-              {initials}
+              <AccountAvatar
+                role="student"
+                name={user?.firstName ?? user?.fullName}
+                imageUrl={user?.hasImage ? user.imageUrl : null}
+              />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 mt-2">
             <DropdownMenuLabel>Student Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onNavigate("dashboard")}
+            >
+              <House className="mr-2 size-4" />
+              <span>Dashboard</span>
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer"
               onClick={() => onNavigate("profile")}
@@ -191,6 +206,10 @@ function StudentNavbar({
               Appearance
             </span>
             <ThemeToggle />
+          </div>
+
+          <div className="mb-2 pb-3 border-b border-border md:hidden">
+            <HomeButton href="/" className="w-full justify-center" />
           </div>
 
           <div className="flex items-center justify-between mb-2 pb-3 border-b border-border md:hidden">
@@ -271,7 +290,18 @@ function StudentNavbar({
 /* ── Main Dashboard Container ── */
 export default function StudentDashboard() {
   const isConvexTokenReady = useConvexTokenReady();
-  const [activeNav, setActiveNav] = useState("dashboard");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const routeTab = searchParams.get("tab");
+  const normalizedRouteTab =
+    routeTab &&
+    ["dashboard", "explore", "profile", "settings", "messages", "notifications"].includes(
+      routeTab,
+    )
+      ? routeTab
+      : "dashboard";
+  const [activeNav, setActiveNav] = useState(normalizedRouteTab);
   const [exploreFocusTaskId, setExploreFocusTaskId] = useState<string | null>(
     null,
   );
@@ -285,6 +315,22 @@ export default function StudentDashboard() {
     setExploreFocusTaskId(null);
     setActiveNav(id);
   }, []);
+
+  useEffect(() => {
+    setActiveNav(normalizedRouteTab);
+  }, [normalizedRouteTab]);
+
+  useEffect(() => {
+    const currentTab = searchParams.get("tab");
+    const nextTab = activeNav === "dashboard" ? null : activeNav;
+
+    if (currentTab === nextTab || (!currentTab && nextTab === null)) {
+      return;
+    }
+
+    const nextUrl = nextTab ? `${pathname}?tab=${nextTab}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }, [activeNav, pathname, router, searchParams]);
 
   if (!isConvexTokenReady) {
     return (
