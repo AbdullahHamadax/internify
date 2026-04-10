@@ -117,10 +117,13 @@ export default function StudentExplore({
   const [isAccepting, setIsAccepting] = useState(false);
   const [showAcceptSuccess, setShowAcceptSuccess] = useState(false);
 
-  const openTaskDetail = useCallback((task: NonNullable<typeof selectedTask>) => {
-    setShowAcceptSuccess(false);
-    setSelectedTask(task);
-  }, []);
+  const openTaskDetail = useCallback(
+    (task: NonNullable<typeof selectedTask>) => {
+      setShowAcceptSuccess(false);
+      setSelectedTask(task);
+    },
+    [],
+  );
 
   const closeTaskDetail = useCallback(() => {
     setSelectedTask(null);
@@ -281,12 +284,12 @@ export default function StudentExplore({
           role="complementary"
           aria-label="Task filters"
         >
-          <div className="bg-card border-4 border-border p-6 shadow-[4px_4px_0_0_var(--border)]">
+          <div className="bg-card dark:bg-zinc-900 border-4 border-border dark:border-zinc-700 p-6">
             <div className="flex items-center gap-3 mb-6">
               <Filter className="w-5 h-5 text-foreground" />
               <Typography
                 variant="h4"
-                className="text-lg font-black uppercase tracking-widest m-0 px-2 bg-[#2563EB] text-white border-2 border-border shadow-[4px_4px_0_0_var(--border)]"
+                className="text-lg font-black uppercase tracking-widest m-0 px-2 bg-[#2563EB] text-white border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]"
               >
                 Filters
               </Typography>
@@ -296,7 +299,7 @@ export default function StudentExplore({
               <div>
                 <Typography
                   variant="span"
-                  className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-border pb-1"
+                  className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-[#C9D1DC] dark:border-zinc-700 pb-1"
                 >
                   Category
                 </Typography>
@@ -306,10 +309,10 @@ export default function StudentExplore({
                       key={f.label}
                       type="button"
                       onClick={() => setActiveCategory(f.label)}
-                      className={`w-full text-left px-4 py-3 text-xs font-black uppercase tracking-widest transition-all border-2 border-border ${
+                      className={`w-full text-left px-4 py-3 text-xs font-black uppercase tracking-widest transition-all border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] ${
                         activeCategory === f.label
-                          ? "bg-[#AB47BC] text-white shadow-[4px_4px_0_0_var(--border)]"
-                          : "bg-surface text-foreground hover:bg-muted shadow-none"
+                          ? "bg-[#AB47BC] text-white"
+                          : "bg-white dark:bg-black text-foreground hover:bg-[#E6ECF8] dark:hover:bg-zinc-800"
                       }`}
                     >
                       {f.label.toUpperCase()}
@@ -321,7 +324,7 @@ export default function StudentExplore({
               <div>
                 <Typography
                   variant="span"
-                  className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-border pb-1"
+                  className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-[#C9D1DC] dark:border-zinc-700 pb-1"
                 >
                   Skill Level
                 </Typography>
@@ -334,21 +337,24 @@ export default function StudentExplore({
                           key={level}
                           className="flex items-center gap-3 cursor-pointer group"
                         >
-                          <input 
-                            type="checkbox" 
-                            className="sr-only" 
-                            checked={isChecked} 
-                            onChange={() => toggleSkillLevel(level)} 
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={isChecked}
+                            onChange={() => toggleSkillLevel(level)}
                           />
                           <div
-                            className={`size-5 flex shrink-0 items-center justify-center transition-all ${
+                            className={`size-5 flex shrink-0 items-center justify-center border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-all ${
                               isChecked
-                                ? "bg-[#AB47BC] border-2 border-border shadow-[2px_2px_0_0_var(--border)] text-white"
-                                : "bg-white dark:bg-black border-2 border-border shadow-[2px_2px_0_0_var(--border)] group-hover:translate-x-0.5 group-hover:translate-y-0.5 group-hover:shadow-none"
+                                ? "bg-[#AB47BC] text-white"
+                                : "bg-white dark:bg-black group-hover:translate-x-0.5 group-hover:translate-y-0.5 group-hover:shadow-none"
                             }`}
                           >
                             {isChecked && (
-                              <CheckCircle2 className="size-3" strokeWidth={4} />
+                              <CheckCircle2
+                                className="size-3"
+                                strokeWidth={4}
+                              />
                             )}
                           </div>
                           <span className="text-sm font-bold uppercase tracking-wider text-foreground/80 group-hover:text-foreground transition-colors">
@@ -364,7 +370,7 @@ export default function StudentExplore({
               <div className="flex flex-col">
                 <Typography
                   variant="span"
-                  className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-border pb-1"
+                  className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-[#C9D1DC] dark:border-zinc-700 pb-1"
                 >
                   Core Skills
                 </Typography>
@@ -375,7 +381,7 @@ export default function StudentExplore({
                     placeholder="FIND A SKILL..."
                     value={skillSearchQuery}
                     onChange={(e) => setSkillSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-transparent border-2 border-border text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-all shadow-[2px_2px_0_0_var(--border)] focus:shadow-[4px_4px_0_0_var(--border)]"
+                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-black border-2 border-black dark:border-white text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] focus:translate-x-0.5 focus:translate-y-0.5 focus:shadow-[2px_2px_0_0_#000] dark:focus:shadow-[2px_2px_0_0_#fff]"
                   />
                 </div>
                 <div className="flex flex-wrap gap-2 max-h-[280px] overflow-y-auto pr-1 pb-2">
@@ -384,7 +390,7 @@ export default function StudentExplore({
                       .toLowerCase()
                       .includes(skillSearchQuery.toLowerCase()),
                   ).length === 0 ? (
-                    <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground py-4 text-center w-full border-2 border-dashed border-border">
+                    <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground py-4 text-center w-full border-2 border-dashed border-[#C9D1DC] dark:border-zinc-700 bg-white/60 dark:bg-zinc-950/40">
                       No skills found
                     </div>
                   ) : (
@@ -399,10 +405,10 @@ export default function StudentExplore({
                           key={skill}
                           type="button"
                           onClick={() => toggleCoreSkill(skill)}
-                          className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-border transition-all duration-200 shadow-[2px_2px_0_0_var(--border)] focus:outline-none ${
+                          className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-black dark:border-white transition-all duration-200 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] focus:outline-none hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none ${
                             selectedCoreSkills.includes(skill)
-                              ? "bg-[#2563EB] text-white hover:bg-[#1D4ED8] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
-                              : "bg-surface text-foreground hover:bg-[#2563EB] hover:text-white hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
+                              ? "bg-[#2563EB] text-white hover:bg-[#1D4ED8]"
+                              : "bg-white dark:bg-black text-foreground hover:bg-[#2563EB] hover:text-white"
                           }`}
                         >
                           {skill.toUpperCase()}

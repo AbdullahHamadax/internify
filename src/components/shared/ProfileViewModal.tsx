@@ -22,6 +22,12 @@ import {
   Star,
 } from "lucide-react";
 import deviconData from "devicon/devicon.json";
+import {
+  formatExternalLinkLabel,
+  getGithubProfileLink,
+  getLinkedinProfileLink,
+  normalizeExternalLink,
+} from "@/lib/profileLinks";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -70,6 +76,9 @@ export default function ProfileViewModal({
   const isStudent = profile?.role === "student";
   const sp = profile?.studentProfile;
   const ep = profile?.employerProfile;
+  const portfolioUrl = normalizeExternalLink(sp?.portfolio);
+  const githubUrl = getGithubProfileLink(sp?.github);
+  const linkedinUrl = getLinkedinProfileLink(sp?.linkedin);
 
   return (
     <AnimatePresence>
@@ -252,7 +261,7 @@ export default function ProfileViewModal({
                 )}
 
                 {/* Links */}
-                {(sp?.portfolio || sp?.github || sp?.linkedin) && (
+                {(portfolioUrl || githubUrl || linkedinUrl) && (
                   <div className="space-y-2 pt-2 border-t-2 border-border">
                     <Typography variant="h4" className="mb-2">
                       Connect
@@ -268,9 +277,9 @@ export default function ProfileViewModal({
                         {profile.email}
                       </span>
                     </a>
-                    {sp.portfolio && (
+                    {portfolioUrl && (
                       <a
-                        href={sp.portfolio}
+                        href={portfolioUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-2 hover:bg-muted transition-colors border-2 border-transparent hover:border-border"
@@ -279,13 +288,13 @@ export default function ProfileViewModal({
                           <LinkIcon className="w-3.5 h-3.5" />
                         </div>
                         <span className="text-sm font-bold truncate">
-                          {sp.portfolio.replace(/^https?:\/\//, "")}
+                          {formatExternalLinkLabel(portfolioUrl)}
                         </span>
                       </a>
                     )}
-                    {sp.github && (
+                    {githubUrl && (
                       <a
-                        href={sp.github}
+                        href={githubUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-2 hover:bg-muted transition-colors border-2 border-transparent hover:border-border"
@@ -294,13 +303,13 @@ export default function ProfileViewModal({
                           <Github className="w-3.5 h-3.5" />
                         </div>
                         <span className="text-sm font-bold truncate">
-                          {sp.github.replace(/^https?:\/\//, "")}
+                          {formatExternalLinkLabel(githubUrl)}
                         </span>
                       </a>
                     )}
-                    {sp.linkedin && (
+                    {linkedinUrl && (
                       <a
-                        href={sp.linkedin}
+                        href={linkedinUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-2 hover:bg-muted transition-colors border-2 border-transparent hover:border-border"
@@ -309,7 +318,7 @@ export default function ProfileViewModal({
                           <Linkedin className="w-3.5 h-3.5" />
                         </div>
                         <span className="text-sm font-bold truncate">
-                          {sp.linkedin.replace(/^https?:\/\//, "")}
+                          {formatExternalLinkLabel(linkedinUrl)}
                         </span>
                       </a>
                     )}

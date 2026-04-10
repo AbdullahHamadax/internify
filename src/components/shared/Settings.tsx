@@ -173,12 +173,16 @@ export default function Settings() {
               letters. Extra spaces are trimmed when you save.
             </Typography>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="w-full sm:w-auto">
+            <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+              <div
+                className={`w-full flex items-end ${
+                  message ? "sm:min-h-[3.25rem]" : ""
+                }`}
+              >
                 {message && (
                   <Typography
                     variant="span"
-                    className={`text-sm font-bold ${message.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+                    className={`block max-w-xl text-sm font-bold leading-relaxed ${message.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                   >
                     {message.text}
                   </Typography>
