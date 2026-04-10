@@ -5,7 +5,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import Image from "next/image";
 
 export type LogoItem =
   | {
@@ -58,6 +57,7 @@ const cx = (...parts: Array<string | false | null | undefined>) =>
 const useResizeObserver = (
   callback: () => void,
   elements: Array<React.RefObject<Element | null>>,
+  dependencyKey: string,
 ) => {
   useEffect(() => {
     if (!window.ResizeObserver) {
@@ -79,12 +79,13 @@ const useResizeObserver = (
     return () => {
       observers.forEach((observer) => observer?.disconnect());
     };
-  }, [callback, elements]);
+  }, [callback, elements, dependencyKey]);
 };
 
 const useImageLoader = (
   seqRef: React.RefObject<HTMLUListElement | null>,
   onLoad: () => void,
+  dependencyKey: string,
 ) => {
   useEffect(() => {
     const images = seqRef.current?.querySelectorAll("img") ?? [];
@@ -118,7 +119,7 @@ const useImageLoader = (
         img.removeEventListener("error", handleImageLoad);
       });
     };
-  }, [onLoad, seqRef]);
+  }, [seqRef, onLoad, dependencyKey]);
 };
 
 const useAnimationLoop = (
@@ -263,6 +264,37 @@ export const LogoLoop = React.memo<LogoLoopProps>(
       return magnitude * directionMultiplier * speedMultiplier;
     }, [speed, direction, isVertical]);
 
+    const observedRefs = useMemo(() => [containerRef, seqRef], []);
+
+    const measurementKey = useMemo(
+      () =>
+        logos
+          .map((item) =>
+            "node" in item
+              ? [
+                  item.title ?? "",
+                  item.ariaLabel ?? "",
+                  item.href ?? "",
+                  "node",
+                ].join(":")
+              : [
+                  item.src,
+                  item.alt ?? "",
+                  item.href ?? "",
+                  item.width ?? "",
+                  item.height ?? "",
+                  "img",
+                ].join(":"),
+          )
+          .join("|"),
+      [logos],
+    );
+
+    const dimensionDependencyKey = useMemo(
+      () => `${measurementKey}:${gap}:${logoHeight}:${isVertical ? "v" : "h"}`,
+      [measurementKey, gap, logoHeight, isVertical],
+    );
+
     const updateDimensions = useCallback(() => {
       const containerWidth = containerRef.current?.clientWidth ?? 0;
       const sequenceRect = seqRef.current?.getBoundingClientRect?.();
@@ -296,9 +328,9 @@ export const LogoLoop = React.memo<LogoLoopProps>(
       }
     }, [isVertical]);
 
-    useResizeObserver(updateDimensions, [containerRef, seqRef]);
+    useResizeObserver(updateDimensions, observedRefs, dimensionDependencyKey);
 
-    useImageLoader(seqRef, updateDimensions);
+    useImageLoader(seqRef, updateDimensions, dimensionDependencyKey);
 
     useAnimationLoop(
       trackRef,
@@ -385,7 +417,9 @@ export const LogoLoop = React.memo<LogoLoopProps>(
             {nodeItem?.node}
           </span>
         ) : (
-          <Image
+          // Native img keeps repeated marquee items lightweight and predictable.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             className={cx(
               "h-[var(--logoloop-logoHeight)] w-auto block object-contain",
               "[-webkit-user-drag:none] pointer-events-none",
@@ -395,12 +429,12 @@ export const LogoLoop = React.memo<LogoLoopProps>(
                 "transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover/item:scale-120",
             )}
             src={imgItem?.src || ""}
+            srcSet={imgItem?.srcSet}
             sizes={imgItem?.sizes}
-            width={imgItem?.width || 100}
-            height={imgItem?.height || 100}
+            width={imgItem?.width}
+            height={imgItem?.height}
             alt={imgItem?.alt ?? ""}
-            title={item.title}
-            unoptimized
+            title={imgItem?.title}
             loading="lazy"
             decoding="async"
             draggable={false}

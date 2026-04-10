@@ -52,6 +52,15 @@
   text-decoration: none;
   color: inherit;
   flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.emp-navbar__brand:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 4px;
 }
 
 .emp-navbar__brand-icon {

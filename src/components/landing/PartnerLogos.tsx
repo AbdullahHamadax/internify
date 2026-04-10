@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import LogoLoop from "@/components/LogoLoop";
 import { Typography } from "@/components/ui/Typography";
 
@@ -31,28 +31,36 @@ export default function PartnerLogos() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Check initial theme
-    setIsDark(document.documentElement.classList.contains("dark"));
+    const syncTheme = () => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    };
+
+    const frame = requestAnimationFrame(syncTheme);
 
     // Observe class changes on <html> for theme toggles
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains("dark"));
-    });
+    const observer = new MutationObserver(syncTheme);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });
-    return () => observer.disconnect();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, []);
 
-  const logos = [
-    ...baseLogos,
-    ...themedLogos.map((logo) => ({
-      src: isDark ? logo.dark : logo.light,
-      alt: logo.alt,
-      href: logo.href,
-    })),
-  ];
+  const logos = useMemo(
+    () => [
+      ...themedLogos.map((logo) => ({
+        src: isDark ? logo.dark : logo.light,
+        alt: logo.alt,
+        href: logo.href,
+      })),
+      ...baseLogos,
+    ],
+    [isDark],
+  );
 
   return (
     <section id="partners" className="py-16 sm:py-20">
@@ -65,13 +73,13 @@ export default function PartnerLogos() {
         >
           Trusted by leading organizations
         </Typography>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <div className="relative mt-8 overflow-hidden">
           <LogoLoop
             logos={logos}
             speed={100}
             direction="left"
             logoHeight={44}
-            gap={50}
+            gap={60}
             hoverSpeed={0}
             scaleOnHover
             fadeOut
