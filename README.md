@@ -158,7 +158,7 @@ Both are supported by shared infrastructure for authentication, notifications, m
 
 ## Team
 
-### Coding Leaders
+### Tech Leads
 
 - **Abdallah Hamada**
 - **Selim Waleed**
