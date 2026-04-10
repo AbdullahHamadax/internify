@@ -1,0 +1,122 @@
+<svg width="900" height="220" viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .float-1 { animation: f1 7s ease-in-out infinite; }
+      .float-2 { animation: f2 9s ease-in-out infinite; }
+      .float-3 { animation: f3 6s ease-in-out infinite; }
+      .float-4 { animation: f4 11s ease-in-out infinite; }
+      .float-5 { animation: f5 8s ease-in-out infinite; }
+      .spin-cw  { animation: spin-cw  12s linear infinite; }
+      .spin-ccw { animation: spin-ccw 16s linear infinite; }
+      .spin-med { animation: spin-cw   9s linear infinite; }
+      .spin-slow{ animation: spin-ccw 20s linear infinite; }
+      .spin-fast{ animation: spin-cw   6s linear infinite; }
+
+      @keyframes f1 { 0%,100%{transform:translate(0,0)}  50%{transform:translate(8px,-12px)} }
+      @keyframes f2 { 0%,100%{transform:translate(0,0)}  50%{transform:translate(-10px,8px)} }
+      @keyframes f3 { 0%,100%{transform:translate(0,0)}  50%{transform:translate(6px,14px)}  }
+      @keyframes f4 { 0%,100%{transform:translate(0,0)}  50%{transform:translate(-8px,-10px)}}
+      @keyframes f5 { 0%,100%{transform:translate(0,0)}  50%{transform:translate(12px,6px)}  }
+      @keyframes spin-cw  { from{transform:rotate(0deg)}  to{transform:rotate(360deg)}  }
+      @keyframes spin-ccw { from{transform:rotate(0deg)}  to{transform:rotate(-360deg)} }
+    </style>
+
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feBlend in="SourceGraphic" mode="overlay" result="blend"/>
+      <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+    </filter>
+  </defs>
+
+  <rect width="900" height="220" fill="#0B0B0F"/>
+
+  <line x1="0"   y1="55"   x2="900" y2="55"   stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="0"   y1="110" x2="900" y2="110" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="0"   y1="165" x2="900" y2="165" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="225" y1="0"    x2="225" y2="220" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="450" y1="0"    x2="450" y2="220" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="675" y1="0"    x2="675" y2="220" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+
+  <rect x="0" y="0" width="900" height="3" fill="#AB47BC" opacity="0.7"/>
+
+  <rect x="0" y="217" width="900" height="3" fill="#2563eb" opacity="0.5"/>
+
+  <line x1="0" y1="220" x2="120" y2="0" stroke="#AB47BC" stroke-opacity="0.12" stroke-width="1"/>
+  <line x1="30" y1="220" x2="150" y2="0" stroke="#AB47BC" stroke-opacity="0.07" stroke-width="1"/>
+
+  <line x1="900" y1="0" x2="780" y2="220" stroke="#2563eb" stroke-opacity="0.12" stroke-width="1"/>
+  <line x1="870" y1="0" x2="750" y2="220" stroke="#2563eb" stroke-opacity="0.07" stroke-width="1"/>
+
+  <g class="float-1" style="transform-origin:72px 52px">
+    <g class="spin-slow" style="transform-origin:72px 52px">
+      <polygon points="72,28 96,52 72,76 48,52"
+        fill="#AB47BC" stroke="#0B0B0F" stroke-width="4" stroke-linejoin="round" opacity="0.85"/>
+    </g>
+  </g>
+
+  <g class="float-3" style="transform-origin:34px 130px">
+    <g class="spin-fast" style="transform-origin:34px 130px">
+      <polygon points="34,118 44,130 34,142 24,130"
+        fill="#2563eb" stroke="#0B0B0F" stroke-width="3" stroke-linejoin="round" opacity="0.75"/>
+    </g>
+  </g>
+
+  <g class="float-5" style="transform-origin:200px 30px">
+    <g class="spin-cw" style="transform-origin:200px 30px">
+      <polygon points="200,20 208,30 200,40 192,30"
+        fill="#AB47BC" stroke="#0B0B0F" stroke-width="2.5" stroke-linejoin="round" opacity="0.6"/>
+    </g>
+  </g>
+
+  <g class="float-2" style="transform-origin:700px 185px">
+    <g class="spin-ccw" style="transform-origin:700px 185px">
+      <polygon points="700,165 720,185 700,205 680,185"
+        fill="#2563eb" stroke="#0B0B0F" stroke-width="3.5" stroke-linejoin="round" opacity="0.8"/>
+    </g>
+  </g>
+
+  <g class="float-4" style="transform-origin:830px 55px">
+    <g class="spin-med" style="transform-origin:830px 55px">
+      <polygon points="830,28 858,55 830,82 802,55"
+        fill="#2563eb" stroke="#0B0B0F" stroke-width="4" stroke-linejoin="round" opacity="0.8"/>
+    </g>
+  </g>
+
+  <g class="float-1" style="transform-origin:866px 160px">
+    <g class="spin-fast" style="transform-origin:866px 160px">
+      <polygon points="866,150 874,160 866,170 858,160"
+        fill="#AB47BC" stroke="#0B0B0F" stroke-width="2" stroke-linejoin="round" opacity="0.55"/>
+    </g>
+  </g>
+
+  <text x="450" y="72"
+    font-family="'Courier New', Courier, monospace"
+    font-size="11"
+    fill="#AB47BC"
+    text-anchor="middle"
+    letter-spacing="5"
+    opacity="0.9"
+  >GRADUATION PROJECT · 2026</text>
+
+  <text x="450" y="148"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="88"
+    font-weight="700"
+    fill="white"
+    text-anchor="middle"
+    letter-spacing="-3"
+  >Internify</text>
+
+  <circle cx="330" cy="168" r="2" fill="#AB47BC" opacity="0.6"/>
+  <circle cx="450" cy="168" r="2" fill="#ffffff" opacity="0.3"/>
+  <circle cx="570" cy="168" r="2" fill="#2563eb" opacity="0.6"/>
+
+  <text x="450" y="192"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="13"
+    fill="#888888"
+    text-anchor="middle"
+    letter-spacing="2"
+  >Prove your skills · Land your future</text>
+</svg>
