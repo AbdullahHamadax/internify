@@ -1,4 +1,5 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type MutationCtx } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { skillLevelValidator } from "./schema";
 
@@ -46,6 +47,7 @@ function validateAttachments(
 
 /** Minimum window from posting time until deadline (not in the past; not “same-day rush”). */
 const MIN_TASK_DEADLINE_LEAD_MS = 24 * 60 * 60 * 1000;
+const EXPIRED_TASK_CLEANUP_GRACE_MS = 24 * 60 * 60 * 1000;
 
 function validateTaskDeadline(deadline: number) {
   const now = Date.now();
@@ -57,6 +59,51 @@ function validateTaskDeadline(deadline: number) {
       "Deadline must be at least 24 hours from now so students have reasonable time to complete the work.",
     );
   }
+}
+
+function isPastDeadline(deadline: number, now = Date.now()) {
+  return deadline <= now;
+}
+
+function isPastCleanupWindow(deadline: number, now = Date.now()) {
+  return deadline + EXPIRED_TASK_CLEANUP_GRACE_MS <= now;
+}
+
+async function deleteTaskCascade(ctx: MutationCtx, task: Doc<"tasks">) {
+  const submissions = await ctx.db
+    .query("submissions")
+    .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+    .collect();
+
+  for (const submission of submissions) {
+    for (const file of submission.files) {
+      await ctx.storage.delete(file.storageId);
+    }
+    await ctx.db.delete(submission._id);
+  }
+
+  const applications = await ctx.db
+    .query("applications")
+    .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+    .collect();
+
+  for (const application of applications) {
+    await ctx.db.delete(application._id);
+  }
+
+  for (const id of task.imageStorageIds ?? []) {
+    await ctx.storage.delete(id);
+  }
+  for (const att of task.attachments ?? []) {
+    await ctx.storage.delete(att.storageId);
+  }
+
+  await ctx.db.delete(task._id);
+
+  return {
+    deletedApplicationCount: applications.length,
+    deletedSubmissionCount: submissions.length,
+  };
 }
 
 export const generateUploadUrl = mutation(async (ctx) => {
@@ -188,6 +235,9 @@ export const browseTasks = query({
 
     // Filter out tasks that are full or already accepted by the user
     const availableTasks = tasks.filter((task) => {
+      if (isPastDeadline(task.deadline)) {
+        return false;
+      }
       if (
         task.maxApplicants &&
         (task.applicantCount ?? 0) >= task.maxApplicants
@@ -429,6 +479,117 @@ export const getEmployerStats = query({
   },
 });
 
+export const cleanupExpiredTaskData = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { deletedTasks: 0, deletedApplications: 0 };
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      return { deletedTasks: 0, deletedApplications: 0 };
+    }
+
+    const now = Date.now();
+    const tasksToInspect = new Map<string, Doc<"tasks">>();
+    let deletedTasks = 0;
+    let deletedApplications = 0;
+
+    if (user.role === "employer") {
+      const employerTasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_employerId", (q) => q.eq("employerId", user._id))
+        .collect();
+
+      for (const task of employerTasks) {
+        if (isPastCleanupWindow(task.deadline, now)) {
+          tasksToInspect.set(task._id.toString(), task);
+        }
+      }
+    } else {
+      const applications = await ctx.db
+        .query("applications")
+        .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+        .collect();
+
+      for (const application of applications) {
+        const task = await ctx.db.get(application.taskId);
+
+        if (!task) {
+          await ctx.db.delete(application._id);
+          deletedApplications += 1;
+          continue;
+        }
+
+        if (isPastCleanupWindow(task.deadline, now)) {
+          tasksToInspect.set(task._id.toString(), task);
+        }
+      }
+    }
+
+    for (const task of tasksToInspect.values()) {
+      const submissions = await ctx.db
+        .query("submissions")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+
+      if (submissions.length === 0) {
+        const result = await deleteTaskCascade(ctx, task);
+        deletedTasks += 1;
+        deletedApplications += result.deletedApplicationCount;
+        continue;
+      }
+
+      const submittedApplicationIds = new Set(
+        submissions.map((submission) => submission.applicationId.toString()),
+      );
+      const applications = await ctx.db
+        .query("applications")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+
+      let removedForTask = 0;
+
+      for (const application of applications) {
+        if (
+          application.status === "completed" ||
+          submittedApplicationIds.has(application._id.toString())
+        ) {
+          continue;
+        }
+
+        await ctx.db.delete(application._id);
+        removedForTask += 1;
+      }
+
+      if (removedForTask > 0) {
+        const remainingApplications = applications.length - removedForTask;
+        await ctx.db.patch(task._id, {
+          applicantCount: Math.max(0, remainingApplications),
+          status:
+            task.status === "completed"
+              ? "completed"
+              : remainingApplications > 0
+                ? "in_progress"
+                : "pending",
+          updatedAt: now,
+        });
+        deletedApplications += removedForTask;
+      }
+    }
+
+    return { deletedTasks, deletedApplications };
+  },
+});
+
 export const deleteTask = mutation({
   args: {
     taskId: v.id("tasks"),
@@ -459,15 +620,7 @@ export const deleteTask = mutation({
       throw new Error("Unauthorized: You can only delete your own tasks");
     }
 
-    // Clean up stored files before deleting the task document
-    for (const id of task.imageStorageIds ?? []) {
-      await ctx.storage.delete(id);
-    }
-    for (const att of task.attachments ?? []) {
-      await ctx.storage.delete(att.storageId);
-    }
-
-    await ctx.db.delete(args.taskId);
+    await deleteTaskCascade(ctx, task);
   },
 });
 
@@ -579,6 +732,10 @@ export const acceptTask = mutation({
     const task = await ctx.db.get(args.taskId);
     if (!task) {
       throw new Error("Task not found");
+    }
+
+    if (isPastDeadline(task.deadline)) {
+      throw new Error("This task deadline has already passed");
     }
 
     if (task.status !== "pending") {
@@ -772,6 +929,12 @@ export const submitTask = mutation({
       throw new Error("Unauthorized: This is not your application");
     }
 
+    const task = await ctx.db.get(application.taskId);
+    if (!task) throw new Error("Task not found");
+    if (isPastDeadline(task.deadline)) {
+      throw new Error("The deadline for this task has passed");
+    }
+
     // Prevent duplicate submissions
     const existing = await ctx.db
       .query("submissions")
@@ -805,14 +968,13 @@ export const submitTask = mutation({
     });
 
     // Notify the employer about the submission
-    const task = await ctx.db.get(application.taskId);
     const studentName =
       [user.firstName, user.lastName].filter(Boolean).join(" ") || "A student";
     await ctx.db.insert("notifications", {
-      userId: task!.employerId,
+      userId: task.employerId,
       type: "task_submitted",
       title: "New Submission",
-      message: `${studentName} submitted work for "${task!.title}".`,
+      message: `${studentName} submitted work for "${task.title}".`,
       relatedTaskId: application.taskId,
       relatedUserId: user._id,
       relatedUserName: studentName,

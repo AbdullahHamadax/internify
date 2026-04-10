@@ -182,6 +182,62 @@ input[type="reset"] {
   animation: checkmark-draw 0.35s ease-out forwards;
 }
 
+@keyframes about-shape-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(
+      var(--drift-x, 24px),
+      calc(var(--drift-y, 20px) * -1),
+      0
+    );
+  }
+  50% {
+    transform: translate3d(
+      calc(var(--drift-x, 24px) * -0.65),
+      var(--drift-y, 20px),
+      0
+    );
+  }
+  75% {
+    transform: translate3d(
+      calc(var(--drift-x, 24px) * 0.75),
+      calc(var(--drift-y, 20px) * -0.45),
+      0
+    );
+  }
+}
+
+@keyframes about-shape-spin {
+  0%,
+  100% {
+    transform: rotate(var(--base-rotate, 0deg));
+  }
+  50% {
+    transform: rotate(calc(var(--base-rotate, 0deg) + 12deg));
+  }
+}
+
+.about-shape-float {
+  animation: about-shape-float ease-in-out infinite;
+  will-change: transform;
+}
+
+.about-shape-spin {
+  animation: about-shape-spin ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-shape-float,
+  .about-shape-spin {
+    animation: none !important;
+  }
+}
+
 /* ── Floating cell drift animation ── */
 
 @keyframes cell-drift {

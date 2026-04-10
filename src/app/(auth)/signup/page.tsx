@@ -197,7 +197,7 @@ export default function SignUpPage() {
   const employerStep2Form = useForm<EmployerStep2Data>({
     resolver: zodResolver(employerStep2Schema),
     mode: "onTouched",
-    defaultValues: { companyName: "", position: "" },
+    defaultValues: { companyName: "", position: "", rankLevel: "mid" },
   });
 
   // ── Already-signed-in guard ──
@@ -205,7 +205,7 @@ export default function SignUpPage() {
     if (!isUserLoaded || !isSignedIn) return;
     if (!isConvexTokenReady || currentUser === undefined) return;
     if (currentUser?.user?.role) {
-      router.replace("/");
+      router.replace("/dashboard");
     } else {
       router.replace("/complete-profile");
     }
@@ -390,7 +390,7 @@ export default function SignUpPage() {
           return;
         }
         await persistProfileWithRetry(payload);
-        router.push("/");
+        router.push("/dashboard");
         return;
       }
 
@@ -497,7 +497,7 @@ export default function SignUpPage() {
         return;
       }
       await persistProfileWithRetry(pendingSignupPayload);
-      router.push("/");
+      router.push("/dashboard");
     } catch (error) {
       if (isClerkAPIResponseError(error)) {
         if (handleRateLimitError(error)) {
@@ -749,6 +749,7 @@ export default function SignUpPage() {
                   <Label htmlFor="password">Password</Label>
                   <PasswordInput
                     id="password"
+                    autoComplete="new-password"
                     placeholder="••••••••"
                     {...step1Form.register("password")}
                     onFocus={() => setPasswordFocused(true)}
@@ -934,9 +935,9 @@ export default function SignUpPage() {
                     <Button
                       type="submit"
                       disabled={isSubmitting || !isLoaded}
-                      className={`h-11 rounded-none border-2 border-black dark:border-white text-white font-black uppercase tracking-widest text-xs min-[375px]:text-sm whitespace-nowrap px-2 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] bg-[#2563EB]`}
+                      className="min-w-0 min-h-11 h-auto rounded-none border-2 border-black bg-[#2563EB] px-3 py-2.5 text-center text-[11px] font-black uppercase leading-tight tracking-widest text-white shadow-[4px_4px_0_0_#000] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] dark:border-white dark:shadow-[4px_4px_0_0_#fff] dark:hover:shadow-[6px_6px_0_0_#fff] sm:text-sm"
                     >
-                      {isSubmitting ? "Creating account..." : "Create Account"}
+                      {isSubmitting ? "Creating..." : "Create Account"}
                     </Button>
                   </div>
 
@@ -1085,9 +1086,9 @@ export default function SignUpPage() {
                     <Button
                       type="submit"
                       disabled={isSubmitting || !isLoaded}
-                      className={`h-11 rounded-none border-2 border-black dark:border-white text-white font-black uppercase tracking-widest text-xs min-[375px]:text-sm whitespace-nowrap px-2 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] bg-[#AB47BC]`}
+                      className="min-w-0 min-h-11 h-auto rounded-none border-2 border-black bg-[#AB47BC] px-3 py-2.5 text-center text-[11px] font-black uppercase leading-tight tracking-widest text-white shadow-[4px_4px_0_0_#000] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] dark:border-white dark:shadow-[4px_4px_0_0_#fff] dark:hover:shadow-[6px_6px_0_0_#fff] sm:text-sm"
                     >
-                      {isSubmitting ? "Creating account..." : "Create Account"}
+                      {isSubmitting ? "Creating..." : "Create Account"}
                     </Button>
                   </div>
 

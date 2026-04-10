@@ -289,6 +289,7 @@ export default function ForgotPasswordPage() {
               <Label htmlFor="password">New password</Label>
               <PasswordInput
                 id="password"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 {...resetForm.register("password")}
                 aria-invalid={!!resetForm.formState.errors.password}
@@ -312,6 +313,7 @@ export default function ForgotPasswordPage() {
               <Label htmlFor="confirmPassword">Confirm new password</Label>
               <PasswordInput
                 id="confirmPassword"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 {...resetForm.register("confirmPassword")}
                 aria-invalid={!!resetForm.formState.errors.confirmPassword}

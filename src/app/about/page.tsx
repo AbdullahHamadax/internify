@@ -24,6 +24,188 @@ import Chatbot from "@/components/Chatbot";
 const RED = "#EA4335";
 const MINT = "#A7F3D0";
 const MINT_DARK = "#34D399"; // readable on dark backgrounds
+const STUDENT_BLUE = "#2563EB";
+const EMPLOYER_PURPLE = "#A855F7";
+
+const heroShapes = [
+  {
+    id: "hero-blue-burst",
+    x: "6%",
+    y: "16%",
+    size: 54,
+    color: STUDENT_BLUE,
+    shape: "burst" as const,
+    duration: 20,
+    delay: -6,
+    driftX: 20,
+    driftY: 16,
+    rotate: -12,
+    opacity: 0.94,
+  },
+  {
+    id: "hero-purple-sparkle",
+    x: "88%",
+    y: "12%",
+    size: 62,
+    color: EMPLOYER_PURPLE,
+    shape: "sparkle" as const,
+    duration: 24,
+    delay: -12,
+    driftX: 24,
+    driftY: 18,
+    rotate: 10,
+    opacity: 0.92,
+  },
+  {
+    id: "hero-blue-diamond",
+    x: "14%",
+    y: "72%",
+    size: 28,
+    color: STUDENT_BLUE,
+    shape: "diamond" as const,
+    duration: 18,
+    delay: -4,
+    driftX: 16,
+    driftY: 12,
+    rotate: 16,
+    opacity: 0.82,
+  },
+  {
+    id: "hero-purple-diamond",
+    x: "79%",
+    y: "78%",
+    size: 34,
+    color: EMPLOYER_PURPLE,
+    shape: "diamond" as const,
+    duration: 19,
+    delay: -9,
+    driftX: 18,
+    driftY: 14,
+    rotate: -14,
+    opacity: 0.8,
+  },
+];
+
+const problemShapes = [
+  {
+    id: "problem-left-sparkle",
+    x: "4%",
+    y: "17%",
+    size: 56,
+    color: RED,
+    shape: "sparkle" as const,
+    duration: 22,
+    delay: -7,
+    driftX: 18,
+    driftY: 16,
+    rotate: -10,
+    opacity: 0.95,
+  },
+  {
+    id: "problem-right-burst",
+    x: "89%",
+    y: "10%",
+    size: 60,
+    color: RED,
+    shape: "burst" as const,
+    duration: 25,
+    delay: -11,
+    driftX: 22,
+    driftY: 18,
+    rotate: 12,
+    opacity: 0.94,
+  },
+  {
+    id: "problem-bottom-diamond",
+    x: "18%",
+    y: "80%",
+    size: 30,
+    color: RED,
+    shape: "diamond" as const,
+    duration: 17,
+    delay: -5,
+    driftX: 14,
+    driftY: 12,
+    rotate: -18,
+    opacity: 0.82,
+  },
+];
+
+const solutionShapes = [
+  {
+    id: "solution-left-burst",
+    x: "9%",
+    y: "12%",
+    size: 56,
+    color: MINT_DARK,
+    shape: "burst" as const,
+    duration: 23,
+    delay: -8,
+    driftX: 20,
+    driftY: 16,
+    rotate: -16,
+    opacity: 0.94,
+  },
+  {
+    id: "solution-right-sparkle",
+    x: "87%",
+    y: "64%",
+    size: 66,
+    color: MINT_DARK,
+    shape: "sparkle" as const,
+    duration: 27,
+    delay: -13,
+    driftX: 24,
+    driftY: 20,
+    rotate: 10,
+    opacity: 0.92,
+  },
+  {
+    id: "solution-top-diamond",
+    x: "73%",
+    y: "18%",
+    size: 28,
+    color: MINT_DARK,
+    shape: "diamond" as const,
+    duration: 16,
+    delay: -3,
+    driftX: 12,
+    driftY: 10,
+    rotate: 18,
+    opacity: 0.8,
+  },
+];
+
+const valuesShapes = [
+  {
+    id: "values-blue-diamond",
+    x: "6%",
+    y: "18%",
+    size: 32,
+    color: STUDENT_BLUE,
+    shape: "diamond" as const,
+    duration: 18,
+    delay: -4,
+    driftX: 12,
+    driftY: 10,
+    rotate: -12,
+    opacity: 0.76,
+  },
+  {
+    id: "values-purple-diamond",
+    x: "92%",
+    y: "68%",
+    size: 36,
+    color: EMPLOYER_PURPLE,
+    shape: "diamond" as const,
+    duration: 20,
+    delay: -9,
+    driftX: 14,
+    driftY: 12,
+    rotate: 12,
+    opacity: 0.76,
+  },
+];
 
 /* ═══════════════════════════════════════════════════════════
    DATA
@@ -99,14 +281,13 @@ export default function AboutPage() {
         aria-hidden="true"
       />
 
-      <FloatingCells />
-
       <div className="relative z-10">
         <Navbar />
 
         {/* ─── HERO ─── */}
         <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-20 overflow-hidden">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+          <FloatingCells shapes={heroShapes} className="z-[1]" />
+          <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
             <AnimateIn>
               <span className="inline-block rounded-none border-2 border-black dark:border-white bg-blue-100 dark:bg-blue-900/50 px-5 py-2 text-xs font-black text-blue-700 dark:text-blue-300 uppercase tracking-widest mb-6 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
                 Our Story
@@ -143,6 +324,7 @@ export default function AboutPage() {
             THE PROBLEM — Red / Tension Treatment
             ───────────────────────────────────────────────────── */}
         <section className="relative z-10 isolate py-20 sm:py-28 overflow-hidden">
+          <FloatingCells shapes={problemShapes} className="z-[1]" />
           {/* Red-tinted background band */}
           <div
             className="absolute inset-0 pointer-events-none"
@@ -166,7 +348,7 @@ export default function AboutPage() {
             aria-hidden="true"
           />
 
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <AnimateIn className="text-center max-w-2xl mx-auto">
               <Typography variant="h2">The Problem We Saw</Typography>
               <Typography variant="p" color="muted" className="mt-4 text-lg">
@@ -249,6 +431,7 @@ export default function AboutPage() {
             OUR SOLUTION — Mint / Relief Treatment
             ───────────────────────────────────────────────────── */}
         <section className="relative py-20 sm:py-28 overflow-hidden">
+          <FloatingCells shapes={solutionShapes} className="z-[1]" />
           {/* Mint-tinted background band */}
           <div
             className="absolute inset-0 pointer-events-none"
@@ -258,7 +441,7 @@ export default function AboutPage() {
             aria-hidden="true"
           />
 
-          <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             <AnimateIn className="text-center max-w-2xl mx-auto">
               <Typography variant="h2">Our Solution</Typography>
               <Typography variant="p" color="muted" className="mt-4 text-lg">
@@ -377,7 +560,8 @@ export default function AboutPage() {
 
         {/* ─── VALUES / WHAT SETS US APART ─── */}
         <section className="relative py-20 sm:py-28 overflow-hidden">
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <FloatingCells shapes={valuesShapes} className="z-[1]" />
+          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <AnimateIn className="text-center max-w-2xl mx-auto">
               <Typography variant="h2">What Sets Us Apart</Typography>
               <Typography variant="p" color="muted" className="mt-4 text-lg">
