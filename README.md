@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="logo-banner-svg" alt="Internify Logo" width="80" />
+<img src="logo-banner.svg" alt="Internify Logo" width="80" />
 
 # Internify
 
