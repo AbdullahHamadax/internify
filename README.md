@@ -2,8 +2,6 @@
 
 <img src="logo-banner.svg" alt="Internify Logo" />
 
-# Internify
-
 **A two-sided learning-to-hiring platform, built as a graduation project.**
 
 Connecting students with employers through real-world challenge tasks, giving students a way to prove their skills and giving employers a smarter way to discover talent beyond CV screening alone.
