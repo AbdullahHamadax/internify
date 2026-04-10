@@ -309,10 +309,10 @@ export default function StudentExplore({
                       key={f.label}
                       type="button"
                       onClick={() => setActiveCategory(f.label)}
-                      className={`w-full text-left px-4 py-3 text-xs font-black uppercase tracking-widest transition-all border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] ${
+                      className={`w-full text-left px-4 py-3 text-xs font-black uppercase tracking-widest transition-colors duration-200 border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] ${
                         activeCategory === f.label
-                          ? "bg-[#AB47BC] text-white"
-                          : "bg-white dark:bg-black text-foreground hover:bg-[#E6ECF8] dark:hover:bg-zinc-800"
+                          ? "bg-[#AB47BC] text-white hover:bg-[#8E24AA]"
+                          : "bg-white dark:bg-black text-foreground hover:bg-[#F3E5F5] hover:text-[#7B1FA2] dark:hover:bg-zinc-800"
                       }`}
                     >
                       {f.label.toUpperCase()}
@@ -344,10 +344,10 @@ export default function StudentExplore({
                             onChange={() => toggleSkillLevel(level)}
                           />
                           <div
-                            className={`size-5 flex shrink-0 items-center justify-center border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-all ${
+                            className={`size-5 flex shrink-0 items-center justify-center border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-colors ${
                               isChecked
-                                ? "bg-[#AB47BC] text-white"
-                                : "bg-white dark:bg-black group-hover:translate-x-0.5 group-hover:translate-y-0.5 group-hover:shadow-none"
+                                ? "bg-[#2563EB] text-white group-hover:bg-[#1D4ED8]"
+                                : "bg-white dark:bg-black group-hover:bg-[#DBEAFE]"
                             }`}
                           >
                             {isChecked && (
@@ -357,7 +357,7 @@ export default function StudentExplore({
                               />
                             )}
                           </div>
-                          <span className="text-sm font-bold uppercase tracking-wider text-foreground/80 group-hover:text-foreground transition-colors">
+                          <span className="text-sm font-bold uppercase tracking-wider text-foreground/80 group-hover:text-[#1D4ED8] transition-colors">
                             {level}
                           </span>
                         </label>
@@ -381,7 +381,7 @@ export default function StudentExplore({
                     placeholder="FIND A SKILL..."
                     value={skillSearchQuery}
                     onChange={(e) => setSkillSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-black border-2 border-black dark:border-white text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] focus:translate-x-0.5 focus:translate-y-0.5 focus:shadow-[2px_2px_0_0_#000] dark:focus:shadow-[2px_2px_0_0_#fff]"
+                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-black border-2 border-black dark:border-white text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-shadow shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] focus:shadow-[2px_2px_0_0_#000] dark:focus:shadow-[2px_2px_0_0_#fff]"
                   />
                 </div>
                 <div className="flex flex-wrap gap-2 max-h-[280px] overflow-y-auto pr-1 pb-2">
@@ -405,10 +405,10 @@ export default function StudentExplore({
                           key={skill}
                           type="button"
                           onClick={() => toggleCoreSkill(skill)}
-                          className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-black dark:border-white transition-all duration-200 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] focus:outline-none hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none ${
+                          className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-black dark:border-white transition-colors duration-200 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] focus:outline-none ${
                             selectedCoreSkills.includes(skill)
-                              ? "bg-[#2563EB] text-white hover:bg-[#1D4ED8]"
-                              : "bg-white dark:bg-black text-foreground hover:bg-[#2563EB] hover:text-white"
+                              ? "bg-[#AB47BC] text-white hover:bg-[#8E24AA]"
+                              : "bg-white dark:bg-black text-foreground hover:bg-[#F3E5F5] hover:text-[#7B1FA2]"
                           }`}
                         >
                           {skill.toUpperCase()}
@@ -489,7 +489,7 @@ export default function StudentExplore({
                     setSelectedCoreSkills([]);
                     setSkillSearchQuery("");
                   }}
-                  className="mt-6 px-6 py-3 bg-[#2563EB] text-white border-2 border-black dark:border-white font-black uppercase tracking-widest text-xs shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-0.5 hover:-translate-x-0.5 transition-all"
+                  className="mt-6 px-6 py-3 bg-[#2563EB] text-white border-2 border-black dark:border-white font-black uppercase tracking-widest text-xs shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-colors"
                 >
                   Clear all filters
                 </button>
@@ -578,7 +578,7 @@ export default function StudentExplore({
                       return (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#2563EB] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#2563EB] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB] transition-colors"
                         >
                           {devicon && (
                             <i className={`${devicon} text-[14px]`} />
@@ -699,7 +699,7 @@ export default function StudentExplore({
                       return (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#2563EB] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#2563EB] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB] transition-colors"
                         >
                           {devicon && (
                             <i className={`${devicon} text-[14px]`} />

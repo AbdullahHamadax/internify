@@ -52,42 +52,46 @@ const STATUS_FILTERS = [
 
 export default function TalentSearch() {
   const students = useQuery(api.users.getStudentsForEmployer);
-  const talentData = students
-    ? students.map((s) => {
-        const mathSeed = s.user.createdAt || 1;
-        function capitalize(str: string) {
-          if (!str) return "";
-          return str.charAt(0).toUpperCase() + str.slice(1);
-        }
-        const uniStr = s.profile?.fieldOfStudy
-          ? `${capitalize(s.profile.academicStatus || "")} in ${s.profile.fieldOfStudy}`
-          : "University Student";
-        return {
-          id: s.user._id,
-          name:
-            `${s.user.firstName || ""} ${s.user.lastName || ""}`.trim() ||
-            "Anonymous Student",
-          role: s.profile?.title || "Student",
-          university: uniStr.trim() || "University of Internify",
-          location: s.profile?.location || "Remote",
-          status: "Available now",
-          skills: s.profile?.skills || [],
-          bio:
-            s.profile?.description ||
-            "Passionate student looking for a challenging internship to grow and learn.",
-          avatar:
-            (
-              (s.user.firstName?.[0] || "") + (s.user.lastName?.[0] || "")
-            ).toUpperCase() || "ST",
-          matchScore: 80 + (mathSeed % 20),
-          rating: Number((4.0 + (mathSeed % 10) / 10).toFixed(1)),
-          tasksDone: mathSeed % 15,
-          avgScore: 85 + (mathSeed % 15),
-          github: s.profile?.github,
-          linkedin: s.profile?.linkedin,
-        };
-      })
-    : [];
+  const talentData = useMemo(
+    () =>
+      students
+        ? students.map((s) => {
+            const mathSeed = s.user.createdAt || 1;
+            function capitalize(str: string) {
+              if (!str) return "";
+              return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+            const uniStr = s.profile?.fieldOfStudy
+              ? `${capitalize(s.profile.academicStatus || "")} in ${s.profile.fieldOfStudy}`
+              : "University Student";
+            return {
+              id: s.user._id,
+              name:
+                `${s.user.firstName || ""} ${s.user.lastName || ""}`.trim() ||
+                "Anonymous Student",
+              role: s.profile?.title || "Student",
+              university: uniStr.trim() || "University of Internify",
+              location: s.profile?.location || "Remote",
+              status: "Available now",
+              skills: s.profile?.skills || [],
+              bio:
+                s.profile?.description ||
+                "Passionate student looking for a challenging internship to grow and learn.",
+              avatar:
+                (
+                  (s.user.firstName?.[0] || "") + (s.user.lastName?.[0] || "")
+                ).toUpperCase() || "ST",
+              matchScore: 80 + (mathSeed % 20),
+              rating: Number((4.0 + (mathSeed % 10) / 10).toFixed(1)),
+              tasksDone: mathSeed % 15,
+              avgScore: 85 + (mathSeed % 15),
+              github: s.profile?.github,
+              linkedin: s.profile?.linkedin,
+            };
+          })
+        : [],
+    [students],
+  );
 
   const masterSkillsSorted = useMemo(
     () =>
@@ -127,6 +131,14 @@ export default function TalentSearch() {
   const toggleSkill = (skill: string) => {
     setSelectedSkills((prev) =>
       prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
+    );
+  };
+
+  const toggleStatus = (status: string) => {
+    setSelectedStatuses((prev) =>
+      prev.includes(status)
+        ? prev.filter((item) => item !== status)
+        : [...prev, status],
     );
   };
 
@@ -179,18 +191,24 @@ export default function TalentSearch() {
                     key={status}
                     className="flex items-center gap-3 cursor-pointer group"
                   >
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={selectedStatuses.includes(status)}
+                      onChange={() => toggleStatus(status)}
+                    />
                     <div
-                      className={`size-5 flex items-center justify-center border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-all ${
+                      className={`size-5 flex items-center justify-center border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-colors ${
                         selectedStatuses.includes(status)
-                          ? "bg-[#AB47BC] text-white"
-                          : "bg-white dark:bg-black group-hover:translate-x-0.5 group-hover:translate-y-0.5 group-hover:shadow-none"
+                          ? "bg-[#AB47BC] text-white group-hover:bg-[#8E24AA]"
+                          : "bg-white dark:bg-black group-hover:bg-[#F3E5F5]"
                       }`}
                     >
                       {selectedStatuses.includes(status) && (
                         <CheckCircle2 className="size-3" strokeWidth={4} />
                       )}
                     </div>
-                    <span className="text-sm font-bold uppercase tracking-wider text-foreground/80 group-hover:text-foreground transition-colors">
+                    <span className="text-sm font-bold uppercase tracking-wider text-foreground/80 group-hover:text-[#7B1FA2] transition-colors">
                       {status}
                     </span>
                   </label>
@@ -213,7 +231,7 @@ export default function TalentSearch() {
                   placeholder="FIND A SKILL..."
                   value={skillSearchQuery}
                   onChange={(e) => setSkillSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-white dark:bg-black border-2 border-black dark:border-white text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] focus:translate-x-0.5 focus:translate-y-0.5 focus:shadow-[2px_2px_0_0_#000] dark:focus:shadow-[2px_2px_0_0_#fff]"
+                  className="w-full pl-9 pr-3 py-2 bg-white dark:bg-black border-2 border-black dark:border-white text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-shadow shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] focus:shadow-[2px_2px_0_0_#000] dark:focus:shadow-[2px_2px_0_0_#fff]"
                 />
               </div>
               <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto pr-1 pb-2">
@@ -235,10 +253,10 @@ export default function TalentSearch() {
                         key={skill}
                         type="button"
                         onClick={() => toggleSkill(skill)}
-                        className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-black dark:border-white transition-all duration-200 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] focus:outline-none hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none ${
+                        className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-black dark:border-white transition-colors duration-200 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] focus:outline-none ${
                           selectedSkills.includes(skill)
                             ? "bg-[#2563EB] text-white hover:bg-[#1D4ED8]"
-                            : "bg-white dark:bg-black text-foreground hover:bg-[#2563EB] hover:text-white"
+                            : "bg-white dark:bg-black text-foreground hover:bg-[#DBEAFE] hover:text-[#1D4ED8]"
                         }`}
                       >
                         {skill.toUpperCase()}
