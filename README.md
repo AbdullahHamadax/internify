@@ -275,3 +275,21 @@ Internify is not just meant to be another internship portal. The long-term goal 
 - AI helps scale feedback, fairness, and evaluation
 
 That is the direction this project is growing toward.
+
+## License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Links
+
+- **Live Site**: [internify-one.vercel.app](https://internify-one.vercel.app/)
+- **GitHub**: [github.com/AbdullahHamadax/internify](https://github.com/AbdullahHamadax/internify)
+- **Author**: [@AbdullahHamadax](https://github.com/AbdullahHamadax)
+
+---
+
+<div align="center">
+  <p>Built by students to help students prove their skills through real work.</p>
+</div>
