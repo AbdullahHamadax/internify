@@ -88,42 +88,65 @@ Visual inspiration includes:
 
 ## Project Structure
 
-```bash
+```text
 internify/
-|-- src/
-|   |-- app/
-|   |   |-- page.tsx                    # Landing page + signed-in home entry
-|   |   |-- about/page.tsx              # About / story page
-|   |   |-- (auth)/                     # Login, signup, forgot-password, complete-profile
-|   |   `-- api/
-|   |       |-- chat/route.ts           # Chat assistant endpoint
-|   |       `-- seed/route.ts           # Seed/testing helpers
-|   |-- components/
-|   |   |-- landing/                    # Landing page sections and navbar/footer
-|   |   |-- student/                    # Student dashboard, explore, profile, submissions
-|   |   |-- employer/                   # Employer dashboard, task management, analytics, talent search
-|   |   |-- shared/                     # Messages, notifications, settings, profile modals
-|   |   |-- about/                      # About page decorative/background components
-|   |   |-- auth/                       # Auth-specific presentation components
-|   |   |-- home/                       # Signed-in home controls
-|   |   |-- providers/                  # App providers (Convex client, etc.)
-|   |   `-- ui/                         # Reusable UI primitives and wrappers
-|   `-- lib/
-|       |-- convexAuth.ts               # Auth helpers bridging Clerk and Convex
-|       |-- skillCatalog.ts             # Skill definitions and metadata
-|       |-- skillMatching.ts            # Skill matching utilities
-|       `-- utils.ts                    # Shared utility helpers
-|-- convex/
-|   |-- schema.ts                       # Database schema
-|   |-- users.ts                        # User creation / profile logic
-|   |-- tasks.ts                        # Task posting, acceptance, submissions, cleanup
-|   |-- messages.ts                     # Real-time messaging logic
-|   |-- notifications.ts                # Notification logic
-|   |-- presence.ts                     # Typing / online presence handling
-|   `-- nameLimits.ts                   # Name validation rules
-|-- public/                             # Static assets, logos, and chatbot image
-|-- package.json                        # Scripts and dependencies
-`-- README.md                           # Project documentation
+├── src/
+│   ├── app/
+│   │   ├── (auth)/                     # Login, signup, forgot-password, complete-profile
+│   │   │   ├── complete-profile/page.tsx
+│   │   │   ├── forgot-password/page.tsx
+│   │   │   ├── login/
+│   │   │   │   ├── page.tsx
+│   │   │   │   └── sso-callback/
+│   │   │   ├── signup/page.tsx
+│   │   │   └── layout.tsx
+│   │   ├── about/page.tsx              # About / story page
+│   │   ├── api/
+│   │   │   ├── chat/route.ts           # Chat assistant endpoint
+│   │   │   └── seed/route.ts           # Seed/testing helpers
+│   │   ├── dashboard/page.tsx          # Role-aware signed-in dashboard entry
+│   │   ├── globals.css                 # Global styles
+│   │   ├── layout.tsx                  # Root app layout
+│   │   ├── not-found.tsx               # 404 page
+│   │   └── page.tsx                    # Landing page
+│   ├── components/
+│   │   ├── about/                      # About page visuals
+│   │   ├── auth/                       # Auth-specific presentation components
+│   │   ├── employer/                   # Employer dashboard, task management, analytics
+│   │   │   └── talent-search/
+│   │   │       └── TalentSearch.tsx    # Employer talent search filters and results
+│   │   ├── home/                       # Signed-in home controls
+│   │   ├── landing/                    # Landing page sections and marketing UI
+│   │   ├── providers/                  # App providers (Convex client, etc.)
+│   │   ├── shared/                     # Messages, notifications, settings, profile modals
+│   │   ├── student/                    # Student dashboard, explore, profile, submissions
+│   │   ├── ui/                         # Reusable UI primitives and wrappers
+│   │   ├── Chatbot.tsx                 # Role-aware Dalil assistant shell
+│   │   ├── SignedInView.tsx            # Signed-in landing/home wrapper
+│   │   ├── Stepper.tsx                 # Shared multi-step progress UI
+│   │   └── ThemeToggle.tsx             # Theme switching control
+│   └── lib/
+│       ├── convexAuth.ts               # Auth helpers bridging Clerk and Convex
+│       ├── profileLinks.ts             # GitHub / LinkedIn URL helpers
+│       ├── skillCatalog.ts             # Skill definitions and metadata
+│       ├── skillMatching.ts            # Skill matching utilities
+│       └── utils.ts                    # Shared utility helpers
+├── convex/
+│   ├── _generated/                     # Convex generated API/types
+│   ├── auth.config.ts                  # Convex auth integration config
+│   ├── convex.config.ts                # Convex project config
+│   ├── messages.ts                     # Real-time messaging logic
+│   ├── nameLimits.ts                   # Name validation rules
+│   ├── notifications.ts                # Notification logic
+│   ├── presence.ts                     # Typing / online presence handling
+│   ├── schema.ts                       # Database schema
+│   ├── tasks.ts                        # Task posting, acceptance, submissions, cleanup
+│   └── users.ts                        # User creation / profile logic
+├── public/                             # Static assets and branding files
+├── testsprite_tests/                   # End-to-end / tooling test assets
+├── next.config.ts                      # Next.js config
+├── package.json                        # Scripts and dependencies
+└── README.md                           # Project documentation
 ```
 
 The product is organized around two main application surfaces:
