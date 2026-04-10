@@ -19,6 +19,10 @@ import deviconData from "devicon/devicon.json";
 import { useProfileModal } from "@/components/shared/ProfileModalContext";
 import { SKILL_CATALOG } from "@/lib/skillCatalog";
 import { entityMatchesSkillFilter, skillMatchKey } from "@/lib/skillMatching";
+import {
+  getGithubProfileLink,
+  getLinkedinProfileLink,
+} from "@/lib/profileLinks";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -149,12 +153,12 @@ export default function TalentSearch() {
     <div className="flex flex-col xl:flex-row gap-8 h-full animate-in fade-in duration-500">
       {/* Sidebar Filters */}
       <aside className="w-full xl:w-72 shrink-0 space-y-6">
-        <div className="bg-card border-4 border-border p-6 shadow-[4px_4px_0_0_var(--border)]">
+        <div className="bg-card dark:bg-zinc-900 border-4 border-border dark:border-zinc-700 p-6">
           <div className="flex items-center gap-3 mb-6">
             <Filter className="w-5 h-5 text-foreground" />
             <Typography
               variant="h4"
-              className="text-lg font-black uppercase tracking-widest m-0 px-2 bg-[#2563EB] text-white border-2 border-border shadow-[4px_4px_0_0_var(--border)]"
+              className="text-lg font-black uppercase tracking-widest m-0 px-2 bg-[#2563EB] text-white border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]"
             >
               Filters
             </Typography>
@@ -165,7 +169,7 @@ export default function TalentSearch() {
             <div>
               <Typography
                 variant="span"
-                className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-border pb-1"
+                className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-[#C9D1DC] dark:border-zinc-700 pb-1"
               >
                 Availability
               </Typography>
@@ -176,10 +180,10 @@ export default function TalentSearch() {
                     className="flex items-center gap-3 cursor-pointer group"
                   >
                     <div
-                      className={`size-5 flex items-center justify-center transition-all ${
+                      className={`size-5 flex items-center justify-center border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-all ${
                         selectedStatuses.includes(status)
-                          ? "bg-[#AB47BC] border-2 border-border shadow-[2px_2px_0_0_var(--border)] text-white"
-                          : "bg-white dark:bg-black border-2 border-border shadow-[2px_2px_0_0_var(--border)] group-hover:translate-x-0.5 group-hover:translate-y-0.5 group-hover:shadow-none"
+                          ? "bg-[#AB47BC] text-white"
+                          : "bg-white dark:bg-black group-hover:translate-x-0.5 group-hover:translate-y-0.5 group-hover:shadow-none"
                       }`}
                     >
                       {selectedStatuses.includes(status) && (
@@ -198,7 +202,7 @@ export default function TalentSearch() {
             <div className="flex flex-col h-full">
               <Typography
                 variant="span"
-                className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-border pb-1"
+                className="font-black mb-3 block text-foreground uppercase tracking-widest text-xs border-b-2 border-[#C9D1DC] dark:border-zinc-700 pb-1"
               >
                 Core Skills
               </Typography>
@@ -209,16 +213,14 @@ export default function TalentSearch() {
                   placeholder="FIND A SKILL..."
                   value={skillSearchQuery}
                   onChange={(e) => setSkillSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-transparent border-2 border-border text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-all shadow-[2px_2px_0_0_var(--border)] focus:shadow-[4px_4px_0_0_var(--border)]"
+                  className="w-full pl-9 pr-3 py-2 bg-white dark:bg-black border-2 border-black dark:border-white text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-0 transition-all shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] focus:translate-x-0.5 focus:translate-y-0.5 focus:shadow-[2px_2px_0_0_#000] dark:focus:shadow-[2px_2px_0_0_#fff]"
                 />
               </div>
               <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto pr-1 pb-2">
                 {skillOptionsSorted.filter((skill) =>
-                  skill
-                    .toLowerCase()
-                    .includes(skillSearchQuery.toLowerCase()),
+                  skill.toLowerCase().includes(skillSearchQuery.toLowerCase()),
                 ).length === 0 ? (
-                  <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground py-4 text-center w-full border-2 border-dashed border-border">
+                  <div className="text-sm font-bold uppercase tracking-widest text-muted-foreground py-4 text-center w-full border-2 border-dashed border-[#C9D1DC] dark:border-zinc-700 bg-white/60 dark:bg-zinc-950/40">
                     No skills found
                   </div>
                 ) : (
@@ -233,10 +235,10 @@ export default function TalentSearch() {
                         key={skill}
                         type="button"
                         onClick={() => toggleSkill(skill)}
-                        className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-border transition-all duration-200 shadow-[2px_2px_0_0_var(--border)] focus:outline-none ${
+                        className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider border-2 border-black dark:border-white transition-all duration-200 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] focus:outline-none hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none ${
                           selectedSkills.includes(skill)
-                            ? "bg-[#2563EB] text-white hover:bg-[#1D4ED8] hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
-                            : "bg-surface text-foreground hover:bg-[#2563EB] hover:text-white hover:translate-y-0.5 hover:translate-x-0.5 hover:shadow-none"
+                            ? "bg-[#2563EB] text-white hover:bg-[#1D4ED8]"
+                            : "bg-white dark:bg-black text-foreground hover:bg-[#2563EB] hover:text-white"
                         }`}
                       >
                         {skill.toUpperCase()}
@@ -308,188 +310,195 @@ export default function TalentSearch() {
               </button>
             </div>
           ) : (
-            filteredTalent.map((talent) => (
-              <div
-                key={talent.id}
-                className="bg-card border-4 border-black dark:border-white p-6 shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0_0_#000] dark:hover:shadow-[12px_12px_0_0_#fff] transition-all duration-200 flex flex-col group relative"
-              >
-                {/* Match Badge (Absolute Top Right) */}
-                <div className="absolute -top-4 -right-4 bg-[#AB47BC] text-white border-4 border-black dark:border-white px-3 py-1 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] z-10 rotate-3 group-hover:rotate-6 transition-transform">
-                  {talent.matchScore}% Match
-                </div>
+            filteredTalent.map((talent) => {
+              const githubUrl = getGithubProfileLink(talent.github);
+              const linkedinUrl = getLinkedinProfileLink(talent.linkedin);
 
-                {/* Card Header & Avatar */}
-                <div className="flex gap-4 items-start mb-5">
-                  <div
-                    className="size-14 bg-[#AB47BC] text-white border-4 border-black dark:border-white flex items-center justify-center font-black text-xl uppercase shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] shrink-0 cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-[#AB47BC] transition-all"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openProfile(talent.id);
-                    }}
-                    title={`View ${talent.name}'s profile`}
-                  >
-                    {talent.avatar}
+              return (
+                <div
+                  key={talent.id}
+                  className="bg-card border-4 border-black dark:border-white p-6 shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0_0_#000] dark:hover:shadow-[12px_12px_0_0_#fff] transition-all duration-200 flex flex-col group relative"
+                >
+                  {/* Match Badge (Absolute Top Right) */}
+                  <div className="absolute -top-4 -right-4 bg-[#AB47BC] text-white border-4 border-black dark:border-white px-3 py-1 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] z-10 rotate-3 group-hover:rotate-6 transition-transform">
+                    {talent.matchScore}% Match
                   </div>
-                  <div className="pt-1">
-                    <Typography
-                      variant="h3"
-                      className="text-xl font-black uppercase tracking-widest m-0 border-none pb-1 group-hover:text-[#AB47BC] transition-colors leading-none cursor-pointer hover:underline decoration-2 underline-offset-2"
-                      onClick={(e: React.MouseEvent) => {
+
+                  {/* Card Header & Avatar */}
+                  <div className="flex gap-4 items-start mb-5">
+                    <div
+                      className="size-14 bg-[#AB47BC] text-white border-4 border-black dark:border-white flex items-center justify-center font-black text-xl uppercase shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] shrink-0 cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-[#AB47BC] transition-all"
+                      onClick={(e) => {
                         e.stopPropagation();
                         openProfile(talent.id);
                       }}
+                      title={`View ${talent.name}'s profile`}
                     >
-                      {talent.name}
-                    </Typography>
-                    <Typography
-                      variant="p"
-                      className="text-sm font-bold text-foreground/80 m-0 uppercase tracking-widest leading-none mt-1"
-                    >
-                      {talent.role}
-                    </Typography>
+                      {talent.avatar}
+                    </div>
+                    <div className="pt-1">
+                      <Typography
+                        variant="h3"
+                        className="text-xl font-black uppercase tracking-widest m-0 border-none pb-1 group-hover:text-[#AB47BC] transition-colors leading-none cursor-pointer hover:underline decoration-2 underline-offset-2"
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          openProfile(talent.id);
+                        }}
+                      >
+                        {talent.name}
+                      </Typography>
+                      <Typography
+                        variant="p"
+                        className="text-sm font-bold text-foreground/80 m-0 uppercase tracking-widest leading-none mt-1"
+                      >
+                        {talent.role}
+                      </Typography>
+                    </div>
                   </div>
-                </div>
 
-                {/* Details list */}
-                <div className="space-y-3 mb-5">
-                  <div className="flex items-center gap-3 text-sm font-bold text-foreground/80">
-                    <GraduationCap className="size-5 text-[#AB47BC]" />
-                    <span className="uppercase tracking-wider">
-                      {talent.university}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-foreground/80">
-                    <MapPin className="size-5 text-[#AB47BC]" />
-                    <span className="uppercase tracking-wider">
-                      {talent.location}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-foreground/80">
-                    <Briefcase className="size-5 text-[#AB47BC]" />
-                    <span className="flex items-center gap-2 uppercase tracking-wider">
-                      <span
-                        className={`size-2.5 border-2 border-black dark:border-white ${
-                          talent.status.includes("now")
-                            ? "bg-green-500"
-                            : "bg-amber-500"
-                        }`}
-                      />
-                      {talent.status}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Bio */}
-                <Typography
-                  variant="p"
-                  className="text-sm font-bold text-foreground italic border-l-4 border-[#AB47BC] pl-4 py-2 bg-[#AB47BC]/5 dark:bg-[#AB47BC]/10 m-0 mb-5 line-clamp-2"
-                >
-                  &quot;{talent.bio}&quot;
-                </Typography>
-
-                {/* Stats Row */}
-                <div className="flex items-center justify-between border-y-4 border-black dark:border-white py-3 mb-5 text-sm font-black uppercase tracking-widest">
-                  <div className="flex flex-col items-center">
-                    <span className="flex items-center gap-1 text-xl text-black dark:text-white">
-                      <Star className="size-5 fill-amber-500" />
-                      {talent.rating}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      Rating
-                    </span>
-                  </div>
-                  <div className="w-1 h-8 bg-black dark:bg-white opacity-20"></div>
-                  <div className="flex flex-col items-center">
-                    <span className="flex items-center gap-1 text-xl text-primary">
-                      {talent.tasksDone}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      Tasks
-                    </span>
-                  </div>
-                  <div className="w-1 h-8 bg-black dark:bg-white opacity-20"></div>
-                  <div className="flex flex-col items-center">
-                    <span className="flex items-center gap-1 text-xl text-green-600 dark:text-green-500">
-                      {talent.avgScore}%
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      Score
-                    </span>
-                  </div>
-                </div>
-
-                {/* Footer Component */}
-                <div className="mt-auto flex flex-col gap-5">
-                  {/* Skill Tags */}
-                  <div className="flex flex-wrap gap-2">
-                    {talent.skills.slice(0, 4).map((skill) => {
-                      const iconClass = getDeviconClass(skill);
-                      return (
-                        <span
-                          key={skill}
-                          className="inline-flex items-center gap-1.5 px-2 py-1 border-2 border-black dark:border-white bg-[#2563EB] text-white text-[10px] font-black uppercase tracking-widest shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
-                        >
-                          {iconClass && (
-                            <i className={`${iconClass} text-xs`}></i>
-                          )}
-                          {skill}
-                        </span>
-                      );
-                    })}
-                    {talent.skills.length > 4 && (
-                      <span className="inline-flex items-center px-2 py-1 border-2 border-dashed border-black dark:border-white bg-surface text-foreground text-[10px] font-black uppercase tracking-widest">
-                        +{talent.skills.length - 4}
+                  {/* Details list */}
+                  <div className="space-y-3 mb-5">
+                    <div className="flex items-center gap-3 text-sm font-bold text-foreground/80">
+                      <GraduationCap className="size-5 text-[#AB47BC]" />
+                      <span className="uppercase tracking-wider">
+                        {talent.university}
                       </span>
-                    )}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm font-bold text-foreground/80">
+                      <MapPin className="size-5 text-[#AB47BC]" />
+                      <span className="uppercase tracking-wider">
+                        {talent.location}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm font-bold text-foreground/80">
+                      <Briefcase className="size-5 text-[#AB47BC]" />
+                      <span className="flex items-center gap-2 uppercase tracking-wider">
+                        <span
+                          className={`size-2.5 border-2 border-black dark:border-white ${
+                            talent.status.includes("now")
+                              ? "bg-green-500"
+                              : "bg-amber-500"
+                          }`}
+                        />
+                        {talent.status}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Actions Row */}
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => openProfile(talent.id)}
-                      className="flex-1 py-3 bg-[#AB47BC] hover:bg-[#8E24AA] text-white border-4 border-black dark:border-white font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all text-sm"
-                    >
-                      View Profile
-                    </button>
-                    <div className="flex items-center gap-2">
+                  {/* Bio */}
+                  <Typography
+                    variant="p"
+                    className="text-sm font-bold text-foreground italic border-l-4 border-[#AB47BC] pl-4 py-2 bg-[#AB47BC]/5 dark:bg-[#AB47BC]/10 m-0 mb-5 line-clamp-2"
+                  >
+                    &quot;{talent.bio}&quot;
+                  </Typography>
+
+                  {/* Stats Row */}
+                  <div className="flex items-center justify-between border-y-4 border-black dark:border-white py-3 mb-5 text-sm font-black uppercase tracking-widest">
+                    <div className="flex flex-col items-center">
+                      <span className="flex items-center gap-1 text-xl text-black dark:text-white">
+                        <Star className="size-5 fill-amber-500" />
+                        {talent.rating}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Rating
+                      </span>
+                    </div>
+                    <div className="w-1 h-8 bg-black dark:bg-white opacity-20"></div>
+                    <div className="flex flex-col items-center">
+                      <span className="flex items-center gap-1 text-xl text-primary">
+                        {talent.tasksDone}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Tasks
+                      </span>
+                    </div>
+                    <div className="w-1 h-8 bg-black dark:bg-white opacity-20"></div>
+                    <div className="flex flex-col items-center">
+                      <span className="flex items-center gap-1 text-xl text-green-600 dark:text-green-500">
+                        {talent.avgScore}%
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Score
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Footer Component */}
+                  <div className="mt-auto flex flex-col gap-5">
+                    {/* Skill Tags */}
+                    <div className="flex flex-wrap gap-2">
+                      {talent.skills.slice(0, 4).map((skill) => {
+                        const iconClass = getDeviconClass(skill);
+                        return (
+                          <span
+                            key={skill}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 border-2 border-black dark:border-white bg-[#2563EB] text-white text-[10px] font-black uppercase tracking-widest shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                          >
+                            {iconClass && (
+                              <i className={`${iconClass} text-xs`}></i>
+                            )}
+                            {skill}
+                          </span>
+                        );
+                      })}
+                      {talent.skills.length > 4 && (
+                        <span className="inline-flex items-center px-2 py-1 border-2 border-dashed border-black dark:border-white bg-surface text-foreground text-[10px] font-black uppercase tracking-widest">
+                          +{talent.skills.length - 4}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Actions Row */}
+                    <div className="flex items-center gap-3">
                       <button
                         type="button"
-                        className="p-3 border-4 border-black dark:border-white bg-[#333] hover:bg-[#111] text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all"
-                        aria-label="GitHub Profile"
-                        onClick={() =>
-                          talent.github &&
-                          window.open(
-                            talent.github.startsWith("http")
-                              ? talent.github
-                              : `https://${talent.github}`,
-                            "_blank",
-                          )
-                        }
+                        onClick={() => openProfile(talent.id)}
+                        className="flex-1 py-3 bg-[#AB47BC] hover:bg-[#8E24AA] text-white border-4 border-black dark:border-white font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all text-sm"
                       >
-                        <Github className="size-5" />
+                        View Profile
                       </button>
-                      <button
-                        type="button"
-                        className="p-3 border-4 border-black dark:border-white bg-[#0A66C2] hover:bg-[#004182] text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all"
-                        aria-label="LinkedIn Profile"
-                        onClick={() =>
-                          talent.linkedin &&
-                          window.open(
-                            talent.linkedin.startsWith("http")
-                              ? talent.linkedin
-                              : `https://${talent.linkedin}`,
-                            "_blank",
-                          )
-                        }
-                      >
-                        <Linkedin className="size-5" />
-                      </button>
+                      {(githubUrl || linkedinUrl) && (
+                        <div className="flex items-center gap-2">
+                          {githubUrl && (
+                            <button
+                              type="button"
+                              className="p-3 border-4 border-black dark:border-white bg-[#333] hover:bg-[#111] text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all"
+                              aria-label="GitHub Profile"
+                              onClick={() =>
+                                window.open(
+                                  githubUrl,
+                                  "_blank",
+                                  "noopener,noreferrer",
+                                )
+                              }
+                            >
+                              <Github className="size-5" />
+                            </button>
+                          )}
+                          {linkedinUrl && (
+                            <button
+                              type="button"
+                              className="p-3 border-4 border-black dark:border-white bg-[#0A66C2] hover:bg-[#004182] text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff] transition-all"
+                              aria-label="LinkedIn Profile"
+                              onClick={() =>
+                                window.open(
+                                  linkedinUrl,
+                                  "_blank",
+                                  "noopener,noreferrer",
+                                )
+                              }
+                            >
+                              <Linkedin className="size-5" />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

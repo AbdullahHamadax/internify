@@ -108,17 +108,6 @@ export const upsertCurrentUser = mutation({
       throw new Error("Unauthorized");
     }
 
-    const now = Date.now(); // Current timestamp
-    const email = args.email ?? identity.email; // Use provided email or fallback to Clerk's email
-
-    if (!email) {
-      throw new Error("No email was provided by Clerk.");
-    }
-
-    const resolvedFirst = args.firstName ?? identity.givenName;
-    const resolvedLast = args.lastName ?? identity.familyName;
-    assertValidUserNameFields(resolvedFirst, resolvedLast);
-
     // Check if the user already exists in our database
     const existingUser = await ctx.db
       .query("users")
@@ -127,6 +116,21 @@ export const upsertCurrentUser = mutation({
       )
       .unique();
 
+    const now = Date.now(); // Current timestamp
+    const email = args.email ?? identity.email ?? existingUser?.email;
+
+    if (!email) {
+      throw new Error(
+        "No email was provided by Clerk or found in the existing user record.",
+      );
+    }
+
+    const resolvedFirst =
+      args.firstName ?? identity.givenName ?? existingUser?.firstName;
+    const resolvedLast =
+      args.lastName ?? identity.familyName ?? existingUser?.lastName;
+    assertValidUserNameFields(resolvedFirst, resolvedLast);
+
     // If they don't exist, CREATE them (Insert). If they do, get their ID.
     const userId = existingUser
       ? existingUser._id
@@ -134,8 +138,8 @@ export const upsertCurrentUser = mutation({
           tokenIdentifier: identity.tokenIdentifier,
           clerkUserId: identity.subject,
           email,
-          firstName: args.firstName ?? identity.givenName,
-          lastName: args.lastName ?? identity.familyName,
+          firstName: resolvedFirst,
+          lastName: resolvedLast,
           role: args.role,
           createdAt: now,
           updatedAt: now,
@@ -154,8 +158,8 @@ export const upsertCurrentUser = mutation({
       await ctx.db.patch(userId, {
         clerkUserId: identity.subject,
         email,
-        firstName: args.firstName ?? identity.givenName,
-        lastName: args.lastName ?? identity.familyName,
+        firstName: resolvedFirst,
+        lastName: resolvedLast,
         updatedAt: now,
       });
     }
