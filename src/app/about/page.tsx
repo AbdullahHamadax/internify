@@ -1,5 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
+import {
+  AuthLoading,
+  Authenticated,
+  Unauthenticated,
+  useQuery,
+} from "convex/react";
+import { useRouter } from "next/navigation";
 import {
   Target,
   Lightbulb,
@@ -16,6 +24,7 @@ import CtaSection from "@/components/landing/CtaSection";
 import { Typography } from "@/components/ui/Typography";
 import FloatingCells from "@/components/about/FloatingCells";
 import Chatbot from "@/components/Chatbot";
+import { api } from "../../../convex/_generated/api";
 
 /* ═══════════════════════════════════════════════════════════
    PALETTE
@@ -267,7 +276,11 @@ const values = [
    PAGE
    ═══════════════════════════════════════════════════════════ */
 
-export default function AboutPage() {
+function AboutContent({
+  userRole = "guest",
+}: {
+  userRole?: "guest" | "student" | "employer";
+}) {
   return (
     <div className="relative min-h-screen bg-white dark:bg-gray-950">
       {/* ── Line-grid background ── */}
@@ -282,7 +295,7 @@ export default function AboutPage() {
       />
 
       <div className="relative z-10">
-        <Navbar />
+        <Navbar authenticatedRole={userRole === "guest" ? undefined : userRole} />
 
         {/* ─── HERO ─── */}
         <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-20 overflow-hidden">
@@ -611,8 +624,49 @@ export default function AboutPage() {
         <CtaSection />
 
         <Footer />
-        <Chatbot userRole="guest" />
+        <Chatbot userRole={userRole} />
       </div>
     </div>
+  );
+}
+
+function FullScreenSpinner() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  );
+}
+
+function AuthenticatedAbout() {
+  const router = useRouter();
+  const currentUser = useQuery(api.users.currentUser);
+
+  useEffect(() => {
+    if (currentUser === null) {
+      router.replace("/complete-profile");
+    }
+  }, [currentUser, router]);
+
+  if (currentUser === undefined || currentUser === null) {
+    return <FullScreenSpinner />;
+  }
+
+  return <AboutContent userRole={currentUser.user.role} />;
+}
+
+export default function AboutPage() {
+  return (
+    <>
+      <AuthLoading>
+        <FullScreenSpinner />
+      </AuthLoading>
+      <Unauthenticated>
+        <AboutContent userRole="guest" />
+      </Unauthenticated>
+      <Authenticated>
+        <AuthenticatedAbout />
+      </Authenticated>
+    </>
   );
 }
