@@ -1,49 +1,73 @@
+<div align="center">
+
+<img src="logo-banner-svg" alt="Internify Logo" width="80" />
+
 # Internify
 
-Internify is a two-sided learning-to-hiring platform built as a graduation project. It connects students with employers through real-world challenge tasks, giving students a way to prove their skills and giving employers a better way to discover talent beyond CV screening alone.
+**A two-sided learning-to-hiring platform, built as a graduation project.**
 
-Instead of relying only on grades, resumes, or interviews, Internify is designed around practical work:
+Connecting students with employers through real-world challenge tasks, giving students a way to prove their skills and giving employers a smarter way to discover talent beyond CV screening alone.
+
+[![Live Site](https://img.shields.io/badge/Live%20Site-internify--one.vercel.app-black?style=for-the-badge&logo=vercel)](https://internify-one.vercel.app/)
+![Status](https://img.shields.io/badge/Status-Active%20Development-brightgreen?style=for-the-badge)
+
+</div>
+
+---
+
+## The Problem
+
+> Entry-level hiring is broken on both sides.
+
+- 🎓 Students graduate with theory but limited proof of real execution.
+- 🏢 Employers spend time filtering candidates without enough evidence of practical ability.
+- 🔁 The result: guesswork for companies and frustration for students.
+
+**Internify closes that gap by making skill demonstration the center of the experience.**
+
+Instead of relying on grades, resumes, or interviews alone:
 
 - Employers post tasks based on real needs.
 - Students explore, accept, and complete those tasks.
-- Submissions become proof of ability, not just claims on paper.
-- AI support is being integrated as the next major phase of the platform.
+- Submissions become proof of ability and not just claims on paper.
 
-## Why Internify?
+---
 
-We built Internify to solve a common problem on both sides:
+## Features
 
-- Students often graduate with theory but limited proof of real execution.
-- Employers spend time filtering candidates without enough evidence of practical ability.
-- Entry-level hiring becomes guesswork for companies and frustration for students.
-
-Internify aims to close that gap by turning skill demonstration into the center of the experience.
-
-## Current Features
-
-### Public Platform Experience
+<details>
+<summary><strong>🌐 Public Platform</strong></summary>
 
 - Landing page with role-based onboarding for students and employers
-- About page explaining the motivation, problem, and vision behind the platform
+- About page explaining the motivation, problem, and vision
 - Auth flow with multi-step signup, login, forgot-password, and profile completion
 - Role-aware AI assistant, **Dalil**, available across the platform
 
-### Student Experience
+</details>
 
-- Student dashboard with overview, explore, messages, notifications, profile, and settings
+<details>
+<summary><strong>🎓 Student Experience</strong></summary>
+
+- Dashboard with overview, explore, messages, notifications, profile, and settings
 - Explore tasks with real backend data, filtering, sorting, and task detail views
 - Task acceptance flow with applicant limits
 - Submission flow for accepted tasks
 - Profile and portfolio-oriented student presentation
 
-### Employer Experience
+</details>
 
-- Employer dashboard with analytics, task management, messages, notifications, profile, and settings
+<details>
+<summary><strong>🏢 Employer Experience</strong></summary>
+
+- Dashboard with analytics, task management, messages, notifications, profile, and settings
 - Task posting and editing flow
 - Applicant tracking and submission visibility
-- Talent search experience for browsing student profiles and skills
+- Talent search for browsing student profiles and skills
 
-### Platform Systems
+</details>
+
+<details>
+<summary><strong>⚙️ Platform Systems</strong></summary>
 
 - Clerk authentication integrated with Convex user persistence
 - Real-time messaging and notifications
@@ -51,42 +75,52 @@ Internify aims to close that gap by turning skill demonstration into the center 
 - File upload support for tasks and submissions
 - Retrieval-assisted chatbot pipeline using Groq, Pinecone, and Hugging Face
 
-## AI Roadmap
-
-AI is the next major track of Internify and is planned to cover:
-
-- automated submission grading
-- code and solution evaluation
-- feedback generation for students
-- fairer skill assessment support for employers
-- stronger retrieval and assistant quality across the platform
-
-This part of the project is intentionally presented as **planned / in progress**, since the team is still building the full AI evaluation logic.
-
-## Tech Stack
-
-- **Frontend:** Next.js, React, TypeScript
-- **Styling/UI:** Tailwind CSS v4, Radix UI, Lucide Icons, custom brutalist inspired design system
-- **Auth:** Clerk
-- **Backend / Database:** Convex
-- **AI / Retrieval:** Groq (llama-3.3-70b-versatile), Pinecone, Hugging Face Inference (sentence-transformers/all-MiniLM-L6-v2)
-- **Validation / Forms:** Zod, React Hook Form
-
-## Design Inspiration
-
-Internify uses a custom brutalist / neobrutalist visual system built on top of Tailwind, Radix primitives, and project-specific components.
-
-Visual inspiration includes:
-
-- **shadcn/ui** patterns for composable UI foundations
-- **[neobrutalism.dev](https://www.neobrutalism.dev/)** as a design inspiration reference for bold, high-contrast neobrutalist component styling
-
-> [!IMPORTANT]
-> The project does **not** directly depend on neobrutalism.dev as a packaged UI framework. Instead, the current interface is a custom implementation tailored to Internify's brand, role colors, and interaction patterns.
+</details>
 
 ---
 
-## Project Structure
+## 🤖 AI Roadmap
+
+AI is the next major track of Internify. This phase is intentionally presented as **in progress** and the team is actively building the full evaluation pipeline.
+
+| Feature | Status |
+|---|---|
+| Automated submission grading | 🔄 In Progress |
+| Code and solution evaluation | 🔄 In Progress |
+| Feedback generation for students | 🔄 In Progress |
+| Fairer skill assessment for employers | 🔄 In Progress |
+| Stronger retrieval & assistant quality | 🔄 In Progress |
+| AI CV generator and analyzer | 🔄 Planned |
+| AI recommendation system | 🔄 Planned |
+| Certificate generation | 🔄 Planned |
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js, React, TypeScript |
+| **Styling / UI** | Tailwind CSS v4, Radix UI, Lucide Icons |
+| **Auth** | Clerk |
+| **Backend / Database** | Convex |
+| **AI / Retrieval** | Groq (`llama-3.3-70b-versatile`), Pinecone, Hugging Face (`sentence-transformers/all-MiniLM-L6-v2`) |
+| **Validation / Forms** | Zod, React Hook Form |
+
+---
+
+## 🎨 Design
+
+Internify uses a custom **brutalist / neobrutalist** visual system built on top of Tailwind CSS, Radix UI primitives, and project-specific components.
+
+Visual inspiration draws from **shadcn/ui** patterns for composable UI foundations and **[neobrutalism.dev](https://www.neobrutalism.dev/)** for bold, high-contrast styling direction.
+
+> [!IMPORTANT]
+> The project does **not** directly depend on neobrutalism.dev as a packaged UI framework. The current interface is a fully custom implementation tailored to Internify's brand, role colors, and interaction patterns.
+
+---
+
+## 📁 Project Structure
 
 ```text
 internify/
@@ -149,85 +183,87 @@ internify/
 └── README.md                           # Project documentation
 ```
 
-The product is organized around two main application surfaces:
+The product is organized around two main application surfaces — the **student side** (task discovery, acceptance, submission, communication, and profile building) and the **employer side** (task posting, talent search, candidate communication, and submission review) — both supported by shared infrastructure for auth, notifications, messaging, file handling, and AI.
 
-- **Student side:** task discovery, task acceptance, submission flow, communication, and profile building
-- **Employer side:** task posting, talent search, candidate communication, and submission review
+---
 
-Both are supported by shared infrastructure for authentication, notifications, messaging, settings, file handling, and AI assistance.
-
-## Team
+## 👥 Team
 
 ### Tech Leads
-
-- **Abdallah Hamada**
-- **Selim Waleed**
+| Name | GitHub |
+|---|---|
+| Abdallah Hamada | [@AbdullahHamadax](https://github.com/AbdullahHamadax) |
+| Selim Waleed | [@Sarremo2002](https://github.com/Sarremo2002)|
 
 ### Full Team
+1. Abdallah Mohamed Hamada
+2. Selim Waleed Mohamed
+3. Abdallah Ahmed Mousa
+4. Ahmed Hisham Ahmed
+5. Youssef Tarek Abdelmalak
+---
 
-- **Abdallah Hamada**
-- **Selim Waleed**
-- **Youseff Tarek**
-- **Ahmed Hisham**
-- **Abdallah Mousa**
+## 📋 Contribution Highlights
 
-## Contribution Highlights
+<details>
+<summary><strong>Abdallah Hamada</strong>: Platform foundation, frontend architecture, UI/UX polish</summary>
 
-The summary below is based on the current repository history and major implementation areas.
+- Set up the initial project structure, global styles, landing page foundation, and early authentication architecture
+- Integrated Clerk with Convex and built the multi-step signup, login, profile-completion, OAuth redirect, password-validation UX, and auth-guard improvements
+- Led major frontend work for the employer-facing experience, including task management UI, analytics, employer profile/settings, task-detail polish, and talent-search frontend
+- Shaped the platform's visual direction through typography migration, repeated UI redesigns, landing page refinement, about page redesign, LogoLoop improvements, and consistent brutalist-style polish
+- Implemented and refined shared product systems such as notifications UX, typing and online indicators, message readability improvements, student settings/profile polish, accessibility cleanup, and responsiveness fixes
+- Handled later structural fixes including landing/dashboard route separation, dashboard tab-routing cleanup, signed-in navigation fixes, chatbot presentation polish, and expired-task cleanup support
 
-### Abdallah Hamada
+</details>
 
-Abdallah contributed to the platform foundation, frontend architecture, and large-scale product polish, including:
+<details>
+<summary><strong>Selim Waleed</strong>: Backend-connected product logic, role-based application flows</summary>
 
-- setting up the initial project structure, global styles, landing page foundation, and early authentication architecture
-- integrating Clerk with Convex and building the multi-step signup, login, profile-completion, OAuth redirect, password-validation UX, and auth-guard improvements
-- leading major frontend work for the employer-facing experience, including task management UI, analytics, employer profile/settings, task-detail polish, and talent-search frontend work
-- shaping the platform's visual direction through typography migration, repeated UI redesigns, landing page refinement, about page redesign, LogoLoop improvements, and consistent brutalist-style polish
-- implementing and refining shared product systems such as notifications UX, typing and online indicators, message readability improvements, student settings/profile polish, accessibility cleanup, and many overflow/responsiveness fixes
-- handling later structural fixes such as landing/dashboard route separation, dashboard tab-routing cleanup, signed-in navigation fixes, chatbot presentation polish, and expired-task cleanup support
+- Implemented auth and form-related fixes including unauthorized-access handling, password reset logic, input behavior fixes, captcha cleanup, and signup/login UX improvements
+- Built the first real student dashboard flow, connecting explore tasks to backend data, improving filters, and replacing placeholder content with real task information
+- Implemented core student workflow logic including task acceptance, applicant limits, and submission handling
+- Implemented employer dashboard functionality for task creation, listing, and statistics
+- Built talent-search functionality including student data retrieval and employer-facing search support
+- Implemented real messaging logic for both employer and student experiences and polished message-related UI consistency
+- Contributed to the AI-assistant effort through the dynamic role-aware Dalil integration
 
-### Selim Waleed
+</details>
 
-Selim contributed to the backend-connected product logic and role-based application flows, including:
-
-- implementing important auth and form-related fixes such as unauthorized-access handling, password reset logic, input behavior fixes, captcha cleanup, and several signup/login UX improvements
-- building the first real student dashboard flow, connecting explore tasks to backend data, improving filters, and replacing placeholder content with real task information
-- implementing core student workflow logic, including task acceptance, applicant limits, and submission handling
-- implementing employer dashboard functionality for task creation, listing, and statistics
-- building talent-search related functionality, including student data retrieval and employer-facing search support
-- implementing real messaging logic for both employer and student experiences, replacing dummy message data, and later polishing message-related UI consistency
-- contributing to the AI-assistant effort through the actual dynamic role-aware Dalil integration
-
-### Youseff Tarek
-
-Planned focus area:
+<details>
+<summary><strong>Youseff Tarek</strong>: AI evaluation pipeline (planned)</summary>
 
 - AI evaluation pipeline
-- submission analysis and grading research
-- intelligent scoring and feedback logic
+- Submission analysis and grading research
+- Intelligent scoring and feedback logic
 - Certificate generation
 
-### Ahmed Hisham
+</details>
 
-Planned focus area:
+<details>
+<summary><strong>Ahmed Hisham</strong>: AI experimentation (planned)</summary>
 
 - AI experimentation and model workflow design
-- evaluation quality improvements
-- assistant and grading system support
-- AI cv generator and analyzer
+- Evaluation quality improvements
+- Assistant and grading system support
+- AI CV generator and analyzer
 
-### Abdallah Mousa
+</details>
 
-Mousa contributed to updating Convex and Clerk's authentication and Integration.
+<details>
+<summary><strong>Abdallah Mousa</strong>: Updated Auth integration + AI infrastructure (planned)</summary>
 
-Planned focus area:
-
+- Contributed to updating Convex and Clerk's authentication and integration
 - AI implementation support
-- evaluation pipeline integration
-- infrastructure support for the AI stage of the platform
+- Evaluation pipeline integration
+- Infrastructure support for the AI stage
 - AI recommendation system
 
-## Local Setup
+</details>
+
+---
+
+## 🚀 Local Setup
 
 ### 1. Install dependencies
 
@@ -236,8 +272,6 @@ npm install
 ```
 
 ### 2. Configure environment variables
-
-At minimum, the app expects configuration for:
 
 ```bash
 NEXT_PUBLIC_CONVEX_URL=
@@ -263,52 +297,33 @@ npx convex dev
 npm run dev
 ```
 
-Then open:
-
-```bash
-http://localhost:3000
-```
-
-## Scripts
-
-```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
-```
-
-## Project Status
-
-Internify is actively under development as a graduation project.
-
-Current status:
-
-- core student and employer flows are implemented
-- authentication, dashboards, messaging, notifications, and task workflows are in place
-- AI assistant support exists
-- full AI submission grading and evaluation is the next major milestone
-
-## Vision
-
-Internify is not just meant to be another internship portal. The long-term goal is to build a platform where:
-
-- students prove skill through work
-- employers hire with stronger evidence
-- AI helps scale feedback, fairness, and evaluation
-
-That is the direction this project is growing toward.
+Then open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Links
+## 📜 Scripts
 
-- **Live Site**: [internify-one.vercel.app](https://internify-one.vercel.app/)
-- **GitHub**: [github.com/AbdullahHamadax/internify](https://github.com/AbdullahHamadax/internify)
-- **Author**: [@AbdullahHamadax](https://github.com/AbdullahHamadax)
+```bash
+npm run dev      # Start development server
+npm run build    # Production build
+npm run start    # Start production server
+npm run lint     # Run linter
+```
+
+---
+
+## 🔭 Vision
+
+Internify is not just another internship portal. The long-term goal is a platform where:
+
+- 🧑‍💻 Students prove skill through real work
+- 🏢 Employers hire with stronger evidence
+- 🤖 AI scales feedback, fairness, and evaluation
 
 ---
 
 <div align="center">
-  <p>Built by students to help students prove their skills through real work.</p>
+
+Built by students, for students to prove skills through real work.
+
 </div>
