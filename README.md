@@ -81,29 +81,29 @@ Instead of relying on grades, resumes, or interviews alone:
 
 AI is the next major track of Internify. This phase is intentionally presented as **in progress** and the team is actively building the full evaluation pipeline.
 
-| Feature | Status |
-|---|---|
-| Automated submission grading | 🔄 In Progress |
-| Code and solution evaluation | 🔄 In Progress |
-| Feedback generation for students | 🔄 In Progress |
-| Fairer skill assessment for employers | 🔄 In Progress |
+| Feature                                | Status         |
+| -------------------------------------- | -------------- |
+| Automated submission grading           | 🔄 In Progress |
+| Code and solution evaluation           | 🔄 In Progress |
+| Feedback generation for students       | 🔄 In Progress |
+| Fairer skill assessment for employers  | 🔄 In Progress |
 | Stronger retrieval & assistant quality | 🔄 In Progress |
-| AI CV generator and analyzer | 🔄 Planned |
-| AI recommendation system | 🔄 Planned |
-| Certificate generation | 🔄 Planned |
+| AI CV generator and analyzer           | 🔄 Planned     |
+| AI recommendation system               | 🔄 Planned     |
+| Certificate generation                 | 🔄 Planned     |
 
 ---
 
 ## 🛠 Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **Frontend** | Next.js, React, TypeScript |
-| **Styling / UI** | Tailwind CSS v4, Radix UI, Lucide Icons |
-| **Auth** | Clerk |
-| **Backend / Database** | Convex |
-| **AI / Retrieval** | Groq (`llama-3.3-70b-versatile`), Pinecone, Hugging Face (`sentence-transformers/all-MiniLM-L6-v2`) |
-| **Validation / Forms** | Zod, React Hook Form |
+| Layer                  | Technology                                                                                          |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| **Frontend**           | Next.js, React, TypeScript                                                                          |
+| **Styling / UI**       | Tailwind CSS v4, Radix UI, Lucide Icons                                                             |
+| **Auth**               | Clerk                                                                                               |
+| **Backend / Database** | Convex                                                                                              |
+| **AI / Retrieval**     | Groq (`llama-3.3-70b-versatile`), Pinecone, Hugging Face (`sentence-transformers/all-MiniLM-L6-v2`) |
+| **Validation / Forms** | Zod, React Hook Form                                                                                |
 
 ---
 
@@ -188,17 +188,21 @@ The product is organized around two main application surfaces — the **student 
 ## 👥 Team
 
 ### Tech Leads
-| Name | GitHub |
-|---|---|
+
+| Name            | GitHub                                                 |
+| --------------- | ------------------------------------------------------ |
 | Abdallah Hamada | [@AbdullahHamadax](https://github.com/AbdullahHamadax) |
-| Selim Waleed | [@Sarremo2002](https://github.com/Sarremo2002)|
+| Selim Waleed    | [@Sarremo2002](https://github.com/Sarremo2002)         |
 
 ### Full Team
+
 1. Abdallah Mohamed Hamada
 2. Selim Waleed Mohamed
 3. Abdallah Ahmed Mousa
 4. Ahmed Hisham Ahmed
 5. Youssef Tarek Abdelmalak
+6. Ahmed Nehad
+
 ---
 
 ## 📋 Contribution Highlights
@@ -256,6 +260,18 @@ The product is organized around two main application surfaces — the **student 
 - Evaluation pipeline integration
 - Infrastructure support for the AI stage
 - AI recommendation system
+
+</details>
+
+<details>
+<summary><strong>Ahmed Nehad</strong>: SRS documentation (in-progress), software testing (planned), and quality assurance (planned)</summary>
+
+- Authored and maintained the Software Requirements Specification (SRS) document, defining functional and non-functional requirements for the Internify platform
+- Documented use cases, system behavior, and acceptance criteria for both student and employer workflows
+- Responsible for the platform's testing strategy, including test plan design, test case development, and defect tracking
+- Conducting end-to-end and integration testing across authentication, task management, messaging, and submission flows
+- Validating platform behavior against SRS requirements to ensure specification compliance
+- Supporting quality assurance processes and contributing to pre-release verification efforts
 
 </details>
 
