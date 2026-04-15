@@ -51,10 +51,15 @@ function AuthenticatedDashboard() {
   useEffect(() => {
     if (!currentUser?.user._id) return;
 
-    void cleanupExpiredTaskData();
+    const runCleanup = () =>
+      cleanupExpiredTaskData().catch((error) => {
+        console.error("Expired task cleanup failed; retrying later.", error);
+      });
+
+    void runCleanup();
 
     const cleanupInterval = window.setInterval(() => {
-      void cleanupExpiredTaskData();
+      void runCleanup();
     }, EXPIRED_TASK_CLEANUP_POLL_MS);
 
     return () => window.clearInterval(cleanupInterval);

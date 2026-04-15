@@ -42,9 +42,10 @@ import { api } from "../../../convex/_generated/api";
 
 import { Typography } from "@/components/ui/Typography";
 import SubmitTaskModal from "./SubmitTaskModal";
+import { useLiveNow } from "@/lib/useLiveNow";
 
-function deadlineToDuration(deadline: number): string {
-  const diff = Math.max(0, deadline - Date.now());
+function deadlineToDuration(deadline: number, now: number): string {
+  const diff = Math.max(0, deadline - now);
   if (diff === 0) return "Expired";
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
   if (days < 7) return `${days} day${days !== 1 ? "s" : ""}`;
@@ -106,6 +107,7 @@ export default function StudentOverview({
 }: {
   onNavigate?: (id: string) => void;
 }) {
+  const now = useLiveNow();
   type SelectedApplication = {
     _id: string;
     taskId: string;
@@ -252,13 +254,13 @@ export default function StudentOverview({
                       <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-border shrink-0" />
                       <Typography
                         variant="span"
-                        className={`flex items-center gap-1.5 shrink-0 whitespace-nowrap ${deadlineToDuration(app.task.deadline) === "Expired" ? "text-red-600 dark:text-red-400 font-black tracking-wide" : ""}`}
+                        className={`flex items-center gap-1.5 shrink-0 whitespace-nowrap ${deadlineToDuration(app.task.deadline, now) === "Expired" ? "text-red-600 dark:text-red-400 font-black tracking-wide" : ""}`}
                       >
                         <Clock
                           className="w-3.5 h-3.5 mb-[2px]"
                           strokeWidth={2.5}
                         />
-                        Due {deadlineToDuration(app.task.deadline)}
+                        Due {deadlineToDuration(app.task.deadline, now)}
                       </Typography>
                     </div>
                   </div>
