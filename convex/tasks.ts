@@ -1,5 +1,5 @@
 import { mutation, query, type MutationCtx } from "./_generated/server";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { skillLevelValidator } from "./schema";
 
@@ -69,40 +69,120 @@ function isPastCleanupWindow(deadline: number, now = Date.now()) {
   return deadline + EXPIRED_TASK_CLEANUP_GRACE_MS <= now;
 }
 
+async function deleteStorageIdSafely(
+  ctx: MutationCtx,
+  storageId: Id<"_storage">,
+  seenStorageIds: Set<string>,
+) {
+  const key = storageId.toString();
+  if (seenStorageIds.has(key)) {
+    return;
+  }
+
+  seenStorageIds.add(key);
+
+  try {
+    await ctx.storage.delete(storageId);
+  } catch (error) {
+    console.warn(
+      `[tasks] Skipping missing or already-deleted storage object ${key}.`,
+      error,
+    );
+  }
+}
+
+async function deleteStorageIdsSafely(
+  ctx: MutationCtx,
+  storageIds: Iterable<Id<"_storage">>,
+  seenStorageIds: Set<string>,
+) {
+  for (const storageId of storageIds) {
+    await deleteStorageIdSafely(ctx, storageId, seenStorageIds);
+  }
+}
+
+async function deleteSubmissionSafely(
+  ctx: MutationCtx,
+  submissionId: Id<"submissions">,
+) {
+  try {
+    await ctx.db.delete(submissionId);
+    return true;
+  } catch (error) {
+    console.warn(
+      `[tasks] Skipping missing or already-deleted submission ${submissionId.toString()}.`,
+      error,
+    );
+    return false;
+  }
+}
+
+async function deleteApplicationSafely(
+  ctx: MutationCtx,
+  applicationId: Id<"applications">,
+) {
+  try {
+    await ctx.db.delete(applicationId);
+    return true;
+  } catch (error) {
+    console.warn(
+      `[tasks] Skipping missing or already-deleted application ${applicationId.toString()}.`,
+      error,
+    );
+    return false;
+  }
+}
+
 async function deleteTaskCascade(ctx: MutationCtx, task: Doc<"tasks">) {
   const submissions = await ctx.db
     .query("submissions")
     .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
     .collect();
+  const seenStorageIds = new Set<string>();
+  let deletedSubmissionCount = 0;
 
   for (const submission of submissions) {
-    for (const file of submission.files) {
-      await ctx.storage.delete(file.storageId);
+    await deleteStorageIdsSafely(
+      ctx,
+      submission.files.map((file) => file.storageId),
+      seenStorageIds,
+    );
+    if (await deleteSubmissionSafely(ctx, submission._id)) {
+      deletedSubmissionCount += 1;
     }
-    await ctx.db.delete(submission._id);
   }
 
   const applications = await ctx.db
     .query("applications")
     .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
     .collect();
+  let deletedApplicationCount = 0;
 
   for (const application of applications) {
-    await ctx.db.delete(application._id);
+    if (await deleteApplicationSafely(ctx, application._id)) {
+      deletedApplicationCount += 1;
+    }
   }
 
-  for (const id of task.imageStorageIds ?? []) {
-    await ctx.storage.delete(id);
-  }
-  for (const att of task.attachments ?? []) {
-    await ctx.storage.delete(att.storageId);
-  }
+  await deleteStorageIdsSafely(ctx, task.imageStorageIds ?? [], seenStorageIds);
+  await deleteStorageIdsSafely(
+    ctx,
+    (task.attachments ?? []).map((att) => att.storageId),
+    seenStorageIds,
+  );
 
-  await ctx.db.delete(task._id);
+  try {
+    await ctx.db.delete(task._id);
+  } catch (error) {
+    console.warn(
+      `[tasks] Skipping missing or already-deleted task ${task._id.toString()}.`,
+      error,
+    );
+  }
 
   return {
-    deletedApplicationCount: applications.length,
-    deletedSubmissionCount: submissions.length,
+    deletedApplicationCount,
+    deletedSubmissionCount,
   };
 }
 
@@ -524,8 +604,9 @@ export const cleanupExpiredTaskData = mutation({
         const task = await ctx.db.get(application.taskId);
 
         if (!task) {
-          await ctx.db.delete(application._id);
-          deletedApplications += 1;
+          if (await deleteApplicationSafely(ctx, application._id)) {
+            deletedApplications += 1;
+          }
           continue;
         }
 
@@ -536,53 +617,71 @@ export const cleanupExpiredTaskData = mutation({
     }
 
     for (const task of tasksToInspect.values()) {
-      const submissions = await ctx.db
-        .query("submissions")
-        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
-        .collect();
-
-      if (submissions.length === 0) {
-        const result = await deleteTaskCascade(ctx, task);
-        deletedTasks += 1;
-        deletedApplications += result.deletedApplicationCount;
-        continue;
-      }
-
-      const submittedApplicationIds = new Set(
-        submissions.map((submission) => submission.applicationId.toString()),
-      );
-      const applications = await ctx.db
-        .query("applications")
-        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
-        .collect();
-
-      let removedForTask = 0;
-
-      for (const application of applications) {
-        if (
-          application.status === "completed" ||
-          submittedApplicationIds.has(application._id.toString())
-        ) {
+      try {
+        const latestTask = await ctx.db.get(task._id);
+        if (!latestTask || !isPastCleanupWindow(latestTask.deadline, now)) {
           continue;
         }
 
-        await ctx.db.delete(application._id);
-        removedForTask += 1;
-      }
+        const submissions = await ctx.db
+          .query("submissions")
+          .withIndex("by_taskId", (q) => q.eq("taskId", latestTask._id))
+          .collect();
 
-      if (removedForTask > 0) {
-        const remainingApplications = applications.length - removedForTask;
-        await ctx.db.patch(task._id, {
-          applicantCount: Math.max(0, remainingApplications),
-          status:
-            task.status === "completed"
-              ? "completed"
-              : remainingApplications > 0
-                ? "in_progress"
-                : "pending",
-          updatedAt: now,
-        });
-        deletedApplications += removedForTask;
+        if (submissions.length === 0) {
+          const result = await deleteTaskCascade(ctx, latestTask);
+          deletedTasks += 1;
+          deletedApplications += result.deletedApplicationCount;
+          continue;
+        }
+
+        const submittedApplicationIds = new Set(
+          submissions.map((submission) => submission.applicationId.toString()),
+        );
+        const applications = await ctx.db
+          .query("applications")
+          .withIndex("by_taskId", (q) => q.eq("taskId", latestTask._id))
+          .collect();
+
+        let removedForTask = 0;
+
+        for (const application of applications) {
+          if (
+            application.status === "completed" ||
+            submittedApplicationIds.has(application._id.toString())
+          ) {
+            continue;
+          }
+
+          if (await deleteApplicationSafely(ctx, application._id)) {
+            removedForTask += 1;
+          }
+        }
+
+        if (removedForTask > 0) {
+          const refreshedTask = await ctx.db.get(latestTask._id);
+          if (!refreshedTask) {
+            continue;
+          }
+
+          const remainingApplications = applications.length - removedForTask;
+          await ctx.db.patch(refreshedTask._id, {
+            applicantCount: Math.max(0, remainingApplications),
+            status:
+              refreshedTask.status === "completed"
+                ? "completed"
+                : remainingApplications > 0
+                  ? "in_progress"
+                  : "pending",
+            updatedAt: now,
+          });
+          deletedApplications += removedForTask;
+        }
+      } catch (error) {
+        console.warn(
+          `[tasks] Failed to clean up expired task ${task._id.toString()}; skipping it for now.`,
+          error,
+        );
       }
     }
 
@@ -671,9 +770,11 @@ export const updateTask = mutation({
     const newLegacySet = new Set(
       (args.imageStorageIds ?? []).map((id) => id.toString()),
     );
+    const seenRemovedStorageIds = new Set<string>();
+
     for (const oldId of task.imageStorageIds ?? []) {
       if (!newLegacySet.has(oldId.toString())) {
-        await ctx.storage.delete(oldId);
+        await deleteStorageIdSafely(ctx, oldId, seenRemovedStorageIds);
       }
     }
 
@@ -683,7 +784,11 @@ export const updateTask = mutation({
     );
     for (const oldAtt of task.attachments ?? []) {
       if (!newAttachmentSet.has(oldAtt.storageId.toString())) {
-        await ctx.storage.delete(oldAtt.storageId);
+        await deleteStorageIdSafely(
+          ctx,
+          oldAtt.storageId,
+          seenRemovedStorageIds,
+        );
       }
     }
 

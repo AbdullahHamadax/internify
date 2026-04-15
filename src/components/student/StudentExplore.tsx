@@ -46,6 +46,7 @@ import { api } from "../../../convex/_generated/api";
 import { useProfileModal } from "@/components/shared/ProfileModalContext";
 import { SKILL_CATALOG } from "@/lib/skillCatalog";
 import { entityMatchesSkillFilter, skillMatchKey } from "@/lib/skillMatching";
+import { useLiveNow } from "@/lib/useLiveNow";
 
 // ── Helpers ──
 
@@ -62,8 +63,8 @@ function timeAgo(timestamp: number): string {
   return `${weeks}w ago`;
 }
 
-function deadlineToDuration(deadline: number): string {
-  const diff = deadline - Date.now();
+function deadlineToDuration(deadline: number, now: number): string {
+  const diff = deadline - now;
   if (diff <= 0) return "Expired";
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
   if (days < 7) return `${days} day${days !== 1 ? "s" : ""}`;
@@ -106,6 +107,7 @@ export default function StudentExplore({
   focusTaskId = null,
   onFocusTaskConsumed,
 }: StudentExploreProps = {}) {
+  const now = useLiveNow();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeSkillLevels, setActiveSkillLevels] = useState<string[]>([]);
@@ -138,15 +140,21 @@ export default function StudentExplore({
   const tasks = useQuery(api.tasks.browseTasks);
   const acceptTask = useMutation(api.tasks.acceptTask);
   const { openProfile } = useProfileModal();
+  const activeTasks = useMemo(
+    () => (tasks ?? []).filter((task) => task.deadline > now),
+    [now, tasks],
+  );
+  const isSelectedTaskExpired =
+    selectedTask !== null ? selectedTask.deadline <= now : false;
 
   useEffect(() => {
     if (!focusTaskId || tasks === undefined) return;
-    const match = tasks.find((t) => String(t._id) === focusTaskId);
+    const match = activeTasks.find((t) => String(t._id) === focusTaskId);
     if (match) {
       openTaskDetail(match);
     }
     onFocusTaskConsumed?.();
-  }, [focusTaskId, tasks, onFocusTaskConsumed, openTaskDetail]);
+  }, [activeTasks, focusTaskId, onFocusTaskConsumed, openTaskDetail, tasks]);
 
   // Category filter groups — each maps to one or more DB categories
   const categoryFilters: { label: string; match: string[] }[] = [
@@ -182,7 +190,7 @@ export default function StudentExplore({
       byNorm.set(skillMatchKey(skill), skill);
     }
 
-    for (const task of tasks ?? []) {
+    for (const task of activeTasks) {
       for (const skill of task.skills ?? []) {
         const norm = skillMatchKey(skill);
         if (!byNorm.has(norm)) byNorm.set(norm, skill);
@@ -192,10 +200,10 @@ export default function StudentExplore({
     return Array.from(byNorm.values()).sort((a, b) =>
       a.localeCompare(b, undefined, { sensitivity: "base" }),
     );
-  }, [tasks]);
+  }, [activeTasks]);
 
   // Apply client-side filtering + sorting
-  const filteredTasks = (tasks ?? [])
+  const filteredTasks = activeTasks
     .filter((task) => {
       const q = searchQuery.toLowerCase();
       const matchesSearch =
@@ -551,14 +559,14 @@ export default function StudentExplore({
                     </span>
                     <div
                       className={`flex items-center gap-1.5 text-sm font-black uppercase tracking-widest cursor-default border-2 border-black dark:border-white px-3 py-1 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
-                        deadlineToDuration(task.deadline) === "Expired"
+                        deadlineToDuration(task.deadline, now) === "Expired"
                           ? "bg-[#DC2626] text-white"
                           : ""
                       }`}
                       title={`Deadline: ${new Date(task.deadline).toLocaleString()}`}
                     >
                       <Clock className="w-4 h-4" />
-                      {deadlineToDuration(task.deadline)}
+                      {deadlineToDuration(task.deadline, now)}
                     </div>
                   </div>
                 </div>
@@ -788,11 +796,26 @@ export default function StudentExplore({
                       Close
                     </button>
                   </div>
+                ) : isSelectedTaskExpired ? (
+                  <div className="w-full border-4 border-black dark:border-white bg-[#FCA5A5] p-4 text-center shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#fff]">
+                    <p className="font-black uppercase tracking-widest text-sm">
+                      Deadline passed
+                    </p>
+                    <p className="mt-1 text-sm font-bold leading-snug">
+                      This task just expired, so it can no longer be accepted. It
+                      will disappear from Explore automatically.
+                    </p>
+                  </div>
                 ) : (
                   <button
                     disabled={isAccepting}
                     onClick={async () => {
                       if (!selectedTask) return;
+                      if (selectedTask.deadline <= now) {
+                        alert("This task deadline has already passed.");
+                        return;
+                      }
+
                       setIsAccepting(true);
                       try {
                         await acceptTask({ taskId: selectedTask._id });

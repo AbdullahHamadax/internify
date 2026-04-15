@@ -14,6 +14,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Typography } from "@/components/ui/Typography";
+import { useLiveNow } from "@/lib/useLiveNow";
 
 interface SubmitTaskModalProps {
   open: boolean;
@@ -41,6 +42,7 @@ export default function SubmitTaskModal({
   onClose,
   onSubmitted,
 }: SubmitTaskModalProps) {
+  const now = useLiveNow();
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [note, setNote] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -49,7 +51,7 @@ export default function SubmitTaskModal({
 
   const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
   const submitTask = useMutation(api.tasks.submitTask);
-  const isExpired = deadline <= Date.now();
+  const isExpired = deadline <= now;
 
   if (!open) return null;
 
