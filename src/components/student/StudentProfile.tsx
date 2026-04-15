@@ -20,13 +20,23 @@ import {
   Zap,
   Trophy,
   X,
+  FileText,
+  Eye,
+  ChevronLeft,
+  ScanLine,
+  Upload,
+  AlertTriangle,
+  TrendingUp,
+  Target,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import deviconData from "devicon/devicon.json";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { SKILL_CATALOG } from "@/lib/skillCatalog";
+import { generateCvPdf } from "@/lib/cvPdfGenerator";
+import { extractTextFromPdf } from "@/lib/pdfTextExtractor";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -128,6 +138,25 @@ export default function StudentProfile() {
   const [skillInput, setSkillInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  // CV Modal State
+  const [isCvModalOpen, setIsCvModalOpen] = useState(false);
+  const [cvStep, setCvStep] = useState<"select" | "preview">("select");
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  const [isGeneratingCv, setIsGeneratingCv] = useState(false);
+  const [cvError, setCvError] = useState<string | null>(null);
+  const [cvPdfBlobUrl, setCvPdfBlobUrl] = useState<string | null>(null);
+  const [cvPdfFileName, setCvPdfFileName] = useState<string>("CV.pdf");
+
+  // CV Analyzer State
+  const [isAnalyzerOpen, setIsAnalyzerOpen] = useState(false);
+  const [analyzerStep, setAnalyzerStep] = useState<"upload" | "results">("upload");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzerError, setAnalyzerError] = useState<string | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
+
   // Sync state when modal opens
   useEffect(() => {
     if (isEditing && studentProfile) {
@@ -220,6 +249,196 @@ export default function StudentProfile() {
 
   const completedTasks =
     applications?.filter((app) => app.status === "completed") || [];
+
+  // Open the CV modal and pre-select all completed tasks
+  const handleOpenCvModal = useCallback(() => {
+    const completed = (applications ?? []).filter((app) => app.status === "completed");
+    setSelectedTaskIds(new Set(completed.map((app) => app._id)));
+    setCvStep("select");
+    setCvError(null);
+    setCvPdfBlobUrl(null);
+    setIsCvModalOpen(true);
+  }, [applications]);
+
+  const handleCloseCvModal = useCallback(() => {
+    setIsCvModalOpen(false);
+    // Revoke blob URL to free memory
+    if (cvPdfBlobUrl) {
+      URL.revokeObjectURL(cvPdfBlobUrl);
+      setCvPdfBlobUrl(null);
+    }
+  }, [cvPdfBlobUrl]);
+
+  const toggleTaskSelection = (taskId: string) => {
+    setSelectedTaskIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+  };
+
+  const handleGenerateCV = async () => {
+    if (!user || !studentProfile || !dbUser) return;
+    setIsGeneratingCv(true);
+    setCvError(null);
+    try {
+      // Gather only the selected completed tasks
+      const completedTasksData = (applications ?? [])
+        .filter((app) => app.status === "completed" && selectedTaskIds.has(app._id))
+        .map((app) => ({
+          title: app.task.title,
+          companyName: app.task.companyName,
+          category: app.task.category,
+          skillLevel: app.task.skillLevel,
+          skills: app.task.skills,
+          completedDate: new Date(app.acceptedAt).toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric",
+          }),
+        }));
+
+      const response = await fetch("/api/generate-cv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: user.fullName ?? "Student",
+          email: dbUser.email,
+          title: studentProfile.title,
+          location: studentProfile.location,
+          description: studentProfile.description,
+          academicStatus: studentProfile.academicStatus,
+          fieldOfStudy: studentProfile.fieldOfStudy,
+          skills: studentProfile.skills,
+          portfolio: studentProfile.portfolio,
+          github: studentProfile.github,
+          linkedin: studentProfile.linkedin,
+          completedTasks: completedTasksData,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to generate CV");
+      }
+
+      const { cv } = await response.json();
+
+      // Generate PDF and create a blob URL for preview
+      const doc = generateCvPdf(cv, user.fullName ?? "Student", dbUser.email);
+      const pdfBlob = doc.output("blob");
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const safeName = (user.fullName ?? "Student").replace(/\s+/g, "_");
+
+      setCvPdfBlobUrl(blobUrl);
+      setCvPdfFileName(`${safeName}_CV.pdf`);
+      setCvStep("preview");
+    } catch (err) {
+      console.error("CV generation failed:", err);
+      setCvError(err instanceof Error ? err.message : "Failed to generate CV");
+    } finally {
+      setIsGeneratingCv(false);
+    }
+  };
+
+  const handleDownloadCv = () => {
+    if (!cvPdfBlobUrl) return;
+    const a = document.createElement("a");
+    a.href = cvPdfBlobUrl;
+    a.download = cvPdfFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  // ─── CV Analyzer ───
+  const handleOpenAnalyzer = () => {
+    setAnalyzerStep("upload");
+    setAnalyzerError(null);
+    setAnalysisResult(null);
+    setUploadedFileName(null);
+    setIsAnalyzerOpen(true);
+  };
+
+  const handleAnalyzeCv = async (file: File) => {
+    if (!file || file.type !== "application/pdf") {
+      setAnalyzerError("Please upload a PDF file.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setAnalyzerError("File too large. Maximum 10MB.");
+      return;
+    }
+
+    setUploadedFileName(file.name);
+    setIsAnalyzing(true);
+    setAnalyzerError(null);
+
+    try {
+      const cvText = await extractTextFromPdf(file);
+
+      if (!cvText || cvText.trim().length < 50) {
+        throw new Error(
+          "Could not extract enough text. Please upload a text-based PDF, not a scanned image."
+        );
+      }
+
+      const fieldOfStudy = studentProfile?.fieldOfStudy || "General";
+
+      const response = await fetch("/api/analyze-cv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cvText, fieldOfStudy }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to analyze CV");
+      }
+
+      const { analysis } = await response.json();
+      setAnalysisResult(analysis);
+      setAnalyzerStep("results");
+    } catch (err) {
+      console.error("CV analysis failed:", err);
+      setAnalyzerError(err instanceof Error ? err.message : "Analysis failed");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleAnalyzeCv(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleAnalyzeCv(file);
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-emerald-600";
+    if (score >= 60) return "text-amber-500";
+    return "text-red-500";
+  };
+
+  const getScoreBg = (score: number) => {
+    if (score >= 80) return "bg-emerald-100 border-emerald-500";
+    if (score >= 60) return "bg-amber-100 border-amber-500";
+    return "bg-red-100 border-red-500";
+  };
+
+  const getPriorityColor = (priority: string) => {
+    if (priority === "high") return "bg-red-500 text-white";
+    if (priority === "medium") return "bg-amber-400 text-black";
+    return "bg-emerald-400 text-black";
+  };
 
   const [shared, setShared] = useState(false);
 
@@ -345,8 +564,11 @@ export default function StudentProfile() {
               Edit Profile
             </button>
             <div className="grid grid-cols-2 gap-3">
-              <button className="group flex items-center justify-center gap-2 py-3 bg-[#A7F3D0] text-black  border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:translate-x-[4px] active:translate-y-[4px]">
-                <Download className="w-4 h-4 group-hover:-translate-y-1 transition-transform" />
+              <button
+                onClick={handleOpenCvModal}
+                className="group flex items-center justify-center gap-2 py-3 bg-[#A7F3D0] text-black border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:translate-x-[4px] active:translate-y-[4px]"
+              >
+                <FileText className="w-4 h-4 group-hover:-translate-y-1 transition-transform" />
                 Generate CV
               </button>
               <button
@@ -361,6 +583,13 @@ export default function StudentProfile() {
                 {shared ? "Copied!" : "Share"}
               </button>
             </div>
+            <button
+              onClick={handleOpenAnalyzer}
+              className="group w-full flex items-center justify-center gap-2 py-3 bg-[#FDE68A] text-black border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] font-black uppercase tracking-widest text-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:translate-x-[4px] active:translate-y-[4px]"
+            >
+              <ScanLine className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              CV Analyzer
+            </button>
           </div>
 
           {/* Contact & Links */}
@@ -805,6 +1034,541 @@ export default function StudentProfile() {
                   Save Changes
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* CV GENERATION MODAL */}
+      <AnimatePresence>
+        {isCvModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseCvModal}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-3xl max-h-[90vh] bg-background border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] flex flex-col overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-5 pb-3 border-b-4 border-border">
+                <div className="flex items-center gap-3">
+                  {cvStep === "preview" && (
+                    <button
+                      onClick={() => setCvStep("select")}
+                      className="w-8 h-8 flex items-center justify-center border-2 border-border bg-transparent text-foreground shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  <Typography
+                    variant="h3"
+                    className="font-black uppercase text-foreground tracking-widest"
+                  >
+                    {cvStep === "select" ? "Generate CV" : "Preview CV"}
+                  </Typography>
+                </div>
+                <button
+                  onClick={handleCloseCvModal}
+                  className="w-8 h-8 flex items-center justify-center border-2 border-border bg-transparent text-foreground shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* STEP 1: Task Selection */}
+              {cvStep === "select" && (
+                <>
+                  <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                    <Typography variant="p" className="text-sm font-medium">
+                      Select which completed tasks to include as work experience in your CV:
+                    </Typography>
+
+                    {completedTasks.length === 0 ? (
+                      <div className="p-6 text-center bg-muted border-4 border-border border-dashed">
+                        <Typography variant="h4" className="uppercase mb-2">
+                          No completed tasks
+                        </Typography>
+                        <Typography variant="p" className="text-sm text-muted-foreground">
+                          Complete tasks first to include them as experience, or generate a CV with just your profile info.
+                        </Typography>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {/* Select All / Deselect All */}
+                        <div className="flex gap-2 mb-3">
+                          <button
+                            onClick={() =>
+                              setSelectedTaskIds(
+                                new Set(completedTasks.map((t) => t._id))
+                              )
+                            }
+                            className="px-3 py-1.5 text-xs font-black uppercase tracking-wider border-2 border-border bg-card shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all"
+                          >
+                            Select All
+                          </button>
+                          <button
+                            onClick={() => setSelectedTaskIds(new Set())}
+                            className="px-3 py-1.5 text-xs font-black uppercase tracking-wider border-2 border-border bg-card shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all"
+                          >
+                            Deselect All
+                          </button>
+                        </div>
+
+                        {completedTasks.map((app) => {
+                          const isSelected = selectedTaskIds.has(app._id);
+                          return (
+                            <button
+                              key={app._id}
+                              onClick={() => toggleTaskSelection(app._id)}
+                              className={`w-full text-left p-4 border-4 transition-all flex items-start gap-3 ${
+                                isSelected
+                                  ? "border-black dark:border-white bg-[#A7F3D0]/30 shadow-[4px_4px_0_0_var(--border)]"
+                                  : "border-border bg-card shadow-[2px_2px_0_0_var(--border)] opacity-70 hover:opacity-100"
+                              }`}
+                            >
+                              {/* Checkbox */}
+                              <div
+                                className={`shrink-0 mt-0.5 w-5 h-5 border-2 flex items-center justify-center transition-colors ${
+                                  isSelected
+                                    ? "bg-black dark:bg-white border-black dark:border-white"
+                                    : "border-border bg-transparent"
+                                }`}
+                              >
+                                {isSelected && (
+                                  <Check className="w-3.5 h-3.5 text-white dark:text-black" />
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <Typography variant="h4" className="truncate">
+                                  {app.task.title}
+                                </Typography>
+                                <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                  <span className="font-bold text-foreground bg-muted px-1.5 py-0.5 border border-border">
+                                    {app.task.companyName}
+                                  </span>
+                                  <span className="font-medium">
+                                    {app.task.category} · {app.task.skillLevel}
+                                  </span>
+                                </div>
+                                {app.task.skills.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {app.task.skills.slice(0, 5).map((skill) => (
+                                      <span
+                                        key={skill}
+                                        className="text-[10px] font-bold uppercase px-1.5 py-0.5 border border-border bg-muted"
+                                      >
+                                        {skill}
+                                      </span>
+                                    ))}
+                                    {app.task.skills.length > 5 && (
+                                      <span className="text-[10px] font-bold text-muted-foreground">
+                                        +{app.task.skills.length - 5} more
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Error Display */}
+                    {cvError && (
+                      <div className="p-3 bg-red-100 dark:bg-red-900/30 border-4 border-red-500 text-red-800 dark:text-red-200 text-sm font-bold">
+                        {cvError}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-4 border-t-4 border-black dark:border-white bg-[#A7F3D0] flex justify-between items-center gap-4">
+                    <Typography variant="span" className="text-xs font-bold text-black">
+                      {selectedTaskIds.size} task{selectedTaskIds.size !== 1 ? "s" : ""} selected
+                    </Typography>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleCloseCvModal}
+                        className="px-5 py-2 bg-transparent text-black border-4 border-black font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[#A7F3D0] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleGenerateCV}
+                        disabled={isGeneratingCv}
+                        className="px-5 py-2 bg-black text-[#A7F3D0] border-4 border-black shadow-[4px_4px_0_0_#000] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {isGeneratingCv ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-4 h-4" />
+                            Generate & Preview
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* STEP 2: PDF Preview */}
+              {cvStep === "preview" && cvPdfBlobUrl && (
+                <>
+                  <div className="flex-1 overflow-hidden p-4">
+                    <iframe
+                      src={cvPdfBlobUrl}
+                      title="CV Preview"
+                      className="w-full h-full border-4 border-border shadow-[4px_4px_0_0_var(--border)] bg-white"
+                      style={{ minHeight: "500px" }}
+                    />
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-4 border-t-4 border-black dark:border-white bg-[#A7F3D0] flex justify-between items-center">
+                    <button
+                      onClick={() => {
+                        setCvStep("select");
+                        if (cvPdfBlobUrl) {
+                          URL.revokeObjectURL(cvPdfBlobUrl);
+                          setCvPdfBlobUrl(null);
+                        }
+                      }}
+                      className="px-5 py-2 bg-transparent text-black border-4 border-black font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[#A7F3D0] transition-colors flex items-center gap-2"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Re-select Tasks
+                    </button>
+                    <button
+                      onClick={handleDownloadCv}
+                      className="px-6 py-2 bg-black text-[#A7F3D0] border-4 border-black shadow-[4px_4px_0_0_#000] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download PDF
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* CV ANALYZER MODAL */}
+      <AnimatePresence>
+        {isAnalyzerOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAnalyzerOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-3xl max-h-[90vh] bg-background border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] flex flex-col overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-5 pb-3 border-b-4 border-border">
+                <div className="flex items-center gap-3">
+                  {analyzerStep === "results" && (
+                    <button
+                      onClick={() => {
+                        setAnalyzerStep("upload");
+                        setAnalysisResult(null);
+                        setAnalyzerError(null);
+                      }}
+                      className="w-8 h-8 flex items-center justify-center border-2 border-border bg-transparent text-foreground shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  <Typography
+                    variant="h3"
+                    className="font-black uppercase text-foreground tracking-widest"
+                  >
+                    {analyzerStep === "upload" ? "CV Analyzer" : "ATS Analysis"}
+                  </Typography>
+                </div>
+                <button
+                  onClick={() => setIsAnalyzerOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center border-2 border-border bg-transparent text-foreground shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* UPLOAD STEP */}
+              {analyzerStep === "upload" && (
+                <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                  <Typography variant="p" className="text-sm font-medium">
+                    Upload your CV as a PDF to get an ATS compatibility score and
+                    personalized recommendations for the{" "}
+                    <span className="font-black">
+                      {studentProfile?.fieldOfStudy || "your"}
+                    </span>{" "}
+                    field.
+                  </Typography>
+
+                  {/* Drop Zone */}
+                  <label
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleDrop}
+                    className={`flex flex-col items-center justify-center gap-4 p-10 border-4 border-dashed cursor-pointer transition-all ${
+                      isDragging
+                        ? "border-[#2563EB] bg-blue-50 dark:bg-blue-950/20 scale-[1.02]"
+                        : isAnalyzing
+                          ? "border-border bg-muted opacity-60 cursor-wait"
+                          : "border-border bg-card hover:border-black dark:hover:border-white hover:bg-muted"
+                    }`}
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-12 h-12 animate-spin text-[#2563EB]" />
+                        <div className="text-center">
+                          <Typography variant="h4" className="uppercase">
+                            Analyzing {uploadedFileName}...
+                          </Typography>
+                          <Typography
+                            variant="p"
+                            className="text-sm text-muted-foreground mt-1"
+                          >
+                            Extracting text and running ATS evaluation
+                          </Typography>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="p-4 bg-[#FDE68A] border-4 border-black shadow-[4px_4px_0_0_#000] rotate-3">
+                          <Upload className="w-8 h-8 text-black" />
+                        </div>
+                        <div className="text-center">
+                          <Typography variant="h4" className="uppercase">
+                            Drop your CV here
+                          </Typography>
+                          <Typography
+                            variant="p"
+                            className="text-sm text-muted-foreground mt-1"
+                          >
+                            or click to browse — PDF only, max 10MB
+                          </Typography>
+                        </div>
+                        <input
+                          type="file"
+                          accept=".pdf,application/pdf"
+                          onChange={handleFileInputChange}
+                          className="hidden"
+                          disabled={isAnalyzing}
+                        />
+                      </>
+                    )}
+                  </label>
+
+                  {/* Error */}
+                  {analyzerError && (
+                    <div className="p-3 bg-red-100 dark:bg-red-900/30 border-4 border-red-500 text-red-800 dark:text-red-200 text-sm font-bold flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      {analyzerError}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* RESULTS STEP */}
+              {analyzerStep === "results" && analysisResult && (
+                <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                  {/* Overall Score */}
+                  <div className="flex flex-col sm:flex-row items-center gap-6 p-5 bg-card border-4 border-border shadow-[4px_4px_0_0_var(--border)]">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={`w-24 h-24 flex items-center justify-center border-4 shadow-[4px_4px_0_0_var(--border)] ${getScoreBg(analysisResult.overallScore)}`}
+                      >
+                        <span
+                          className={`text-4xl font-black ${getScoreColor(analysisResult.overallScore)}`}
+                        >
+                          {analysisResult.overallScore}
+                        </span>
+                      </div>
+                      <Typography
+                        variant="span"
+                        className="text-xs font-black uppercase tracking-widest mt-2"
+                      >
+                        ATS Score
+                      </Typography>
+                    </div>
+                    <div className="flex-1 text-center sm:text-left">
+                      <Typography variant="p" className="text-sm font-medium leading-relaxed">
+                        {analysisResult.summary}
+                      </Typography>
+                      <Typography
+                        variant="span"
+                        className="text-xs text-muted-foreground mt-2 block"
+                      >
+                        Analyzed for: {studentProfile?.fieldOfStudy || "General"} roles
+                      </Typography>
+                    </div>
+                  </div>
+
+                  {/* Criteria Breakdown */}
+                  <div className="space-y-3">
+                    <Typography variant="h4" className="flex items-center gap-2 uppercase">
+                      <Target className="w-4 h-4" />
+                      Score Breakdown
+                    </Typography>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {analysisResult.breakdown?.map(
+                        (item: { criterion: string; score: number; comment: string }) => (
+                          <div
+                            key={item.criterion}
+                            className="p-3 bg-card border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-start gap-3"
+                          >
+                            <span
+                              className={`text-lg font-black shrink-0 w-10 text-center ${getScoreColor(item.score)}`}
+                            >
+                              {item.score}
+                            </span>
+                            <div className="min-w-0">
+                              <Typography variant="span" className="text-xs font-black uppercase block">
+                                {item.criterion}
+                              </Typography>
+                              <Typography
+                                variant="span"
+                                className="text-xs text-muted-foreground block mt-0.5"
+                              >
+                                {item.comment}
+                              </Typography>
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Strengths */}
+                  {analysisResult.strengths?.length > 0 && (
+                    <div className="space-y-2">
+                      <Typography variant="h4" className="flex items-center gap-2 uppercase">
+                        <TrendingUp className="w-4 h-4" />
+                        Strengths
+                      </Typography>
+                      <div className="space-y-1">
+                        {analysisResult.strengths.map((s: string, i: number) => (
+                          <div
+                            key={i}
+                            className="flex items-start gap-2 p-2 bg-emerald-50 dark:bg-emerald-950/20 border-2 border-emerald-300 dark:border-emerald-700"
+                          >
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <Typography variant="span" className="text-sm">
+                              {s}
+                            </Typography>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recommendations */}
+                  {analysisResult.recommendations?.length > 0 && (
+                    <div className="space-y-2">
+                      <Typography variant="h4" className="flex items-center gap-2 uppercase">
+                        <Zap className="w-4 h-4" />
+                        Recommendations
+                      </Typography>
+                      <div className="space-y-2">
+                        {analysisResult.recommendations.map(
+                          (
+                            rec: { priority: string; title: string; description: string },
+                            i: number
+                          ) => (
+                            <div
+                              key={i}
+                              className="p-3 bg-card border-4 border-border shadow-[2px_2px_0_0_var(--border)]"
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <span
+                                  className={`text-[10px] font-black uppercase px-2 py-0.5 border-2 border-black ${getPriorityColor(rec.priority)}`}
+                                >
+                                  {rec.priority}
+                                </span>
+                                <Typography variant="span" className="text-sm font-black">
+                                  {rec.title}
+                                </Typography>
+                              </div>
+                              <Typography
+                                variant="p"
+                                className="text-sm text-muted-foreground leading-relaxed"
+                              >
+                                {rec.description}
+                              </Typography>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing Keywords */}
+                  {analysisResult.missingKeywords?.length > 0 && (
+                    <div className="space-y-2">
+                      <Typography variant="h4" className="flex items-center gap-2 uppercase">
+                        <AlertTriangle className="w-4 h-4" />
+                        Missing Keywords for {studentProfile?.fieldOfStudy || "Your Field"}
+                      </Typography>
+                      <div className="flex flex-wrap gap-2">
+                        {analysisResult.missingKeywords.map((kw: string) => (
+                          <span
+                            key={kw}
+                            className="px-3 py-1.5 text-xs font-black uppercase border-2 border-red-400 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300 shadow-[2px_2px_0_0_#fca5a5]"
+                          >
+                            + {kw}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Footer */}
+              {analyzerStep === "results" && (
+                <div className="p-4 border-t-4 border-black dark:border-white bg-[#FDE68A] flex justify-between items-center">
+                  <button
+                    onClick={() => {
+                      setAnalyzerStep("upload");
+                      setAnalysisResult(null);
+                    }}
+                    className="px-5 py-2 bg-transparent text-black border-4 border-black font-black uppercase tracking-widest text-xs hover:bg-black hover:text-[#FDE68A] transition-colors flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Analyze Another
+                  </button>
+                  <button
+                    onClick={() => setIsAnalyzerOpen(false)}
+                    className="px-6 py-2 bg-black text-[#FDE68A] border-4 border-black shadow-[4px_4px_0_0_#000] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
             </motion.div>
           </div>
         )}
