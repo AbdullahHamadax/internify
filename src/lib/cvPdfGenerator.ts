@@ -21,9 +21,11 @@ interface CVExperience {
 
 interface CVEducation {
   institution: string;
+  college?: string | null;
   degree: string;
   field: string;
   date: string;
+  gpa?: string | null;
 }
 
 interface CVData {
@@ -36,6 +38,8 @@ interface CVData {
     github?: string | null;
     linkedin?: string | null;
   };
+  phone?: string | null;
+  address?: string | null;
 }
 
 // Layout constants
@@ -51,6 +55,23 @@ const SECTION_GAP = 8;
 
 function wrapText(doc: jsPDF, text: string, maxWidth: number): string[] {
   return doc.splitTextToSize(text, maxWidth) as string[];
+}
+
+/**
+ * Extracts a short display handle from a URL.
+ * e.g. "https://linkedin.com/in/abdallah-hamada" → "abdallah-hamada"
+ * e.g. "https://github.com/abdomosa194"           → "abdomosa194"
+ * e.g. "https://insomniagamingegypt.com/"          → "insomniagamingegypt.com"
+ */
+function extractHandle(url: string): string {
+  try {
+    const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
+    const segments = parsed.pathname.split("/").filter(Boolean);
+    if (segments.length > 0) return segments[segments.length - 1];
+    return parsed.hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
 }
 
 export function generateCvPdf(
@@ -74,22 +95,108 @@ export function generateCvPdf(
   doc.text(fullName.toUpperCase(), PAGE_WIDTH / 2, y, { align: "center" });
   y += 9;
 
-  // ─── HEADER: Contact Line ───
+  // ─── HEADER: Contact Line (labeled short links + phone/address) ───
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
 
-  const contactParts: string[] = [email];
-  if (cvData.links?.linkedin) contactParts.push(cvData.links.linkedin);
-  if (cvData.links?.github) contactParts.push(cvData.links.github);
-  if (cvData.links?.portfolio) contactParts.push(cvData.links.portfolio);
+  /**
+   * Each segment: { prefix, handle, url? }
+   * prefix = plain black label, handle = blue+clickable if url, else plain black
+   */
+  interface ContactSegment {
+    prefix: string;
+    handle: string;
+    url?: string;
+  }
 
-  const contactLine = contactParts.join("  |  ");
-  const contactLines = wrapText(doc, contactLine, CONTENT_WIDTH);
-  contactLines.forEach((line) => {
+  const segments: ContactSegment[] = [
+    { prefix: "", handle: email, url: `mailto:${email}` },
+  ];
+
+  if (cvData.phone)
+    segments.push({ prefix: "Phone: ", handle: cvData.phone });
+
+  if (cvData.address)
+    segments.push({ prefix: "Address: ", handle: cvData.address });
+
+  if (cvData.links?.linkedin)
+    segments.push({
+      prefix: "LinkedIn: ",
+      handle: extractHandle(cvData.links.linkedin),
+      url: cvData.links.linkedin,
+    });
+  if (cvData.links?.github)
+    segments.push({
+      prefix: "GitHub: ",
+      handle: extractHandle(cvData.links.github),
+      url: cvData.links.github,
+    });
+  if (cvData.links?.portfolio)
+    segments.push({
+      prefix: "Portfolio: ",
+      handle: extractHandle(cvData.links.portfolio),
+      url: cvData.links.portfolio,
+    });
+
+  const SEP = "  |  ";
+  const sepWidth = doc.getTextWidth(SEP);
+
+  // If too many segments to fit on one line, split into two rows
+  const totalLineWidth = segments.reduce((acc, seg, idx) => {
+    const segW = doc.getTextWidth(seg.prefix) + doc.getTextWidth(seg.handle);
+    return acc + segW + (idx < segments.length - 1 ? sepWidth : 0);
+  }, 0);
+
+  const renderSegmentRow = (row: ContactSegment[]) => {
+    if (row.length === 0) return;
+    const rowWidth = row.reduce((acc, seg, idx) => {
+      return acc + doc.getTextWidth(seg.prefix) + doc.getTextWidth(seg.handle)
+        + (idx < row.length - 1 ? sepWidth : 0);
+    }, 0);
     checkPageBreak(LINE_HEIGHT);
-    doc.text(line, PAGE_WIDTH / 2, y, { align: "center" });
+    let cx = PAGE_WIDTH / 2 - rowWidth / 2;
+
+    row.forEach((seg, idx) => {
+      if (seg.prefix) {
+        doc.setTextColor(0, 0, 0);
+        doc.text(seg.prefix, cx, y);
+        cx += doc.getTextWidth(seg.prefix);
+      }
+
+      const handleWidth = doc.getTextWidth(seg.handle);
+      if (seg.url) {
+        doc.setTextColor(0, 102, 204);
+        doc.text(seg.handle, cx, y);
+        doc.setDrawColor(0, 102, 204);
+        doc.setLineWidth(0.2);
+        doc.line(cx, y + 0.6, cx + handleWidth, y + 0.6);
+        doc.link(cx, y - 3.5, handleWidth, 4.5, { url: seg.url });
+      } else {
+        doc.setTextColor(0, 0, 0);
+        doc.text(seg.handle, cx, y);
+      }
+      cx += handleWidth;
+
+      if (idx < row.length - 1) {
+        doc.setTextColor(0, 0, 0);
+        doc.text(SEP, cx, y);
+        cx += sepWidth;
+      }
+    });
+
+    doc.setTextColor(0, 0, 0);
+    doc.setDrawColor(0);
     y += LINE_HEIGHT;
-  });
+  };
+
+  // Split into two rows if content is wider than the page
+  if (totalLineWidth > CONTENT_WIDTH) {
+    const mid = Math.ceil(segments.length / 2);
+    renderSegmentRow(segments.slice(0, mid));
+    renderSegmentRow(segments.slice(mid));
+  } else {
+    renderSegmentRow(segments);
+  }
 
   y += 3;
 
@@ -139,7 +246,6 @@ export function generateCvPdf(
     drawSectionHeader("Experience");
 
     cvData.experience.forEach((exp, idx) => {
-      // Job title + date on one line
       checkPageBreak(20);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
@@ -164,19 +270,12 @@ export function generateCvPdf(
         const bulletLines = wrapText(doc, bulletText, CONTENT_WIDTH - 5);
         bulletLines.forEach((line, lineIdx) => {
           checkPageBreak(LINE_HEIGHT);
-          doc.text(
-            lineIdx === 0 ? line : `    ${line}`,
-            MARGIN_LEFT + 3,
-            y
-          );
+          doc.text(lineIdx === 0 ? line : `    ${line}`, MARGIN_LEFT + 3, y);
           y += LINE_HEIGHT;
         });
       });
 
-      // Spacing between entries
-      if (idx < cvData.experience.length - 1) {
-        y += 4;
-      }
+      if (idx < cvData.experience.length - 1) y += 4;
     });
 
     y += SECTION_GAP;
@@ -189,7 +288,7 @@ export function generateCvPdf(
     drawSectionHeader("Education");
 
     cvData.education.forEach((edu) => {
-      checkPageBreak(15);
+      checkPageBreak(20);
 
       // Degree + date
       doc.setFont("helvetica", "bold");
@@ -202,11 +301,29 @@ export function generateCvPdf(
       doc.text(edu.date, PAGE_WIDTH - MARGIN_RIGHT, y, { align: "right" });
       y += LINE_HEIGHT;
 
-      // Institution
+      // University
       doc.setFont("helvetica", "italic");
       doc.setFontSize(10);
       doc.text(edu.institution, MARGIN_LEFT, y);
-      y += LINE_HEIGHT + 2;
+      y += LINE_HEIGHT;
+
+      // College / faculty (if present)
+      if (edu.college) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.text(edu.college, MARGIN_LEFT, y);
+        y += LINE_HEIGHT;
+      }
+
+      // GPA (if present)
+      if (edu.gpa && edu.gpa !== "null") {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.text(`GPA: ${edu.gpa}`, MARGIN_LEFT, y);
+        y += LINE_HEIGHT;
+      }
+
+      y += 2;
     });
 
     y += SECTION_GAP;
@@ -232,11 +349,7 @@ export function generateCvPdf(
       const labelWidth = doc.getTextWidth(categoryLabel);
       doc.setFont("helvetica", "normal");
       const skillsText = (skillsList as string[]).join(", ");
-      const skillsLines = wrapText(
-        doc,
-        skillsText,
-        CONTENT_WIDTH - labelWidth
-      );
+      const skillsLines = wrapText(doc, skillsText, CONTENT_WIDTH - labelWidth);
 
       skillsLines.forEach((line, lineIdx) => {
         if (lineIdx === 0) {

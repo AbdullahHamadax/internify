@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
       fullName,
       email,
       title,
-      location,
       description,
       academicStatus,
       fieldOfStudy,
@@ -25,6 +24,13 @@ export async function POST(req: NextRequest) {
       github,
       linkedin,
       completedTasks,
+      // New extended fields
+      university,
+      degree,
+      graduationYear,
+      gpa,
+      phone,
+      city,
     } = body;
 
     if (!fullName || !email) {
@@ -34,15 +40,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const address = city ? `${city}, Egypt` : null;
+
     // Build a raw text representation of everything we know about this student
     const rawProfileText = `
 STUDENT PROFILE DATA:
 - Full Name: ${fullName}
 - Email: ${email}
+- Phone: ${phone || "Not provided"}
+- Address: ${address || "Not specified"}
 - Professional Title: ${title || "Not specified"}
-- Location: ${location || "Not specified"}
 - Academic Status: ${academicStatus || "Not specified"}
+- University: ${university || "Not specified"}
+- College / Faculty: Faculty of Computing and Information Technology
+- Degree Name: ${degree || "Not specified"}
 - Field of Study: ${fieldOfStudy || "Not specified"}
+- Graduation Year: ${graduationYear || "Not specified"}
+- GPA: ${gpa != null ? `${gpa} / 4.0` : "Not specified"}
 - Bio/Description: ${description || "Not provided"}
 - Skills: ${skills?.length ? skills.join(", ") : "None listed"}
 - Portfolio: ${portfolio || "None"}
@@ -62,7 +76,7 @@ ${
 }
     `.trim();
 
-    const systemPrompt = `You are an expert CV writer specializing in ATS-optimized resumes. 
+    const systemPrompt = `You are an expert CV writer specializing in ATS-optimized resumes for Egyptian CS students.
 Your job is to take raw student profile data and transform it into a polished, professional CV.
 
 RULES:
@@ -71,11 +85,12 @@ RULES:
    - The company name as the employer
    - A relevant job title derived from the task category and skill level
    - The completion date formatted as "Month Year"
-   - 2-3 bullet points describing what was accomplished, using strong action verbs (e.g., "Developed", "Implemented", "Designed", "Delivered")
-3. For education, use the academic status and field of study to create a proper education entry.
+   - 2-3 bullet points describing what was accomplished, using strong action verbs
+3. For education, use the provided university, college ("Faculty of Computing and Information Technology"), degree name, field of study, and graduation year. Include GPA if provided.
 4. For skills, organize them into categories (e.g., "Programming Languages", "Frameworks", "Tools") if possible.
 5. Keep all content factual — do NOT invent information that wasn't provided.
 6. If the student has no completed tasks, still produce a valid CV with the available information.
+7. Include phone and address in the output exactly as provided.
 
 RESPOND WITH ONLY valid JSON in this exact format (no markdown, no code fences):
 {
@@ -90,10 +105,12 @@ RESPOND WITH ONLY valid JSON in this exact format (no markdown, no code fences):
   ],
   "education": [
     {
-      "institution": "University / Academic Program",
-      "degree": "Degree or Status",
+      "institution": "University Name",
+      "college": "Faculty of Computing and Information Technology",
+      "degree": "Bachelor's Degree Name",
       "field": "Field of Study",
-      "date": "Current or Expected Graduation"
+      "date": "Expected Graduation Year or 'Current'",
+      "gpa": "GPA / 4.0 or null"
     }
   ],
   "skills": {
@@ -103,7 +120,9 @@ RESPOND WITH ONLY valid JSON in this exact format (no markdown, no code fences):
     "portfolio": "url or null",
     "github": "url or null",
     "linkedin": "url or null"
-  }
+  },
+  "phone": "phone number or null",
+  "address": "City, Egypt or null"
 }`;
 
     const chatCompletion = await groq.chat.completions.create({
@@ -124,7 +143,6 @@ RESPOND WITH ONLY valid JSON in this exact format (no markdown, no code fences):
       );
     }
 
-    // Parse and validate the JSON response
     const cvData = JSON.parse(rawReply);
 
     return NextResponse.json({ cv: cvData });

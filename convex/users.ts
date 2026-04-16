@@ -34,7 +34,6 @@ export const currentUser = query({
     }
 
     // 3. If they are a student, get their student-specific info
-    // Example: Getting their "Field of Study" (e.g., "Computer Science")
     if (user.role === "student") {
       const studentProfile = await ctx.db
         .query("studentProfiles")
@@ -44,7 +43,6 @@ export const currentUser = query({
     }
 
     // 4. If they are an employer, get their company-specific info
-    // Example: Getting their "Company Name" (e.g., "Google")
     const employerProfile = await ctx.db
       .query("employerProfiles")
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
@@ -92,6 +90,13 @@ export const upsertCurrentUser = mutation({
         linkedin: v.optional(v.string()),
         skills: v.optional(v.array(v.string())),
         cvFileName: v.optional(v.string()),
+        // Extended education & contact fields
+        university: v.optional(v.string()),
+        degree: v.optional(v.string()),
+        graduationYear: v.optional(v.number()),
+        gpa: v.optional(v.number()),
+        phone: v.optional(v.string()),
+        city: v.optional(v.string()),
       }),
     ),
     employerProfile: v.optional(
@@ -146,7 +151,6 @@ export const upsertCurrentUser = mutation({
         });
 
     // If they already exist, UPDATE their info (Patch).
-    // Example: User changed their email address in settings.
     if (existingUser) {
       // Role is immutable once set — prevents students from becoming employers (and vice versa).
       if (existingUser.role !== args.role) {
@@ -191,6 +195,12 @@ export const upsertCurrentUser = mutation({
           linkedin: args.studentProfile.linkedin,
           skills: args.studentProfile.skills,
           cvFileName: args.studentProfile.cvFileName,
+          university: args.studentProfile.university,
+          degree: args.studentProfile.degree,
+          graduationYear: args.studentProfile.graduationYear,
+          gpa: args.studentProfile.gpa,
+          phone: args.studentProfile.phone,
+          city: args.studentProfile.city,
           updatedAt: now,
         });
       } else {
@@ -207,6 +217,12 @@ export const upsertCurrentUser = mutation({
           linkedin: args.studentProfile.linkedin,
           skills: args.studentProfile.skills,
           cvFileName: args.studentProfile.cvFileName,
+          university: args.studentProfile.university,
+          degree: args.studentProfile.degree,
+          graduationYear: args.studentProfile.graduationYear,
+          gpa: args.studentProfile.gpa,
+          phone: args.studentProfile.phone,
+          city: args.studentProfile.city,
           updatedAt: now,
         });
       }
@@ -303,10 +319,10 @@ export const getStudentsForEmployer = query({
       throw new Error("Unauthorized");
     }
 
-    // 2. We can enforce evaluating if caller is an employer, but for now just fetching all students
+    // 2. Fetch all student users
     const students = await ctx.db
       .query("users")
-      .withIndex("by_tokenIdentifier") // Using a valid index or full scan if necessary
+      .withIndex("by_tokenIdentifier")
       .filter((q) => q.eq(q.field("role"), "student"))
       .collect();
 
