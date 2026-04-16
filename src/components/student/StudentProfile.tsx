@@ -28,7 +28,9 @@ import {
   AlertTriangle,
   TrendingUp,
   Target,
+  Phone,
 } from "lucide-react";
+import { EGYPTIAN_UNIVERSITIES, EGYPTIAN_CITIES } from "@/lib/egyptianData";
 import { useState, useEffect, useCallback } from "react";
 import deviconData from "devicon/devicon.json";
 import { motion, Variants, AnimatePresence } from "framer-motion";
@@ -108,7 +110,9 @@ export default function StudentProfile() {
 
   // Profile Data Resolution
   const profileTitle = studentProfile?.title || DEFAULT_PROFILE.title;
-  const profileLocation = studentProfile?.location || DEFAULT_PROFILE.location;
+  const profileLocation = studentProfile?.city
+    ? `${studentProfile.city}, Egypt`
+    : studentProfile?.location || DEFAULT_PROFILE.location;
   const profileDescription =
     studentProfile?.description || DEFAULT_PROFILE.description;
   const profileEmail = dbUser?.email || DEFAULT_PROFILE.email;
@@ -134,6 +138,12 @@ export default function StudentProfile() {
     github: "",
     linkedin: "",
     skills: [] as string[],
+    university: "",
+    degree: "",
+    graduationYear: "",
+    gpa: "",
+    phone: "",
+    city: "",
   });
   const [skillInput, setSkillInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -146,6 +156,7 @@ export default function StudentProfile() {
   const [cvError, setCvError] = useState<string | null>(null);
   const [cvPdfBlobUrl, setCvPdfBlobUrl] = useState<string | null>(null);
   const [cvPdfFileName, setCvPdfFileName] = useState<string>("CV.pdf");
+  const [cvBlockedFields, setCvBlockedFields] = useState<string[]>([]);
 
   // CV Analyzer State
   const [isAnalyzerOpen, setIsAnalyzerOpen] = useState(false);
@@ -168,6 +179,12 @@ export default function StudentProfile() {
         github: studentProfile.github || "",
         linkedin: studentProfile.linkedin || "",
         skills: studentProfile.skills || [],
+        university: studentProfile.university || "",
+        degree: studentProfile.degree || "",
+        graduationYear: studentProfile.graduationYear ? String(studentProfile.graduationYear) : "",
+        gpa: studentProfile.gpa != null ? String(studentProfile.gpa) : "",
+        phone: studentProfile.phone || "",
+        city: studentProfile.city || "",
       });
     }
   }, [isEditing, studentProfile]);
@@ -189,6 +206,12 @@ export default function StudentProfile() {
           linkedin: formData.linkedin,
           skills: formData.skills,
           cvFileName: studentProfile.cvFileName,
+          university: formData.university || undefined,
+          degree: formData.degree || undefined,
+          graduationYear: formData.graduationYear ? Number(formData.graduationYear) : undefined,
+          gpa: formData.gpa ? Number(formData.gpa) : undefined,
+          phone: formData.phone || undefined,
+          city: formData.city || undefined,
         },
       });
       setIsEditing(false);
@@ -250,15 +273,33 @@ export default function StudentProfile() {
   const completedTasks =
     applications?.filter((app) => app.status === "completed") || [];
 
-  // Open the CV modal and pre-select all completed tasks
+  // Open the CV modal — hard-gate: all required fields must be filled
   const handleOpenCvModal = useCallback(() => {
+    if (!studentProfile) return;
+
+    // Check completeness of new required CV fields
+    const missing: string[] = [];
+    if (!studentProfile.university) missing.push("University");
+    if (!studentProfile.degree) missing.push("Bachelor's Degree Name");
+    if (!studentProfile.graduationYear) missing.push("Graduation Year");
+    if (studentProfile.gpa == null) missing.push("GPA");
+    if (!studentProfile.phone) missing.push("Phone Number");
+    if (!studentProfile.city) missing.push("City");
+
+    if (missing.length > 0) {
+      // Signal the edit modal to open with the missing-fields banner
+      setCvBlockedFields(missing);
+      setIsEditing(true);
+      return;
+    }
+
     const completed = (applications ?? []).filter((app) => app.status === "completed");
     setSelectedTaskIds(new Set(completed.map((app) => app._id)));
     setCvStep("select");
     setCvError(null);
     setCvPdfBlobUrl(null);
     setIsCvModalOpen(true);
-  }, [applications]);
+  }, [applications, studentProfile]);
 
   const handleCloseCvModal = useCallback(() => {
     setIsCvModalOpen(false);
@@ -286,7 +327,6 @@ export default function StudentProfile() {
     setIsGeneratingCv(true);
     setCvError(null);
     try {
-      // Gather only the selected completed tasks
       const completedTasksData = (applications ?? [])
         .filter((app) => app.status === "completed" && selectedTaskIds.has(app._id))
         .map((app) => ({
@@ -308,7 +348,6 @@ export default function StudentProfile() {
           fullName: user.fullName ?? "Student",
           email: dbUser.email,
           title: studentProfile.title,
-          location: studentProfile.location,
           description: studentProfile.description,
           academicStatus: studentProfile.academicStatus,
           fieldOfStudy: studentProfile.fieldOfStudy,
@@ -317,6 +356,12 @@ export default function StudentProfile() {
           github: studentProfile.github,
           linkedin: studentProfile.linkedin,
           completedTasks: completedTasksData,
+          university: studentProfile.university,
+          degree: studentProfile.degree,
+          graduationYear: studentProfile.graduationYear,
+          gpa: studentProfile.gpa,
+          phone: studentProfile.phone,
+          city: studentProfile.city,
         }),
       });
 
@@ -327,7 +372,6 @@ export default function StudentProfile() {
 
       const { cv } = await response.json();
 
-      // Generate PDF and create a blob URL for preview
       const doc = generateCvPdf(cv, user.fullName ?? "Student", dbUser.email);
       const pdfBlob = doc.output("blob");
       const blobUrl = URL.createObjectURL(pdfBlob);
@@ -608,7 +652,7 @@ export default function StudentProfile() {
               <div className="p-2 bg-[#FDE68A] border-2 border-black dark:border-white text-black shadow-[2px_2px_0_0_#000]">
                 <Mail className="w-4 h-4" />
               </div>
-              <span className="text-sm font-bold truncate">{profileEmail}</span>
+              <span className="text-sm font-bold truncate text-blue-600 dark:text-blue-400">{profileEmail}</span>
             </a>
 
             {profilePortfolio && (
@@ -621,7 +665,7 @@ export default function StudentProfile() {
                 <div className="p-2 bg-[#E9D5FF] border-2 border-black dark:border-white text-black shadow-[2px_2px_0_0_#000]">
                   <LinkIcon className="w-4 h-4" />
                 </div>
-                <span className="text-sm font-bold truncate">
+                <span className="text-sm font-bold truncate text-blue-600 dark:text-blue-400">
                   {profilePortfolio.replace(/^https?:\/\//, "")}
                 </span>
               </a>
@@ -637,7 +681,7 @@ export default function StudentProfile() {
                 <div className="p-2 bg-black border-2 border-black dark:border-white text-white dark:bg-white dark:text-black shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ">
                   <Github className="w-4 h-4" />
                 </div>
-                <span className="text-sm font-bold truncate">
+                <span className="text-sm font-bold truncate text-blue-600 dark:text-blue-400">
                   {profileGithub.replace(/^https?:\/\//, "")}
                 </span>
               </a>
@@ -653,10 +697,19 @@ export default function StudentProfile() {
                 <div className="p-2 bg-[#0A66C2] border-2 border-black dark:border-white text-white shadow-[2px_2px_0_0_#000]">
                   <Linkedin className="w-4 h-4" />
                 </div>
-                <span className="text-sm font-bold truncate">
+                <span className="text-sm font-bold truncate text-blue-600 dark:text-blue-400">
                   {profileLinkedin.replace(/^https?:\/\//, "")}
                 </span>
               </a>
+            )}
+
+            {studentProfile?.phone && (
+              <div className="flex items-center gap-3 p-2 border-2 border-transparent">
+                <div className="p-2 bg-[#D1FAE5] border-2 border-black dark:border-white text-black shadow-[2px_2px_0_0_#000]">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-bold truncate">{studentProfile.phone}</span>
+              </div>
             )}
           </div>
         </motion.div>
@@ -804,6 +857,21 @@ export default function StudentProfile() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
+
+                {/* Missing-fields banner shown when CV generation was blocked */}
+                {cvBlockedFields.length > 0 && (
+                  <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950 border-4 border-amber-400 dark:border-amber-500 shadow-[4px_4px_0_0_#d97706]">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-black uppercase tracking-widest text-amber-800 dark:text-amber-300 mb-1">Complete your profile to generate a CV</p>
+                      <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">Missing: {cvBlockedFields.join(" · ")}</p>
+                    </div>
+                    <button onClick={() => setCvBlockedFields([])} className="ml-auto shrink-0 text-amber-600 dark:text-amber-400 hover:text-amber-900">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
                 <div>
                   <Typography
                     variant="label"
@@ -827,24 +895,6 @@ export default function StudentProfile() {
                     variant="label"
                     className="uppercase tracking-widest text-sm font-black mb-2 block"
                   >
-                    Location
-                  </Typography>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) =>
-                      setFormData({ ...formData, location: e.target.value })
-                    }
-                    placeholder="e.g. San Francisco, CA"
-                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
-                  />
-                </div>
-
-                <div>
-                  <Typography
-                    variant="label"
-                    className="uppercase tracking-widest text-sm font-black mb-2 block"
-                  >
                     Bio / Description
                   </Typography>
                   <textarea
@@ -856,6 +906,84 @@ export default function StudentProfile() {
                     rows={4}
                     className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] resize-none"
                   />
+                </div>
+
+                {/* ── Education ── */}
+                <div className="pt-4 border-t-4 border-black dark:border-white border-dashed">
+                  <Typography variant="h4" className="mb-4">Education</Typography>
+                  <div className="space-y-4">
+
+                    <div>
+                      <Typography variant="label" className="uppercase tracking-widest text-xs font-black mb-1 block">
+                        University
+                      </Typography>
+                      <select
+                        value={formData.university}
+                        onChange={(e) => setFormData({ ...formData, university: e.target.value })}
+                        className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus:outline-none focus:shadow-[4px_4px_0_0_hsl(263,70%,50%)] transition-all cursor-pointer text-sm"
+                      >
+                        <option value="">Select your university...</option>
+                        {EGYPTIAN_UNIVERSITIES.map((uni) => (
+                          <option key={uni} value={uni}>{uni}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <Typography variant="label" className="uppercase tracking-widest text-xs font-black mb-1 block">
+                        College / Faculty
+                      </Typography>
+                      <div className="w-full p-3 bg-muted border-2 border-border text-muted-foreground text-sm italic select-none">
+                        Faculty of Computing and Information Technology
+                      </div>
+                    </div>
+
+                    <div>
+                      <Typography variant="label" className="uppercase tracking-widest text-xs font-black mb-1 block">
+                        Bachelor&apos;s Degree Name
+                      </Typography>
+                      <input
+                        type="text"
+                        value={formData.degree}
+                        onChange={(e) => setFormData({ ...formData, degree: e.target.value })}
+                        placeholder="e.g. Bachelor of Science in Computer Science"
+                        className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Typography variant="label" className="uppercase tracking-widest text-xs font-black mb-1 block">
+                          Graduation Year
+                        </Typography>
+                        <input
+                          type="number"
+                          value={formData.graduationYear}
+                          onChange={(e) => setFormData({ ...formData, graduationYear: e.target.value })}
+                          placeholder="e.g. 2026"
+                          min={1990}
+                          max={2035}
+                          className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
+                        />
+                      </div>
+                      <div>
+                        <Typography variant="label" className="uppercase tracking-widest text-xs font-black mb-1 block">
+                          GPA (0.0 – 4.0)
+                        </Typography>
+                        <input
+                          type="number"
+                          value={formData.gpa}
+                          onChange={(e) => setFormData({ ...formData, gpa: e.target.value })}
+                          placeholder="e.g. 3.7"
+                          min={0}
+                          max={4}
+                          step={0.01}
+                          className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
+                        />
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t-4 border-black dark:border-white border-dashed">
@@ -918,6 +1046,53 @@ export default function StudentProfile() {
                         className="w-full p-2 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* ── Contact & Location ── */}
+                <div className="pt-4 border-t-4 border-black dark:border-white border-dashed">
+                  <Typography variant="h4" className="mb-4">Contact &amp; Location</Typography>
+                  <div className="space-y-4">
+
+                    <div>
+                      <Typography variant="label" className="uppercase tracking-widest text-xs font-black mb-1 block">
+                        Phone Number
+                      </Typography>
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="e.g. +20 100 000 0000"
+                        className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Typography variant="label" className="uppercase tracking-widest text-xs font-black mb-1 block">
+                          City
+                        </Typography>
+                        <select
+                          value={formData.city}
+                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                          className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus:outline-none focus:shadow-[4px_4px_0_0_hsl(263,70%,50%)] transition-all cursor-pointer text-sm"
+                        >
+                          <option value="">Select city...</option>
+                          {EGYPTIAN_CITIES.map((city) => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <Typography variant="label" className="uppercase tracking-widest text-xs font-black mb-1 block">
+                          Country
+                        </Typography>
+                        <div className="w-full p-3 bg-muted border-2 border-border text-muted-foreground text-sm italic select-none">
+                          Egypt
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 

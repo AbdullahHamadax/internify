@@ -613,7 +613,12 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
             <p className="font-black uppercase tracking-widest text-sm">
               Select a conversation
             </p>
-            <p className="text-xs mt-1 font-bold">Or start a new chat</p>
+            <button
+              onClick={() => setShowNewChat(true)}
+              className="text-xs mt-1 font-bold hover:underline cursor-pointer focus:outline-none"
+            >
+              Or start a new chat
+            </button>
           </div>
         </div>
       )}
