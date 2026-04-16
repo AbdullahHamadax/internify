@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 import {
   MAX_USER_NAME_FIELD_LENGTH,
   validateSingleNameField,
@@ -48,6 +49,12 @@ import {
 import {
   useConvexTokenReady,
 } from "@/lib/convexAuth";
+import {
+  buildStudentProfileFromCv,
+  getMissingRequiredCvProfileFields,
+  parseStudentProfileFromCv,
+  type ParsedStudentCvProfile,
+} from "@/lib/studentCvOnboarding";
 
 // ── Schemas ──────────────────────────────────────────────
 
@@ -126,6 +133,7 @@ export default function SignUpPage() {
   const { isLoaded: isUserLoaded, isSignedIn } = useUser();
   const convex = useConvex();
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
+  const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
   const isConvexTokenReady = useConvexTokenReady();
   const currentUser = useQuery(
     api.users.currentUser,
@@ -311,18 +319,82 @@ export default function SignUpPage() {
     return false;
   }
 
-  async function persistProfile(payload: PendingSignupPayload) {
+  async function uploadCvForCurrentStudent(file: File) {
+    const uploadUrl = await generateUploadUrl();
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": file.type || "application/octet-stream",
+      },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error("Could not upload your CV during signup.");
+    }
+
+    const body = await uploadResponse.json();
+    if (!body?.storageId) {
+      throw new Error("Could not store your CV during signup.");
+    }
+
+    return body.storageId as Id<"_storage">;
+  }
+
+  async function prepareStudentCvContext(
+    payload: Extract<PendingSignupPayload, { role: "student" }>,
+  ) {
+    if (!cvFile) {
+      return null;
+    }
+
+    const [storageId, parseResult] = await Promise.all([
+      uploadCvForCurrentStudent(cvFile),
+      parseStudentProfileFromCv(cvFile),
+    ]);
+
+    const mergedProfile = buildStudentProfileFromCv(
+      {
+        academicStatus: payload.profile.academicStatus,
+        fieldOfStudy: payload.profile.fieldOfStudy,
+        cvFileName: payload.cvFileName ?? undefined,
+        cvStorageId: storageId,
+      },
+      parseResult.parsedProfile,
+    );
+
+    return {
+      storageId,
+      parsedProfile: parseResult.parsedProfile,
+      parseError: parseResult.parseError,
+      missingRequiredFields: getMissingRequiredCvProfileFields(mergedProfile),
+    };
+  }
+
+  async function persistProfile(
+    payload: PendingSignupPayload,
+    studentCvContext?: {
+      storageId: Id<"_storage">;
+      parsedProfile: ParsedStudentCvProfile | null;
+      parseError: string | null;
+      missingRequiredFields: string[];
+    } | null,
+  ) {
     if (payload.role === "student") {
       await upsertCurrentUser({
         role: "student",
         firstName: payload.step1.firstName,
         lastName: payload.step1.lastName,
         email: payload.step1.email,
-        studentProfile: {
-          academicStatus: payload.profile.academicStatus,
-          fieldOfStudy: payload.profile.fieldOfStudy,
-          cvFileName: payload.cvFileName ?? undefined,
-        },
+        studentProfile: buildStudentProfileFromCv(
+          {
+            academicStatus: payload.profile.academicStatus,
+            fieldOfStudy: payload.profile.fieldOfStudy,
+            cvFileName: payload.cvFileName ?? undefined,
+            cvStorageId: studentCvContext?.storageId,
+          },
+          studentCvContext?.parsedProfile ?? null,
+        ),
       });
       return;
     }
@@ -340,11 +412,19 @@ export default function SignUpPage() {
     });
   }
 
-  async function persistProfileWithRetry(payload: PendingSignupPayload) {
+  async function persistProfileWithRetry(
+    payload: PendingSignupPayload,
+    studentCvContext?: {
+      storageId: Id<"_storage">;
+      parsedProfile: ParsedStudentCvProfile | null;
+      parseError: string | null;
+      missingRequiredFields: string[];
+    } | null,
+  ) {
     let lastError: unknown = null;
     for (let attempt = 0; attempt < 8; attempt += 1) {
       try {
-        await persistProfile(payload);
+        await persistProfile(payload, studentCvContext);
         return;
       } catch (error) {
         lastError = error;
@@ -389,8 +469,25 @@ export default function SignUpPage() {
           );
           return;
         }
-        await persistProfileWithRetry(payload);
-        router.push("/dashboard");
+        const studentCvContext =
+          payload.role === "student"
+            ? await prepareStudentCvContext(payload)
+            : null;
+        await persistProfileWithRetry(payload, studentCvContext);
+        const shouldPromptManualProfileCompletion =
+          payload.role === "student" &&
+          !!cvFile &&
+          !!(
+            studentCvContext?.parseError ||
+            studentCvContext?.missingRequiredFields.length
+          );
+        const destination =
+          payload.role === "student" && cvFile
+            ? shouldPromptManualProfileCompletion
+              ? "/dashboard?tab=profile&cvPrompt=complete"
+              : "/dashboard?tab=profile"
+            : "/dashboard";
+        router.push(destination);
         return;
       }
 
@@ -496,8 +593,25 @@ export default function SignUpPage() {
         );
         return;
       }
-      await persistProfileWithRetry(pendingSignupPayload);
-      router.push("/dashboard");
+      const studentCvContext =
+        pendingSignupPayload.role === "student"
+          ? await prepareStudentCvContext(pendingSignupPayload)
+          : null;
+      await persistProfileWithRetry(pendingSignupPayload, studentCvContext);
+      const shouldPromptManualProfileCompletion =
+        pendingSignupPayload.role === "student" &&
+        !!cvFile &&
+        !!(
+          studentCvContext?.parseError ||
+          studentCvContext?.missingRequiredFields.length
+        );
+      const destination =
+        pendingSignupPayload.role === "student" && cvFile
+          ? shouldPromptManualProfileCompletion
+            ? "/dashboard?tab=profile&cvPrompt=complete"
+            : "/dashboard?tab=profile"
+          : "/dashboard";
+      router.push(destination);
     } catch (error) {
       if (isClerkAPIResponseError(error)) {
         if (handleRateLimitError(error)) {
