@@ -35,9 +35,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 import {
   useConvexTokenReady,
 } from "@/lib/convexAuth";
+import {
+  buildStudentProfileFromCv,
+  getMissingRequiredCvProfileFields,
+  parseStudentProfileFromCv,
+} from "@/lib/studentCvOnboarding";
 
 // ── Types & Schemas ──────────────────────────────────────
 
@@ -71,6 +77,7 @@ export default function CompleteProfilePage() {
   const { signOut } = useClerk();
   const convex = useConvex();
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
+  const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
   const router = useRouter();
   const isConvexTokenReady = useConvexTokenReady();
   const currentUser = useQuery(
@@ -165,6 +172,56 @@ export default function CompleteProfilePage() {
     return false;
   }
 
+  async function uploadCvForCurrentStudent(file: File) {
+    const uploadUrl = await generateUploadUrl();
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": file.type || "application/octet-stream",
+      },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error("Could not upload your CV while completing your profile.");
+    }
+
+    const body = await uploadResponse.json();
+    if (!body?.storageId) {
+      throw new Error("Could not store your CV while completing your profile.");
+    }
+
+    return body.storageId as Id<"_storage">;
+  }
+
+  async function prepareStudentCvContext(data: StudentProfileData) {
+    if (!cvFile) {
+      return null;
+    }
+
+    const [storageId, parseResult] = await Promise.all([
+      uploadCvForCurrentStudent(cvFile),
+      parseStudentProfileFromCv(cvFile),
+    ]);
+
+    const mergedProfile = buildStudentProfileFromCv(
+      {
+        academicStatus: data.academicStatus,
+        fieldOfStudy: data.fieldOfStudy,
+        cvFileName: cvFile.name,
+        cvStorageId: storageId,
+      },
+      parseResult.parsedProfile,
+    );
+
+    return {
+      storageId,
+      parsedProfile: parseResult.parsedProfile,
+      parseError: parseResult.parseError,
+      missingRequiredFields: getMissingRequiredCvProfileFields(mergedProfile),
+    };
+  }
+
   async function persistProfileWithRetry(action: () => Promise<unknown>) {
     let lastError: unknown = null;
 
@@ -221,20 +278,47 @@ export default function CompleteProfilePage() {
         );
       }
 
+      const studentCvContext = await prepareStudentCvContext(data);
+      const parsedProfile = studentCvContext?.parsedProfile ?? null;
+      const resolvedFirstName =
+        user?.firstName ?? parsedProfile?.firstName ?? undefined;
+      const resolvedLastName =
+        user?.lastName ?? parsedProfile?.lastName ?? undefined;
+      const resolvedEmail =
+        user?.primaryEmailAddress?.emailAddress ??
+        parsedProfile?.email ??
+        undefined;
+
       await persistProfileWithRetry(() =>
         upsertCurrentUser({
           role: "student",
-          firstName: user?.firstName ?? undefined,
-          lastName: user?.lastName ?? undefined,
-          email: user?.primaryEmailAddress?.emailAddress ?? undefined,
-          studentProfile: {
-            academicStatus: data.academicStatus,
-            fieldOfStudy: data.fieldOfStudy,
-            cvFileName: cvFile?.name ?? undefined,
-          },
+          firstName: resolvedFirstName,
+          lastName: resolvedLastName,
+          email: resolvedEmail,
+          studentProfile: buildStudentProfileFromCv(
+            {
+              academicStatus: data.academicStatus,
+              fieldOfStudy: data.fieldOfStudy,
+              cvFileName: cvFile?.name ?? undefined,
+              cvStorageId: studentCvContext?.storageId,
+            },
+            parsedProfile,
+          ),
         }),
       );
-      router.push("/dashboard");
+      const shouldPromptManualProfileCompletion =
+        !!cvFile &&
+        !!(
+          studentCvContext?.parseError ||
+          studentCvContext?.missingRequiredFields.length
+        );
+      router.push(
+        cvFile
+          ? shouldPromptManualProfileCompletion
+            ? "/dashboard?tab=profile&cvPrompt=complete"
+            : "/dashboard?tab=profile"
+          : "/dashboard",
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Could not save your profile.";

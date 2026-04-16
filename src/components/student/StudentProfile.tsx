@@ -3,6 +3,7 @@
 import { useUser } from "@clerk/nextjs";
 import { Typography } from "@/components/ui/Typography";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   Briefcase,
   MapPin,
@@ -29,9 +30,12 @@ import {
   TrendingUp,
   Target,
   Phone,
+  Save,
+  Trash2,
+  FileCheck,
 } from "lucide-react";
 import { EGYPTIAN_UNIVERSITIES, EGYPTIAN_CITIES } from "@/lib/egyptianData";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import deviconData from "devicon/devicon.json";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
@@ -39,6 +43,7 @@ import { api } from "../../../convex/_generated/api";
 import { SKILL_CATALOG } from "@/lib/skillCatalog";
 import { generateCvPdf } from "@/lib/cvPdfGenerator";
 import { extractTextFromPdf } from "@/lib/pdfTextExtractor";
+import { getMissingRequiredCvProfileFields } from "@/lib/studentCvOnboarding";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -97,6 +102,7 @@ const itemVariants: Variants = {
 
 export default function StudentProfile() {
   const { user } = useUser();
+  const searchParams = useSearchParams();
   const applications = useQuery(api.tasks.getStudentApplications);
   const currentUserData = useQuery(api.users.currentUser);
   const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
@@ -168,6 +174,26 @@ export default function StudentProfile() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [analysisResult, setAnalysisResult] = useState<any>(null);
 
+  // CV Upload & Management State
+  const [isUploadingCv, setIsUploadingCv] = useState(false);
+  const [isSavingGeneratedCv, setIsSavingGeneratedCv] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [isCvViewerOpen, setIsCvViewerOpen] = useState(false);
+  const cvUploadInputRef = useRef<HTMLInputElement>(null);
+
+  // CV Backend Hooks
+  const cvData = useQuery(api.users.getCvDownloadUrl);
+  const saveCvToProfile = useMutation(api.users.saveCvToProfile);
+  const deleteCvFromProfile = useMutation(api.users.deleteCvFromProfile);
+  const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
+  const cvPrompt = searchParams.get("cvPrompt");
+  const cvMissingFields = useMemo(
+    () => getMissingRequiredCvProfileFields(studentProfile),
+    [studentProfile],
+  );
+  const canPreviewUploadedCv =
+    cvData?.fileName.toLowerCase().endsWith(".pdf") ?? false;
+
   // Sync state when modal opens
   useEffect(() => {
     if (isEditing && studentProfile) {
@@ -188,6 +214,19 @@ export default function StudentProfile() {
       });
     }
   }, [isEditing, studentProfile]);
+
+  useEffect(() => {
+    if (cvPrompt !== "complete" || !studentProfile) {
+      return;
+    }
+
+    if (cvMissingFields.length === 0) {
+      return;
+    }
+
+    setCvBlockedFields(cvMissingFields);
+    setIsEditing(true);
+  }, [cvMissingFields, cvPrompt, studentProfile]);
 
   const handleSaveProfile = async () => {
     if (!studentProfile) return;
@@ -278,13 +317,7 @@ export default function StudentProfile() {
     if (!studentProfile) return;
 
     // Check completeness of new required CV fields
-    const missing: string[] = [];
-    if (!studentProfile.university) missing.push("University");
-    if (!studentProfile.degree) missing.push("Bachelor's Degree Name");
-    if (!studentProfile.graduationYear) missing.push("Graduation Year");
-    if (studentProfile.gpa == null) missing.push("GPA");
-    if (!studentProfile.phone) missing.push("Phone Number");
-    if (!studentProfile.city) missing.push("City");
+    const missing = cvMissingFields;
 
     if (missing.length > 0) {
       // Signal the edit modal to open with the missing-fields banner
@@ -299,7 +332,7 @@ export default function StudentProfile() {
     setCvError(null);
     setCvPdfBlobUrl(null);
     setIsCvModalOpen(true);
-  }, [applications, studentProfile]);
+  }, [applications, cvMissingFields, studentProfile]);
 
   const handleCloseCvModal = useCallback(() => {
     setIsCvModalOpen(false);
@@ -510,6 +543,105 @@ export default function StudentProfile() {
     }
   };
 
+  // ─── CV Upload Handler ───
+  const handleUploadCv = async (file: File) => {
+    if (!file || file.type !== "application/pdf") {
+      alert("Please upload a PDF file.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File too large. Maximum 10MB.");
+      return;
+    }
+    setIsUploadingCv(true);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const result = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      const { storageId } = await result.json();
+      await saveCvToProfile({ storageId, fileName: file.name });
+    } catch (err) {
+      console.error("CV upload failed:", err);
+      alert("Failed to upload CV. Please try again.");
+    } finally {
+      setIsUploadingCv(false);
+      if (cvUploadInputRef.current) cvUploadInputRef.current.value = "";
+    }
+  };
+
+  // ─── Save Generated CV to Profile ───
+  const handleSaveGeneratedCv = async () => {
+    if (!cvPdfBlobUrl) return;
+    setIsSavingGeneratedCv(true);
+    try {
+      const response = await fetch(cvPdfBlobUrl);
+      const blob = await response.blob();
+      const uploadUrl = await generateUploadUrl();
+      const uploadResult = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/pdf" },
+        body: blob,
+      });
+      const { storageId } = await uploadResult.json();
+      await saveCvToProfile({ storageId, fileName: cvPdfFileName });
+      setShowSaveConfirm(false);
+    } catch (err) {
+      console.error("Failed to save generated CV:", err);
+      alert("Failed to save CV to profile. Please try again.");
+    } finally {
+      setIsSavingGeneratedCv(false);
+    }
+  };
+
+  // ─── Analyze Current CV (already uploaded) ───
+  const handleAnalyzeCurrentCv = async () => {
+    if (!cvData?.url || !canPreviewUploadedCv) return;
+    setIsAnalyzing(true);
+    setAnalyzerError(null);
+    setUploadedFileName(cvData.fileName);
+    try {
+      const response = await fetch(cvData.url);
+      const blob = await response.blob();
+      const file = new File([blob], cvData.fileName, { type: "application/pdf" });
+      const cvText = await extractTextFromPdf(file);
+      if (!cvText || cvText.trim().length < 50) {
+        throw new Error("Could not extract enough text from CV.");
+      }
+      const fieldOfStudy = studentProfile?.fieldOfStudy || "General";
+      const analysisResponse = await fetch("/api/analyze-cv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cvText, fieldOfStudy }),
+      });
+      if (!analysisResponse.ok) {
+        const err = await analysisResponse.json();
+        throw new Error(err.error || "Failed to analyze CV");
+      }
+      const { analysis } = await analysisResponse.json();
+      setAnalysisResult(analysis);
+      setAnalyzerStep("results");
+    } catch (err) {
+      console.error("CV analysis failed:", err);
+      setAnalyzerError(err instanceof Error ? err.message : "Analysis failed");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // ─── Delete CV ───
+  const handleDeleteCv = async () => {
+    if (!confirm("Are you sure you want to remove your CV?")) return;
+    try {
+      await deleteCvFromProfile();
+    } catch (err) {
+      console.error("Failed to delete CV:", err);
+      alert("Failed to remove CV.");
+    }
+  };
+
   return (
     <motion.div
       initial="hidden"
@@ -636,6 +768,124 @@ export default function StudentProfile() {
             </button>
           </div>
 
+          {/* Upload CV Button */}
+          <div className="flex flex-col gap-3">
+            <input
+              ref={cvUploadInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleUploadCv(file);
+              }}
+              className="hidden"
+              id="cv-upload-input"
+            />
+            <button
+              onClick={() => cvUploadInputRef.current?.click()}
+              disabled={isUploadingCv}
+              className="group w-full flex items-center justify-center gap-2 py-3 bg-[#0EA5E9] text-white border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] font-black uppercase tracking-widest text-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:translate-x-[4px] active:translate-y-[4px] disabled:opacity-50"
+            >
+              {isUploadingCv ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 group-hover:-translate-y-1 transition-transform" />
+                  Upload CV
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* CV Display Section */}
+          {cvData && (
+            <div className="bg-card border-4 border-black dark:border-white p-5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] space-y-4">
+              <Typography
+                variant="h4"
+                className="border-b-4 border-black dark:border-white pb-2 mb-4 flex items-center gap-2"
+              >
+                <FileCheck className="w-5 h-5" />
+                My CV
+              </Typography>
+
+              {/* CV Card — clickable to open viewer */}
+              {canPreviewUploadedCv ? (
+                <button
+                  onClick={() => setIsCvViewerOpen(true)}
+                  className="w-full group relative bg-gray-100 dark:bg-gray-800 border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all overflow-hidden text-left"
+                >
+                  <div className="absolute top-0 left-0 w-16 h-16 bg-[#F43F5E]/80 rounded-br-[40px] z-10" />
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white bg-black/50 px-2 py-1 border border-white/50 backdrop-blur-sm">
+                      Featured
+                    </span>
+                  </div>
+
+                  <div className="relative w-full h-[200px] overflow-hidden bg-white group-hover:scale-[1.02] transition-transform duration-500">
+                    <div className="absolute inset-0 z-10 bg-black/5 group-hover:bg-transparent transition-colors" />
+                    <div className="absolute left-0 top-0 w-[200%] h-[200%] origin-top-left scale-50 opacity-80 group-hover:opacity-100 transition-opacity">
+                      <iframe
+                        src={`${cvData.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                        title="CV Thumbnail"
+                        className="w-[100%] h-[100%] border-0 pointer-events-none"
+                        tabIndex={-1}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="relative z-10 bg-black text-white p-3 border-t-4 border-black">
+                    <Typography variant="span" className="text-sm font-bold block truncate">
+                      {cvData.fileName}
+                    </Typography>
+                    <Typography variant="span" className="text-white/70 text-xs font-medium flex items-center gap-1 mt-1">
+                      <Eye className="w-3 h-3" />
+                      Click to view full screen
+                    </Typography>
+                  </div>
+                </button>
+              ) : (
+                <div className="w-full bg-gray-100 dark:bg-gray-800 border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] overflow-hidden text-left">
+                  <div className="flex h-[200px] flex-col items-center justify-center gap-3 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.18),_transparent_55%)] px-6 text-center">
+                    <FileCheck className="h-12 w-12" />
+                    <Typography variant="h4" className="uppercase">
+                      CV Saved
+                    </Typography>
+                    <Typography variant="p" className="text-sm text-muted-foreground">
+                      Preview isn&apos;t available for this file type, but your CV is linked to your profile and ready to download.
+                    </Typography>
+                  </div>
+                  <div className="bg-black p-3 text-white border-t-4 border-black">
+                    <Typography variant="span" className="text-sm font-bold block truncate">
+                      {cvData.fileName}
+                    </Typography>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                <a
+                  href={cvData.url}
+                  download={cvData.fileName}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-2 bg-card text-foreground border-2 border-border font-black uppercase tracking-widest text-[10px] shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all"
+                >
+                  <Download className="w-3 h-3" />
+                  Download
+                </a>
+                <button
+                  onClick={handleDeleteCv}
+                  className="flex items-center justify-center gap-2 py-2 px-3 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-2 border-red-300 dark:border-red-700 font-black uppercase tracking-widest text-[10px] shadow-[2px_2px_0_0_#fca5a5] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          )}
           {/* Contact & Links */}
           <div className="bg-card border-4 border-black dark:border-white p-5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] space-y-4">
             <Typography
@@ -1412,7 +1662,7 @@ export default function StudentProfile() {
                   </div>
 
                   {/* Footer */}
-                  <div className="p-4 border-t-4 border-black dark:border-white bg-[#A7F3D0] flex justify-between items-center">
+                  <div className="p-4 border-t-4 border-black dark:border-white bg-[#A7F3D0] flex flex-wrap justify-between items-center gap-2">
                     <button
                       onClick={() => {
                         setCvStep("select");
@@ -1426,13 +1676,38 @@ export default function StudentProfile() {
                       <ChevronLeft className="w-4 h-4" />
                       Re-select Tasks
                     </button>
-                    <button
-                      onClick={handleDownloadCv}
-                      className="px-6 py-2 bg-black text-[#A7F3D0] border-4 border-black shadow-[4px_4px_0_0_#000] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download PDF
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          if (cvData) {
+                            setShowSaveConfirm(true);
+                          } else {
+                            handleSaveGeneratedCv();
+                          }
+                        }}
+                        disabled={isSavingGeneratedCv}
+                        className="px-5 py-2 bg-[#047857] text-white border-4 border-black shadow-[4px_4px_0_0_#000] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {isSavingGeneratedCv ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4" />
+                            Save to Profile
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={handleDownloadCv}
+                        className="px-5 py-2 bg-black text-[#A7F3D0] border-4 border-black shadow-[4px_4px_0_0_#000] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -1557,6 +1832,28 @@ export default function StudentProfile() {
                       </>
                     )}
                   </label>
+
+                  {/* Use Current CV Option */}
+                  {cvData && canPreviewUploadedCv && !isAnalyzing && (
+                    <div className="flex items-center gap-3 p-4 bg-[#A7F3D0]/30 border-4 border-[#047857]/40 shadow-[2px_2px_0_0_#047857]">
+                      <FileCheck className="w-5 h-5 text-[#047857] shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <Typography variant="span" className="text-sm font-black block">
+                          Use your uploaded CV
+                        </Typography>
+                        <Typography variant="span" className="text-xs text-muted-foreground truncate block">
+                          {cvData.fileName}
+                        </Typography>
+                      </div>
+                      <button
+                        onClick={handleAnalyzeCurrentCv}
+                        className="shrink-0 px-4 py-2 bg-[#047857] text-white border-2 border-black font-black uppercase tracking-widest text-[10px] shadow-[2px_2px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all flex items-center gap-1.5"
+                      >
+                        <ScanLine className="w-3 h-3" />
+                        Analyze
+                      </button>
+                    </div>
+                  )}
 
                   {/* Error */}
                   {analyzerError && (
@@ -1744,6 +2041,138 @@ export default function StudentProfile() {
                   </button>
                 </div>
               )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* CV VIEWER MODAL */}
+      <AnimatePresence>
+        {isCvViewerOpen && cvData && canPreviewUploadedCv && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsCvViewerOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-4xl max-h-[90vh] bg-background border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] flex flex-col overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-5 pb-3 border-b-4 border-border">
+                <Typography
+                  variant="h3"
+                  className="font-black uppercase text-foreground tracking-widest flex items-center gap-2"
+                >
+                  <FileCheck className="w-5 h-5" />
+                  {cvData.fileName}
+                </Typography>
+                <button
+                  onClick={() => setIsCvViewerOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center border-2 border-border bg-transparent text-foreground shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* PDF Viewer */}
+              <div className="flex-1 overflow-hidden p-4">
+                <iframe
+                  src={cvData.url}
+                  title="CV Viewer"
+                  className="w-full h-full border-4 border-border shadow-[4px_4px_0_0_var(--border)] bg-white"
+                  style={{ minHeight: "500px" }}
+                />
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t-4 border-black dark:border-white bg-[#0EA5E9] flex justify-between items-center">
+                <button
+                  onClick={() => setIsCvViewerOpen(false)}
+                  className="px-5 py-2 bg-transparent text-white border-4 border-white font-black uppercase tracking-widest text-xs hover:bg-white hover:text-[#0EA5E9] transition-colors"
+                >
+                  Close
+                </button>
+                <a
+                  href={cvData.url}
+                  download={cvData.fileName}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-2 bg-white text-[#0EA5E9] border-4 border-white shadow-[4px_4px_0_0_rgba(255,255,255,0.3)] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* SAVE CV CONFIRMATION DIALOG */}
+      <AnimatePresence>
+        {showSaveConfirm && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSaveConfirm(false)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-md bg-background border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] p-6 space-y-4"
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-amber-100 dark:bg-amber-950 border-2 border-amber-400 text-amber-600 shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <Typography variant="h4" className="uppercase mb-1">
+                    Replace Existing CV?
+                  </Typography>
+                  <Typography variant="p" className="text-sm text-muted-foreground">
+                    You already have a CV saved to your profile. Saving this
+                    generated CV will <span className="font-black text-foreground">replace</span> your
+                    current one. This action cannot be undone.
+                  </Typography>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2 border-t-4 border-border">
+                <button
+                  onClick={() => setShowSaveConfirm(false)}
+                  disabled={isSavingGeneratedCv}
+                  className="px-5 py-2 bg-transparent text-foreground border-4 border-border font-black uppercase tracking-widest text-xs hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveGeneratedCv}
+                  disabled={isSavingGeneratedCv}
+                  className="px-5 py-2 bg-[#F43F5E] text-white border-4 border-black shadow-[4px_4px_0_0_#000] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSavingGeneratedCv ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Replace & Save
+                    </>
+                  )}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
