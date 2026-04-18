@@ -29,58 +29,84 @@ export async function POST(req: NextRequest) {
     const truncatedText = cvText.trim().slice(0, 8000);
     const field = fieldOfStudy || "General";
 
-    const systemPrompt = `You are an expert ATS (Applicant Tracking System) analyst and career coach specializing in the "${field}" field.
+    const systemPrompt = `You are an expert ATS (Applicant Tracking System) analyst and senior technical recruiter who specializes in hiring for "${field}" roles.
 
-Your job is to analyze a CV/resume and provide:
-1. An ATS compatibility score from 0-100
-2. A breakdown of scoring criteria
-3. Field-specific recommendations to improve the CV for the "${field}" industry
+You are reading plain text that was extracted from a PDF resume. ATS systems parse resumes the same way — as raw text. Your analysis must reflect how well THIS TEXT would be parsed and ranked by real ATS software.
 
-SCORING CRITERIA (evaluate each 0-100):
-- **Formatting & Structure**: Single-column layout, standard headings (Experience, Education, Skills), no tables/graphics, consistent formatting
-- **Keyword Optimization**: Relevant industry keywords for ${field}, action verbs, technical terms
-- **Content Quality**: Quantified achievements, clear descriptions, relevant experience
-- **Contact Information**: Complete and professional (name, email, phone, LinkedIn)
-- **Skills Section**: Relevant skills listed, properly categorized for ${field}
-- **Education**: Properly formatted, relevant to ${field}
-- **Overall ATS Parsability**: Can an ATS robot correctly parse all sections?
+TASK: Analyze the resume text below and score it across 7 criteria. Each score must be independent and justified by specific evidence from the text.
 
-RESPOND WITH ONLY valid JSON in this exact format (no markdown, no code fences):
+SCORING CRITERIA (0-100 each, judge independently):
+
+1. **Formatting & Structure**
+   - Look at how the extracted text flows. Clear section headers like "Experience", "Education", "Skills"? Or is text jumbled, with columns merged, dates separated from job titles, or sections running together?
+   - Well-structured single-column CVs extract cleanly with logical flow. Multi-column or graphical CVs produce chaotic, interleaved text.
+   - Score 80+ only if text flows perfectly with clear headers. Score below 40 if text is jumbled or headers are missing/unclear.
+
+2. **Keyword Optimization**
+   - Does the resume contain specific technical keywords, tools, frameworks, and methodologies relevant to "${field}"?
+   - Count actual matching keywords. 10+ relevant keywords = 80+. Under 5 = below 50.
+
+3. **Content Quality**
+   - Are bullet points quantified with specific numbers, percentages, dollar amounts, or metrics?
+   - Vague descriptions like "helped improve sales" = low score. "Increased sales by 34% over 6 months" = high score.
+   - Count how many bullet points have metrics. If fewer than 30% have numbers, score below 50.
+
+4. **Contact Information**
+   - Is there a name, email, phone number, and LinkedIn/portfolio URL clearly present?
+   - All 4 present = 90+. Missing 1 = 70. Missing 2+ = below 50.
+
+5. **Skills Section**
+   - Is there a dedicated skills section? Are skills relevant to "${field}"?
+   - Well-organized and relevant = 80+. Missing or irrelevant = below 40.
+
+6. **Education**
+   - Is education clearly listed with institution, degree, and dates?
+   - Complete and relevant to ${field} = 80+. Incomplete = 50-70. Missing = below 30.
+
+7. **ATS Parsability**
+   - Overall: would an ATS robot correctly identify the candidate's name, current role, work history, and skills from this text?
+   - If the text has random symbols, merged columns, or unintelligible sections, score below 40.
+
+IMPORTANT RULES:
+- Each criterion score must be justified with a specific quote or observation from the actual resume text.
+- Do NOT use generic comments like "good formatting" or "could improve keywords". Reference what you actually see.
+- Different resumes MUST get different scores. Evaluate what is actually in front of you.
+- Provide 3-5 recommendations, each referencing specific content from the resume.
+
+RESPOND WITH ONLY valid JSON (no markdown, no code fences):
 {
-  "overallScore": 75,
   "breakdown": [
-    { "criterion": "Formatting & Structure", "score": 80, "comment": "Brief explanation" },
-    { "criterion": "Keyword Optimization", "score": 60, "comment": "Brief explanation" },
-    { "criterion": "Content Quality", "score": 75, "comment": "Brief explanation" },
-    { "criterion": "Contact Information", "score": 90, "comment": "Brief explanation" },
-    { "criterion": "Skills Section", "score": 70, "comment": "Brief explanation" },
-    { "criterion": "Education", "score": 85, "comment": "Brief explanation" },
-    { "criterion": "ATS Parsability", "score": 65, "comment": "Brief explanation" }
+    { "criterion": "Formatting & Structure", "score": <number>, "comment": "<specific observation from the text>" },
+    { "criterion": "Keyword Optimization", "score": <number>, "comment": "<list specific keywords found or missing>" },
+    { "criterion": "Content Quality", "score": <number>, "comment": "<cite specific bullet points and whether they have metrics>" },
+    { "criterion": "Contact Information", "score": <number>, "comment": "<list which contact details are present vs missing>" },
+    { "criterion": "Skills Section", "score": <number>, "comment": "<name actual skills found and assess relevance>" },
+    { "criterion": "Education", "score": <number>, "comment": "<cite the education details found>" },
+    { "criterion": "ATS Parsability", "score": <number>, "comment": "<describe how cleanly or poorly the text parses>" }
   ],
   "strengths": [
-    "Specific strength 1",
-    "Specific strength 2",
-    "Specific strength 3"
+    "<strength citing specific text from the resume>",
+    "<another strength citing specific text>"
   ],
   "recommendations": [
     {
       "priority": "high",
-      "title": "Short title",
-      "description": "Detailed, actionable recommendation specific to the ${field} field"
+      "title": "<specific actionable title>",
+      "description": "<reference exact text from resume and explain how to improve it>"
     },
     {
       "priority": "medium",
-      "title": "Short title",
-      "description": "Detailed, actionable recommendation"
+      "title": "<specific actionable title>",
+      "description": "<reference exact text from resume and explain how to improve it>"
     },
     {
       "priority": "low",
-      "title": "Short title",
-      "description": "Detailed, actionable recommendation"
+      "title": "<specific actionable title>",
+      "description": "<reference exact text from resume and explain how to improve it>"
     }
   ],
-  "missingKeywords": ["keyword1", "keyword2", "keyword3"],
-  "summary": "2-3 sentence overall assessment of the CV for ${field} roles"
+  "missingKeywords": ["<actual missing ${field} keyword>", "<another>"],
+  "summary": "<2-3 sentences referencing the candidate's actual name, background, and specific improvements needed for ${field} roles>"
 }`;
 
     const chatCompletion = await groq.chat.completions.create({
@@ -88,11 +114,11 @@ RESPOND WITH ONLY valid JSON in this exact format (no markdown, no code fences):
         { role: "system", content: systemPrompt },
         {
           role: "user",
-          content: `Analyze this CV for a ${field} position:\n\n${truncatedText}`,
+          content: `Here is the raw text extracted from a PDF resume. Analyze it for a ${field} position. Remember: score each criterion independently based on evidence you find in the text.\n\n---BEGIN RESUME TEXT---\n${truncatedText}\n---END RESUME TEXT---`,
         },
       ],
       model: "llama-3.3-70b-versatile",
-      temperature: 0.2,
+      temperature: 0.4,
       response_format: { type: "json_object" },
     });
 
@@ -105,6 +131,19 @@ RESPOND WITH ONLY valid JSON in this exact format (no markdown, no code fences):
     }
 
     const analysis = JSON.parse(rawReply);
+
+    // Compute overallScore server-side as the true average of breakdown scores
+    // This removes the LLM's ability to anchor to any fixed number
+    if (Array.isArray(analysis.breakdown)) {
+      const scores = analysis.breakdown
+        .map((b: { score?: number }) => b.score)
+        .filter((s: unknown): s is number => typeof s === "number");
+      analysis.overallScore =
+        scores.length > 0
+          ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length)
+          : 0;
+    }
+
     return NextResponse.json({ analysis });
   } catch (error) {
     console.error("CV Analysis API Error:", error);
