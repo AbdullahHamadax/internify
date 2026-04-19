@@ -509,6 +509,110 @@ export const getCvDownloadUrl = query({
 });
 
 /**
+ * QUERY: getPublicStudentProfileDetail
+ * Fetches a richer read-only student profile for employer-facing profile pages.
+ */
+export const getPublicStudentProfileDetail = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db.get(args.userId);
+    if (!user || user.role !== "student") return null;
+
+    const profile = await ctx.db
+      .query("studentProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    const applications = await ctx.db
+      .query("applications")
+      .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+      .collect();
+
+    const completedApplications = applications.filter(
+      (app) => app.status === "completed",
+    );
+
+    const completedWork = (
+      await Promise.all(
+        completedApplications.map(async (app) => {
+          const task = await ctx.db.get(app.taskId);
+          if (!task) return null;
+
+          const employerProfile = await ctx.db
+            .query("employerProfiles")
+            .withIndex("by_userId", (q) => q.eq("userId", task.employerId))
+            .unique();
+
+          return {
+            applicationId: app._id,
+            taskId: task._id,
+            title: task.title,
+            description: task.description,
+            category: task.category,
+            skillLevel: task.skillLevel,
+            skills: task.skills,
+            companyName: employerProfile?.companyName ?? "Unknown Company",
+            recordedAt: app.createdAt,
+          };
+        }),
+      )
+    )
+      .filter((item) => item !== null)
+      .sort((a, b) => b.recordedAt - a.recordedAt);
+
+    const rating =
+      completedApplications.length > 0
+        ? 4.5 + Math.min(completedApplications.length * 0.1, 0.5)
+        : 0;
+
+    const cvUrl =
+      profile?.cvStorageId !== undefined
+        ? await ctx.storage.getUrl(profile.cvStorageId)
+        : null;
+
+    return {
+      userId: user._id,
+      clerkUserId: user.clerkUserId,
+      name: [user.firstName, user.lastName].filter(Boolean).join(" ") || "User",
+      email: user.email,
+      role: user.role as "student",
+      memberSince: user.createdAt,
+      rating,
+      completedTasks: completedApplications.length,
+      studentProfile: profile
+        ? {
+            title: profile.title,
+            location: profile.location,
+            description: profile.description,
+            academicStatus: profile.academicStatus,
+            fieldOfStudy: profile.fieldOfStudy,
+            skills: profile.skills ?? [],
+            portfolio: profile.portfolio,
+            github: profile.github,
+            linkedin: profile.linkedin,
+            university: profile.university,
+            degree: profile.degree,
+            graduationYear: profile.graduationYear,
+            gpa: profile.gpa,
+            phone: profile.phone,
+            city: profile.city,
+          }
+        : null,
+      cv: profile?.cvStorageId
+        ? {
+            url: cvUrl,
+            fileName: profile.cvFileName ?? "CV.pdf",
+          }
+        : null,
+      completedWork,
+    };
+  },
+});
+
+/**
  * MUTATION: deleteCvFromProfile
  * Removes the stored CV from both storage and the student profile record.
  */
