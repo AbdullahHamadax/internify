@@ -340,6 +340,7 @@ export default function EmployerDashboard() {
     api.users.currentUser,
     isConvexTokenReady ? {} : "skip",
   );
+  const initialConversationId = searchParams.get("conversationId");
 
   const employerTasks = useQuery(
     api.tasks.getEmployerTasks,
@@ -532,7 +533,12 @@ export default function EmployerDashboard() {
 
       <main className="emp-main">
         {activeNav === "talent-search" && <TalentSearch />}
-        {activeNav === "messages" && <Messages role="employer" />}
+        {activeNav === "messages" && (
+          <Messages
+            role="employer"
+            initialConversationId={initialConversationId}
+          />
+        )}
         {activeNav === "profile" && <EmployerProfile />}
         {activeNav === "settings" && <SettingsPage />}
         {activeNav === "notifications" && <Notifications role="employer" onNavigate={handleNavigate} />}

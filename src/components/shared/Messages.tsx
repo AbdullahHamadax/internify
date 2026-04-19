@@ -61,7 +61,13 @@ function ChatOpenPresence({
   return null;
 }
 
-export default function Messages({ role }: { role: "student" | "employer" }) {
+export default function Messages({
+  role,
+  initialConversationId = null,
+}: {
+  role: "student" | "employer";
+  initialConversationId?: string | null;
+}) {
   const conversations = useQuery(api.messages.getConversations);
   const messagableUsers = useQuery(api.messages.getMessagableUsers);
   const getOrCreateConversation = useMutation(
@@ -174,6 +180,29 @@ export default function Messages({ role }: { role: "student" | "employer" }) {
       sub.includes(newChatSearch.toLowerCase())
     );
   });
+
+  useEffect(() => {
+    if (!initialConversationId || !conversations) {
+      return;
+    }
+
+    const targetConversation = conversations.find(
+      (conv) => conv._id === initialConversationId,
+    );
+
+    if (!targetConversation) {
+      return;
+    }
+
+    setActiveConvId(initialConversationId);
+    setMobileShowChat(true);
+
+    if (targetConversation.hasUnread) {
+      void markConversationRead({
+        conversationId: initialConversationId as Id<"conversations">,
+      });
+    }
+  }, [conversations, initialConversationId, markConversationRead]);
 
   const handleStartConversation = async (otherUserId: string) => {
     try {

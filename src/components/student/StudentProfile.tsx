@@ -100,6 +100,167 @@ const itemVariants: Variants = {
   },
 };
 
+type RenderedPdfPage = {
+  src: string;
+  width: number;
+  height: number;
+};
+
+function UploadedCvPdfRenderer({
+  pdfData,
+  mode,
+}: {
+  pdfData: Uint8Array | null;
+  mode: "thumbnail" | "document";
+}) {
+  const [pages, setPages] = useState<RenderedPdfPage[]>([]);
+  const [isRendering, setIsRendering] = useState(false);
+  const [renderError, setRenderError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pdfData) {
+      setPages([]);
+      setIsRendering(false);
+      setRenderError(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    setPages([]);
+    setIsRendering(true);
+    setRenderError(null);
+
+    void (async () => {
+      try {
+        const pdfjsLib = await import("pdfjs-dist");
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
+        const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice(0) });
+        const pdf = await loadingTask.promise;
+        const outputScale =
+          typeof window !== "undefined" ? Math.max(window.devicePixelRatio || 1, 1) : 1;
+        const targetWidth = mode === "thumbnail" ? 360 : 900;
+        const pageCount = mode === "thumbnail" ? 1 : pdf.numPages;
+        const renderedPages: RenderedPdfPage[] = [];
+
+        for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+          const page = await pdf.getPage(pageNumber);
+          const baseViewport = page.getViewport({ scale: 1 });
+          const cssScale = targetWidth / baseViewport.width;
+          const renderViewport = page.getViewport({ scale: cssScale * outputScale });
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+
+          if (!context) {
+            throw new Error("Canvas rendering is unavailable.");
+          }
+
+          canvas.width = Math.ceil(renderViewport.width);
+          canvas.height = Math.ceil(renderViewport.height);
+
+          await page.render({ canvas, viewport: renderViewport }).promise;
+          page.cleanup();
+
+          if (cancelled) {
+            return;
+          }
+
+          renderedPages.push({
+            src: canvas.toDataURL("image/png"),
+            width: Math.max(Math.round(renderViewport.width / outputScale), 1),
+            height: Math.max(Math.round(renderViewport.height / outputScale), 1),
+          });
+        }
+
+        if (!cancelled) {
+          setPages(renderedPages);
+        }
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        console.error("PDF render failed:", error);
+        setRenderError("We couldn't render this PDF preview in the browser.");
+      } finally {
+        if (!cancelled) {
+          setIsRendering(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, pdfData]);
+
+  if (isRendering) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-4 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#0EA5E9]" />
+        <Typography
+          variant="span"
+          className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground"
+        >
+          Preparing preview...
+        </Typography>
+      </div>
+    );
+  }
+
+  if (renderError || pages.length === 0) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-4 text-center">
+        <FileText className="h-10 w-10 text-[#0EA5E9]" />
+        <Typography
+          variant={mode === "thumbnail" ? "span" : "p"}
+          className="max-w-[28rem] text-sm font-bold text-muted-foreground"
+        >
+          {renderError ?? "Preview unavailable right now. Open the file or download it below."}
+        </Typography>
+      </div>
+    );
+  }
+
+  if (mode === "thumbnail") {
+    const firstPage = pages[0];
+
+    return (
+      <Image
+        src={firstPage.src}
+        alt="CV thumbnail preview"
+        width={firstPage.width}
+        height={firstPage.height}
+        unoptimized
+        className="h-full w-full object-cover object-top"
+        sizes="(max-width: 768px) 100vw, 420px"
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {pages.map((page, index) => (
+        <div
+          key={`${page.src}-${index}`}
+          className="overflow-hidden border-4 border-border bg-white shadow-[4px_4px_0_0_var(--border)]"
+        >
+          <Image
+            src={page.src}
+            alt={`CV page ${index + 1}`}
+            width={page.width}
+            height={page.height}
+            unoptimized
+            className="h-auto w-full"
+            sizes="(max-width: 1024px) 100vw, 900px"
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function StudentProfile() {
   const { user } = useUser();
   const searchParams = useSearchParams();
@@ -179,6 +340,9 @@ export default function StudentProfile() {
   const [isSavingGeneratedCv, setIsSavingGeneratedCv] = useState(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [isCvViewerOpen, setIsCvViewerOpen] = useState(false);
+  const [uploadedCvPdfData, setUploadedCvPdfData] = useState<Uint8Array | null>(null);
+  const [isUploadedCvPreviewLoading, setIsUploadedCvPreviewLoading] = useState(false);
+  const [uploadedCvPreviewError, setUploadedCvPreviewError] = useState<string | null>(null);
   const cvUploadInputRef = useRef<HTMLInputElement>(null);
 
   // CV Backend Hooks
@@ -193,6 +357,58 @@ export default function StudentProfile() {
   );
   const canPreviewUploadedCv =
     cvData?.fileName.toLowerCase().endsWith(".pdf") ?? false;
+
+  useEffect(() => {
+    if (!canPreviewUploadedCv || !cvData?.url) {
+      setIsUploadedCvPreviewLoading(false);
+      setUploadedCvPreviewError(null);
+      setUploadedCvPdfData(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    setIsUploadedCvPreviewLoading(true);
+    setUploadedCvPreviewError(null);
+
+    void (async () => {
+      try {
+        const response = await fetch(cvData.url, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load CV preview (${response.status})`);
+        }
+
+        const pdfArrayBuffer = await response.arrayBuffer();
+
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setUploadedCvPdfData(new Uint8Array(pdfArrayBuffer));
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        console.error("CV preview load failed:", error);
+        setUploadedCvPdfData(null);
+        setUploadedCvPreviewError(
+          "Preview unavailable in this browser. You can still download the file.",
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsUploadedCvPreviewLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      controller.abort();
+    };
+  }, [canPreviewUploadedCv, cvData?.url]);
 
   // Sync state when modal opens
   useEffect(() => {
@@ -826,14 +1042,39 @@ export default function StudentProfile() {
 
                   <div className="relative w-full h-[200px] overflow-hidden bg-white group-hover:scale-[1.02] transition-transform duration-500">
                     <div className="absolute inset-0 z-10 bg-black/5 group-hover:bg-transparent transition-colors" />
-                    <div className="absolute left-0 top-0 w-[200%] h-[200%] origin-top-left scale-50 opacity-80 group-hover:opacity-100 transition-opacity">
-                      <iframe
-                        src={`${cvData.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                        title="CV Thumbnail"
-                        className="w-[100%] h-[100%] border-0 pointer-events-none"
-                        tabIndex={-1}
-                      />
-                    </div>
+                    {uploadedCvPdfData ? (
+                      <div className="absolute inset-0">
+                        <UploadedCvPdfRenderer
+                          pdfData={uploadedCvPdfData}
+                          mode="thumbnail"
+                        />
+                      </div>
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4 text-center">
+                        {isUploadedCvPreviewLoading ? (
+                          <>
+                            <Loader2 className="h-8 w-8 animate-spin text-[#0EA5E9]" />
+                            <Typography
+                              variant="span"
+                              className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground"
+                            >
+                              Preparing preview...
+                            </Typography>
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="h-10 w-10 text-[#0EA5E9]" />
+                            <Typography
+                              variant="span"
+                              className="max-w-[18rem] text-xs font-bold text-muted-foreground"
+                            >
+                              {uploadedCvPreviewError ??
+                                "Preview unavailable right now. Open the file or download it below."}
+                            </Typography>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="relative z-10 bg-black text-white p-3 border-t-4 border-black">
@@ -842,7 +1083,11 @@ export default function StudentProfile() {
                     </Typography>
                     <Typography variant="span" className="text-white/70 text-xs font-medium flex items-center gap-1 mt-1">
                       <Eye className="w-3 h-3" />
-                      Click to view full screen
+                      {uploadedCvPreviewError
+                        ? "Preview unavailable in Firefox? Use download below."
+                        : isUploadedCvPreviewLoading
+                          ? "Preparing preview..."
+                          : "Click to view full screen"}
                     </Typography>
                   </div>
                 </button>
@@ -870,8 +1115,6 @@ export default function StudentProfile() {
                 <a
                   href={cvData.url}
                   download={cvData.fileName}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 py-2 bg-card text-foreground border-2 border-border font-black uppercase tracking-widest text-[10px] shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all"
                 >
                   <Download className="w-3 h-3" />
@@ -2061,7 +2304,7 @@ export default function StudentProfile() {
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="relative w-full max-w-4xl max-h-[90vh] bg-background border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] flex flex-col overflow-hidden"
+              className="relative flex max-h-[90vh] min-h-0 w-full max-w-4xl flex-col overflow-hidden bg-background border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]"
             >
               {/* Header */}
               <div className="flex items-center justify-between p-5 pb-3 border-b-4 border-border">
@@ -2081,13 +2324,50 @@ export default function StudentProfile() {
               </div>
 
               {/* PDF Viewer */}
-              <div className="flex-1 overflow-hidden p-4">
-                <iframe
-                  src={cvData.url}
-                  title="CV Viewer"
-                  className="w-full h-full border-4 border-border shadow-[4px_4px_0_0_var(--border)] bg-white"
-                  style={{ minHeight: "500px" }}
-                />
+              <div className="flex-1 min-h-0 overflow-y-auto p-4">
+                {uploadedCvPdfData ? (
+                  <div
+                    className="min-h-full border-4 border-border bg-[#F8FAFC] p-3 shadow-[4px_4px_0_0_var(--border)]"
+                  >
+                    <UploadedCvPdfRenderer
+                      pdfData={uploadedCvPdfData}
+                      mode="document"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="flex min-h-[500px] w-full flex-col items-center justify-center gap-4 border-4 border-border bg-white px-6 text-center shadow-[4px_4px_0_0_var(--border)]"
+                  >
+                    {isUploadedCvPreviewLoading ? (
+                      <>
+                        <Loader2 className="h-10 w-10 animate-spin text-[#0EA5E9]" />
+                        <Typography
+                          variant="h4"
+                          className="font-black uppercase tracking-[0.2em]"
+                        >
+                          Preparing preview
+                        </Typography>
+                        <Typography variant="p" className="max-w-md text-sm text-muted-foreground">
+                          Firefox is loading a browser-safe preview of your PDF.
+                        </Typography>
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-12 w-12 text-[#0EA5E9]" />
+                        <Typography
+                          variant="h4"
+                          className="font-black uppercase tracking-[0.2em]"
+                        >
+                          Preview unavailable
+                        </Typography>
+                        <Typography variant="p" className="max-w-md text-sm text-muted-foreground">
+                          {uploadedCvPreviewError ??
+                            "We couldn't open an in-browser preview for this file, but the download is still available."}
+                        </Typography>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Footer */}
@@ -2101,8 +2381,6 @@ export default function StudentProfile() {
                 <a
                   href={cvData.url}
                   download={cvData.fileName}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="px-6 py-2 bg-white text-[#0EA5E9] border-4 border-white shadow-[4px_4px_0_0_rgba(255,255,255,0.3)] font-black uppercase tracking-widest text-xs hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
                 >
                   <Download className="w-4 h-4" />
