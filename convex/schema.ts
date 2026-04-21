@@ -91,6 +91,11 @@ export default defineSchema({
     // ── Contact & Location ──
     phone: v.optional(v.string()),
     city: v.optional(v.string()),            // Egyptian city; country is always "Egypt"
+    // ── Skill XP Tracking ──
+    skillXp: v.optional(v.array(v.object({
+      skill: v.string(),    // Skill name (matches skills array entries)
+      xp: v.number(),       // Current XP (0–2000)
+    }))),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
 
@@ -138,6 +143,7 @@ export default defineSchema({
     ),
     createdAt: v.number(),
     updatedAt: v.number(),
+    xpPerSkill: v.optional(v.number()), // XP awarded per required skill on completion
   })
     .index("by_employerId", ["employerId"])
     .index("by_status", ["status"]),

@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { EGYPTIAN_UNIVERSITIES, EGYPTIAN_CITIES } from "@/lib/egyptianData";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import deviconData from "devicon/devicon.json";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
@@ -44,6 +45,221 @@ import { SKILL_CATALOG } from "@/lib/skillCatalog";
 import { generateCvPdf } from "@/lib/cvPdfGenerator";
 import { extractTextFromPdf } from "@/lib/pdfTextExtractor";
 import { getMissingRequiredCvProfileFields } from "@/lib/studentCvOnboarding";
+
+// ── Skill XP Helpers ──
+type SkillLevel = "Beginner" | "Intermediate" | "Advanced";
+
+function getSkillLevel(xp: number): SkillLevel {
+  if (xp >= 1500) return "Advanced";
+  if (xp >= 1000) return "Intermediate";
+  return "Beginner";
+}
+
+function getSkillLevelStyle(level: SkillLevel) {
+  switch (level) {
+    case "Advanced":
+      return "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-700";
+    case "Intermediate":
+      return "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-700";
+    default:
+      return "bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600";
+  }
+}
+
+function getSkillProgress(xp: number) {
+  if (xp >= 1500) {
+    // Advanced tier — progress toward 2000 max
+    return {
+      percentage: Math.min(((xp - 1500) / 500) * 100, 100),
+      xpToNext: Math.max(2000 - xp, 0),
+      nextLevel: xp >= 2000 ? null : ("Max" as const),
+      currentMin: 1500,
+      currentMax: 2000,
+    };
+  }
+  if (xp >= 1000) {
+    // Intermediate tier — progress toward Advanced (1500)
+    return {
+      percentage: ((xp - 1000) / 500) * 100,
+      xpToNext: 1500 - xp,
+      nextLevel: "Advanced" as const,
+      currentMin: 1000,
+      currentMax: 1500,
+    };
+  }
+  // Beginner tier — progress toward Intermediate (1000)
+  return {
+    percentage: (xp / 1000) * 100,
+    xpToNext: 1000 - xp,
+    nextLevel: "Intermediate" as const,
+    currentMin: 0,
+    currentMax: 1000,
+  };
+}
+
+function getProgressBarColor(level: SkillLevel) {
+  switch (level) {
+    case "Advanced":
+      return "bg-emerald-500";
+    case "Intermediate":
+      return "bg-blue-500";
+    default:
+      return "bg-gray-400";
+  }
+}
+
+// ── Portal-based Skill XP Tooltip ──
+function SkillXpTooltip({
+  skill,
+  xp,
+  level,
+  levelStyle,
+  progress,
+  progressBarColor,
+  triggerRef,
+  visible,
+}: {
+  skill: string;
+  xp: number;
+  level: SkillLevel;
+  levelStyle: string;
+  progress: ReturnType<typeof getSkillProgress>;
+  progressBarColor: string;
+  triggerRef: React.RefObject<HTMLDivElement | null>;
+  visible: boolean;
+}) {
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (!visible || !triggerRef.current) {
+      setCoords(null);
+      return;
+    }
+
+    const update = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      // Position below the badge, centered horizontally
+      setCoords({
+        top: rect.bottom + 8,
+        left: rect.left + rect.width / 2,
+      });
+    };
+
+    update();
+
+    // Re-calculate on scroll/resize so the tooltip tracks the badge
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [visible, triggerRef]);
+
+  if (!visible || !coords) return null;
+
+  return createPortal(
+    <div
+      className="fixed z-[9999] w-56 -translate-x-1/2 animate-in fade-in zoom-in-95 duration-150"
+      style={{ top: coords.top, left: coords.left }}
+    >
+      {/* Arrow pointing up */}
+      <div className="flex justify-center -mb-[1px]">
+        <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-border" />
+      </div>
+      <div className="relative flex justify-center -mb-[5px]" style={{ marginTop: -6 }}>
+        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[6px] border-b-card" />
+      </div>
+
+      <div className="bg-card border-4 border-border shadow-[4px_4px_0_0_var(--border)] p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs uppercase tracking-widest font-black text-foreground">
+            {skill}
+          </span>
+          <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 border ${levelStyle}`}>
+            {level}
+          </span>
+        </div>
+
+        <p className="text-sm font-bold text-foreground">
+          {xp.toLocaleString()} XP
+        </p>
+
+        {/* Progress Bar */}
+        <div className="w-full h-2 bg-muted border border-border overflow-hidden">
+          <div
+            className={`h-full ${progressBarColor} transition-all duration-500`}
+            style={{ width: `${progress.percentage}%` }}
+          />
+        </div>
+
+        {/* XP to next level text */}
+        <p className="text-[11px] text-muted-foreground">
+          {xp >= 2000
+            ? "Maximum XP reached!"
+            : progress.nextLevel === "Max"
+              ? `${progress.xpToNext.toLocaleString()} XP to max`
+              : `${progress.xpToNext.toLocaleString()} XP to ${progress.nextLevel}`}
+        </p>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+// ── Skill Badge with Portal Tooltip ──
+function SkillBadgeWithTooltip({
+  skill,
+  skillXpData,
+}: {
+  skill: string;
+  skillXpData: Array<{ skill: string; xp: number }> | null | undefined;
+}) {
+  const badgeRef = useRef<HTMLDivElement>(null);
+  const [hovered, setHovered] = useState(false);
+
+  const devicon = getDeviconClass(skill);
+  const xpEntry = skillXpData?.find((e) => e.skill === skill);
+  const xp = xpEntry?.xp ?? 0;
+  const level = getSkillLevel(xp);
+  const levelStyle = getSkillLevelStyle(level);
+  const progress = getSkillProgress(xp);
+  const progressBarColor = getProgressBarColor(level);
+
+  return (
+    <div
+      ref={badgeRef}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="relative flex flex-col items-start gap-1 py-2 px-4 bg-card border-4 border-black shadow-[4px_4px_0_0_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] transition-all cursor-default"
+    >
+      <div className="flex items-center gap-2">
+        {devicon && <i className={`${devicon} text-lg`} />}
+        <span className="uppercase tracking-wide text-sm font-black text-foreground">
+          {skill}
+        </span>
+      </div>
+      {/* Level Badge */}
+      <span
+        className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 border ${levelStyle}`}
+      >
+        {level}
+      </span>
+
+      <SkillXpTooltip
+        skill={skill}
+        xp={xp}
+        level={level}
+        levelStyle={levelStyle}
+        progress={progress}
+        progressBarColor={progressBarColor}
+        triggerRef={badgeRef}
+        visible={hovered}
+      />
+    </div>
+  );
+}
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -271,6 +487,7 @@ export default function StudentProfile() {
     (u) => u.userId === currentUserData?.user?._id,
   );
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
+  const skillXpData = useQuery(api.users.getStudentSkillXp);
 
   const studentProfile = currentUserData?.studentProfile;
   const dbUser = currentUserData?.user;
@@ -314,6 +531,7 @@ export default function StudentProfile() {
   });
   const [skillInput, setSkillInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   // CV Modal State
   const [isCvModalOpen, setIsCvModalOpen] = useState(false);
@@ -1223,23 +1441,13 @@ export default function StudentProfile() {
 
             <div className="flex flex-wrap gap-3">
               {profileSkills.length > 0 ? (
-                profileSkills.map((skill) => {
-                  const devicon = getDeviconClass(skill);
-                  return (
-                    <div
-                      key={skill}
-                      className="flex items-center gap-2 py-2 px-4 bg-card border-4 border-border shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--border)] transition-all cursor-default"
-                    >
-                      {devicon && <i className={`${devicon} text-lg`} />}
-                      <Typography
-                        variant="h4"
-                        className="uppercase tracking-wide text-sm"
-                      >
-                        {skill}
-                      </Typography>
-                    </div>
-                  );
-                })
+                profileSkills.map((skill) => (
+                  <SkillBadgeWithTooltip
+                    key={skill}
+                    skill={skill}
+                    skillXpData={skillXpData}
+                  />
+                ))
               ) : (
                 <Typography variant="p" color="muted" className="italic mt-2">
                   No skills listed yet. Edit your profile to add some!
@@ -1273,44 +1481,114 @@ export default function StudentProfile() {
                   </Typography>
                 </div>
               ) : (
-                completedTasks.map((app) => (
-                  <div
-                    key={app._id}
-                    className="group relative p-5 bg-card border-4 border-border shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center"
-                  >
-                    <div className="flex-1 w-full min-w-0 pr-0 sm:pr-4">
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest bg-[#047857] text-white px-2 py-0.5 border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Done
-                        </span>
+                completedTasks.map((app) => {
+                  const isExpanded = expandedTaskId === app._id;
+                  return (
+                    <div
+                      key={app._id}
+                      className="bg-card border-4 border-border shadow-[4px_4px_0_0_var(--border)] transition-all"
+                    >
+                      <div className="p-5 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                        <div className="flex-1 w-full min-w-0 pr-0 sm:pr-4">
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest bg-[#047857] text-white px-2 py-0.5 border-2 border-border shadow-[2px_2px_0_0_var(--border)] flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" /> Done
+                            </span>
+                          </div>
+
+                          <Typography
+                            variant="h4"
+                            className="truncate block w-full"
+                          >
+                            {app.task.title}
+                          </Typography>
+
+                          <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-muted-foreground">
+                            <span className="font-bold text-foreground bg-muted px-2 py-0.5 border border-border">
+                              {app.task.companyName}
+                            </span>
+                            <span className="hidden sm:inline-block w-1.5 h-1.5 bg-black dark:bg-white rotate-45" />
+                            <span className="flex items-center gap-1 font-medium">
+                              Completed on{" "}
+                              {new Date(app.acceptedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 pt-2 sm:pt-0">
+                          <button
+                            onClick={() =>
+                              setExpandedTaskId(isExpanded ? null : app._id)
+                            }
+                            className="px-4 py-2 bg-transparent text-foreground border-2 border-border font-black uppercase tracking-widest text-xs hover:bg-foreground hover:text-background transition-colors"
+                          >
+                            {isExpanded ? "Hide Details" : "View Details"}
+                          </button>
+                        </div>
                       </div>
 
-                      <Typography
-                        variant="h4"
-                        className="truncate block w-full group-hover:text-blue-600 transition-colors"
-                      >
-                        {app.task.title}
-                      </Typography>
+                      {/* Expandable Details Panel */}
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-5 pb-5 pt-2 border-t-2 border-dashed border-border space-y-3">
+                              {/* Description */}
+                              {app.task.description && (
+                                <div>
+                                  <Typography variant="h4" className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                                    Description
+                                  </Typography>
+                                  <Typography variant="p" className="text-sm text-foreground leading-relaxed">
+                                    {app.task.description}
+                                  </Typography>
+                                </div>
+                              )}
 
-                      <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-muted-foreground">
-                        <span className="font-bold text-foreground bg-muted px-2 py-0.5 border border-border">
-                          {app.task.companyName}
-                        </span>
-                        <span className="hidden sm:inline-block w-1.5 h-1.5 bg-black dark:bg-white rotate-45" />
-                        <span className="flex items-center gap-1 font-medium">
-                          Completed on{" "}
-                          {new Date(app.acceptedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
+                              {/* Meta Row */}
+                              <div className="flex flex-wrap gap-2">
+                                {app.task.category && (
+                                  <span className="text-[10px] font-black uppercase tracking-widest bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 border border-blue-300 dark:border-blue-700">
+                                    {app.task.category}
+                                  </span>
+                                )}
+                                {app.task.skillLevel && (
+                                  <span className="text-[10px] font-black uppercase tracking-widest bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-2 py-0.5 border border-amber-300 dark:border-amber-700">
+                                    {app.task.skillLevel}
+                                  </span>
+                                )}
+                              </div>
 
-                    <div className="shrink-0 pt-2 sm:pt-0">
-                      <button className="px-4 py-2 bg-transparent text-foreground border-2 border-border font-black uppercase tracking-widest text-xs hover:bg-foreground hover:text-background transition-colors">
-                        View Details
-                      </button>
+                              {/* Skills */}
+                              {app.task.skills && app.task.skills.length > 0 && (
+                                <div>
+                                  <Typography variant="h4" className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                                    Skills Used
+                                  </Typography>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {app.task.skills.map((s) => (
+                                      <span
+                                        key={s}
+                                        className="text-[10px] font-bold uppercase tracking-wider bg-muted text-foreground px-2 py-0.5 border border-border"
+                                      >
+                                        {s}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
