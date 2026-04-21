@@ -9,11 +9,17 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
 const hf = new HfInference(process.env.HF_TOKEN!);
 
+interface HistoryMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     let message: string = body.message;
-    const userRole: string = body.userRole || "guest"; // Default to guest if not provided
+    const userRole: string = body.userRole || "guest";
+    const history: HistoryMessage[] = Array.isArray(body.history) ? body.history : [];
 
     // 1. Server-side validation
     if (!message || typeof message !== "string" || !message.trim()) {
@@ -53,7 +59,7 @@ export async function POST(req: NextRequest) {
     // 3. Search Pinecone for relevant context
     const searchResults = await index.query({
       vector: queryVector,
-      topK: 3,
+      topK: 5,
       includeMetadata: true,
     });
 
@@ -87,32 +93,87 @@ export async function POST(req: NextRequest) {
       `;
     }
 
-    const systemPrompt = `You are "Dalil", a helpful AI platform assistant for "Internify", a two-sided learning-to-hiring platform. 
-    Use the following retrieved context to accurately answer the user's question, but ALWAYS adhere strictly to your Role Enforcement instructions below.
-    If the answer is not in the context, politely say you don't know and do not make up information.
-    Keep your answers concise, well-structured, and helpful.
-    
-    ${roleSpecificInstructions}
-    
-    Context:
-    ${contextText}`;
+    const systemPrompt = `You are "Dalil" (دَلِيل), meaning "guide" in Arabic — the AI assistant for Internify, a two-sided learning-to-hiring platform connecting students with real employer tasks.
 
-    // 6. Send context and user message to Groq
-    const chatCompletion = await groq.chat.completions.create({
+PERSONALITY:
+- Friendly, concise, and encouraging.
+- Use short bullet lists when listing steps or features.
+- If unsure, say so honestly — never fabricate information.
+- Keep answers to 2-3 short paragraphs maximum.
+
+CONVERSATION AWARENESS:
+- You have access to the conversation history above. Use it to provide contextual follow-ups.
+- If the user refers to something they said earlier, check the conversation history.
+- Don't repeat information you've already given unless specifically asked.
+
+${roleSpecificInstructions}
+
+KNOWLEDGE BASE (use this to answer accurately):
+${contextText}
+
+If the answer is not in the knowledge base above, say: "I don't have specific information about that yet. You can reach out to the Internify team for more details."`;
+
+    // 6. Build conversation messages with history for multi-turn context
+    const conversationHistory = history
+      .slice(-10) // Keep last 10 messages to stay within context limits
+      .filter(
+        (msg) =>
+          (msg.role === "user" || msg.role === "assistant") &&
+          typeof msg.content === "string" &&
+          msg.content.trim().length > 0,
+      )
+      .map((msg) => ({
+        role: msg.role as "user" | "assistant",
+        content: msg.content.slice(0, 500),
+      }));
+
+    // 7. Stream Groq response via SSE
+    const stream = await groq.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
+        ...conversationHistory,
         { role: "user", content: message },
       ],
       model: "llama-3.3-70b-versatile",
-      temperature: 0.1,
+      temperature: 0.3,
+      max_tokens: 500,
+      stream: true,
     });
 
-    const reply =
-      chatCompletion.choices[0]?.message?.content ||
-      "I couldn't generate a response.";
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const text = chunk.choices[0]?.delta?.content || "";
+            if (text) {
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ text })}\n\n`),
+              );
+            }
+          }
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        } catch (err) {
+          console.error("Stream error:", err);
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ text: "\n\nSorry, an error occurred." })}\n\n`,
+            ),
+          );
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        }
+      },
+    });
 
-    // 7. Return response to the frontend
-    return NextResponse.json({ reply });
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error) {
     console.error("Chat API Error:", error);
     return NextResponse.json(
