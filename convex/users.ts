@@ -51,6 +51,36 @@ export const currentUser = query({
   },
 });
 
+/**
+ * QUERY: getStudentSkillXp
+ * Returns the current student's skillXp array for rendering skill levels and tooltips.
+ */
+export const getStudentSkillXp = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") return null;
+
+    const profile = await ctx.db
+      .query("studentProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile) return null;
+
+    return profile.skillXp ?? [];
+  },
+});
+
 export const requireCurrentIdentity = query({
   args: {},
   handler: async (ctx) => {
@@ -209,13 +239,31 @@ export const upsertCurrentUser = mutation({
       };
 
       if (existingStudentProfile) {
+        // Sync skillXp: preserve XP for existing skills, add 0 XP for new skills, drop removed skills
+        const newSkills = args.studentProfile.skills ?? [];
+        const existingXpMap = new Map(
+          (existingStudentProfile.skillXp ?? []).map((entry) => [entry.skill, entry.xp]),
+        );
+        const syncedSkillXp = newSkills.map((skill) => ({
+          skill,
+          xp: existingXpMap.get(skill) ?? 0,
+        }));
+
         // Update existing student info
-        await ctx.db.patch(existingStudentProfile._id, studentProfileUpdate);
+        await ctx.db.patch(existingStudentProfile._id, {
+          ...studentProfileUpdate,
+          skillXp: syncedSkillXp,
+        });
       } else {
-        // Create new student info
+        // Create new student info — all skills start at 0 XP
+        const initialSkillXp = (args.studentProfile.skills ?? []).map((skill) => ({
+          skill,
+          xp: 0,
+        }));
         await ctx.db.insert("studentProfiles", {
           userId,
           ...studentProfileUpdate,
+          skillXp: initialSkillXp,
         });
       }
     }

@@ -229,6 +229,14 @@ export const createTask = mutation({
 
     const now = Date.now();
 
+    // Map difficulty level to XP awarded per required skill
+    const xpMap: Record<string, number> = {
+      beginner: 65,
+      intermediate: 115,
+      advanced: 175,
+    };
+    const xpPerSkill = xpMap[args.skillLevel] ?? 65;
+
     // Insert new task row for the currently authenticated employer
     const taskId = await ctx.db.insert("tasks", {
       employerId: user._id,
@@ -245,6 +253,7 @@ export const createTask = mutation({
       status: "pending",
       createdAt: now,
       updatedAt: now,
+      xpPerSkill,
     });
 
     // Notify all students about the new task
@@ -1086,6 +1095,62 @@ export const submitTask = mutation({
       isRead: false,
       createdAt: Date.now(),
     });
+
+    // ── Award Skill XP ──
+    // Use stored xpPerSkill, or fall back to difficulty-based defaults
+    const fallbackXp: Record<string, number> = {
+      beginner: 65,
+      intermediate: 115,
+      advanced: 175,
+    };
+    const xpToAward = task.xpPerSkill ?? fallbackXp[task.skillLevel] ?? 65;
+    const MAX_SKILL_XP = 2000;
+
+    const studentProfile = await ctx.db
+      .query("studentProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (studentProfile) {
+      const taskSkills = task.skills ?? [];
+      if (taskSkills.length > 0) {
+        // Build XP map from existing skillXp entries
+        const existingXp = studentProfile.skillXp ?? [];
+        const xpEntryMap = new Map(existingXp.map((entry) => [entry.skill, entry.xp]));
+
+        // Award XP to ALL task skills (create entries for new skills too)
+        for (const skill of taskSkills) {
+          const current = xpEntryMap.get(skill) ?? 0;
+          xpEntryMap.set(skill, Math.min(current + xpToAward, MAX_SKILL_XP));
+        }
+
+        // Also ensure all existing student skills are preserved
+        for (const entry of existingXp) {
+          if (!xpEntryMap.has(entry.skill)) {
+            xpEntryMap.set(entry.skill, entry.xp);
+          }
+        }
+
+        // Rebuild the full skillXp array
+        const updatedSkillXp = Array.from(xpEntryMap.entries()).map(([skill, xp]) => ({
+          skill,
+          xp,
+        }));
+
+        // Also add any new task skills to the student's skills array if missing
+        const currentSkills = studentProfile.skills ?? [];
+        const skillSet = new Set(currentSkills);
+        const newSkills = taskSkills.filter((s) => !skillSet.has(s));
+        const updatedSkills = newSkills.length > 0
+          ? [...currentSkills, ...newSkills]
+          : currentSkills;
+
+        await ctx.db.patch(studentProfile._id, {
+          skillXp: updatedSkillXp,
+          ...(newSkills.length > 0 ? { skills: updatedSkills } : {}),
+        });
+      }
+    }
   },
 });
 
