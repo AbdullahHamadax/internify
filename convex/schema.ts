@@ -83,6 +83,14 @@ export default defineSchema({
     skills: v.optional(v.array(v.string())),
     cvStorageId: v.optional(v.id("_storage")), // Example: A file ID for their uploaded PDF resume
     cvFileName: v.optional(v.string()), // Example: "Alice_Resume_2024.pdf"
+    // ── Education (extended) ──
+    university: v.optional(v.string()),      // Egyptian university name
+    degree: v.optional(v.string()),          // e.g. "Bachelor of Science in Computer Science"
+    graduationYear: v.optional(v.number()), // e.g. 2025
+    gpa: v.optional(v.number()),            // 0.0 – 4.0 scale
+    // ── Contact & Location ──
+    phone: v.optional(v.string()),
+    city: v.optional(v.string()),            // Egyptian city; country is always "Egypt"
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
 

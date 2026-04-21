@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -20,6 +21,7 @@ import {
   Zap,
   Loader2,
   Star,
+  ArrowUpRight,
 } from "lucide-react";
 import deviconData from "devicon/devicon.json";
 import {
@@ -324,6 +326,17 @@ export default function ProfileViewModal({
                     )}
                   </div>
                 )}
+
+                <div className="pt-2 border-t-2 border-border">
+                  <Link
+                    href={`/students/${userId}`}
+                    onClick={onClose}
+                    className="inline-flex items-center gap-2 border-4 border-black dark:border-white bg-[#2563EB] px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff]"
+                  >
+                    View Full Profile
+                    <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+                </div>
               </div>
             )}
 

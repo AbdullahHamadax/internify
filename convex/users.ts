@@ -34,7 +34,6 @@ export const currentUser = query({
     }
 
     // 3. If they are a student, get their student-specific info
-    // Example: Getting their "Field of Study" (e.g., "Computer Science")
     if (user.role === "student") {
       const studentProfile = await ctx.db
         .query("studentProfiles")
@@ -44,7 +43,6 @@ export const currentUser = query({
     }
 
     // 4. If they are an employer, get their company-specific info
-    // Example: Getting their "Company Name" (e.g., "Google")
     const employerProfile = await ctx.db
       .query("employerProfiles")
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
@@ -91,7 +89,15 @@ export const upsertCurrentUser = mutation({
         github: v.optional(v.string()),
         linkedin: v.optional(v.string()),
         skills: v.optional(v.array(v.string())),
+        cvStorageId: v.optional(v.id("_storage")),
         cvFileName: v.optional(v.string()),
+        // Extended education & contact fields
+        university: v.optional(v.string()),
+        degree: v.optional(v.string()),
+        graduationYear: v.optional(v.number()),
+        gpa: v.optional(v.number()),
+        phone: v.optional(v.string()),
+        city: v.optional(v.string()),
       }),
     ),
     employerProfile: v.optional(
@@ -146,7 +152,6 @@ export const upsertCurrentUser = mutation({
         });
 
     // If they already exist, UPDATE their info (Patch).
-    // Example: User changed their email address in settings.
     if (existingUser) {
       // Role is immutable once set — prevents students from becoming employers (and vice versa).
       if (existingUser.role !== args.role) {
@@ -178,36 +183,39 @@ export const upsertCurrentUser = mutation({
         .withIndex("by_userId", (q) => q.eq("userId", userId))
         .unique();
 
+      const studentProfileUpdate = {
+        academicStatus: args.studentProfile.academicStatus,
+        fieldOfStudy: args.studentProfile.fieldOfStudy,
+        title: args.studentProfile.title,
+        location: args.studentProfile.location,
+        description: args.studentProfile.description,
+        portfolio: args.studentProfile.portfolio,
+        github: args.studentProfile.github,
+        linkedin: args.studentProfile.linkedin,
+        skills: args.studentProfile.skills,
+        university: args.studentProfile.university,
+        degree: args.studentProfile.degree,
+        graduationYear: args.studentProfile.graduationYear,
+        gpa: args.studentProfile.gpa,
+        phone: args.studentProfile.phone,
+        city: args.studentProfile.city,
+        updatedAt: now,
+        ...(args.studentProfile.cvStorageId !== undefined
+          ? { cvStorageId: args.studentProfile.cvStorageId }
+          : {}),
+        ...(args.studentProfile.cvFileName !== undefined
+          ? { cvFileName: args.studentProfile.cvFileName }
+          : {}),
+      };
+
       if (existingStudentProfile) {
         // Update existing student info
-        await ctx.db.patch(existingStudentProfile._id, {
-          academicStatus: args.studentProfile.academicStatus,
-          fieldOfStudy: args.studentProfile.fieldOfStudy,
-          title: args.studentProfile.title,
-          location: args.studentProfile.location,
-          description: args.studentProfile.description,
-          portfolio: args.studentProfile.portfolio,
-          github: args.studentProfile.github,
-          linkedin: args.studentProfile.linkedin,
-          skills: args.studentProfile.skills,
-          cvFileName: args.studentProfile.cvFileName,
-          updatedAt: now,
-        });
+        await ctx.db.patch(existingStudentProfile._id, studentProfileUpdate);
       } else {
         // Create new student info
         await ctx.db.insert("studentProfiles", {
           userId,
-          academicStatus: args.studentProfile.academicStatus,
-          fieldOfStudy: args.studentProfile.fieldOfStudy,
-          title: args.studentProfile.title,
-          location: args.studentProfile.location,
-          description: args.studentProfile.description,
-          portfolio: args.studentProfile.portfolio,
-          github: args.studentProfile.github,
-          linkedin: args.studentProfile.linkedin,
-          skills: args.studentProfile.skills,
-          cvFileName: args.studentProfile.cvFileName,
-          updatedAt: now,
+          ...studentProfileUpdate,
         });
       }
     }
@@ -303,10 +311,10 @@ export const getStudentsForEmployer = query({
       throw new Error("Unauthorized");
     }
 
-    // 2. We can enforce evaluating if caller is an employer, but for now just fetching all students
+    // 2. Fetch all student users
     const students = await ctx.db
       .query("users")
-      .withIndex("by_tokenIdentifier") // Using a valid index or full scan if necessary
+      .withIndex("by_tokenIdentifier")
       .filter((q) => q.eq(q.field("role"), "student"))
       .collect();
 
@@ -409,5 +417,241 @@ export const getPublicProfile = query({
           }
         : null,
     };
+  },
+});
+
+/**
+ * MUTATION: saveCvToProfile
+ * Saves an uploaded CV file reference (storageId + fileName) to the student profile.
+ * Optionally deletes the previous CV from storage to prevent orphaned files.
+ */
+export const saveCvToProfile = mutation({
+  args: {
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") {
+      throw new Error("Only students can upload CVs.");
+    }
+
+    const profile = await ctx.db
+      .query("studentProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile) {
+      throw new Error("Student profile not found. Complete signup first.");
+    }
+
+    // Delete previous CV file from storage to avoid orphans
+    if (profile.cvStorageId) {
+      try {
+        await ctx.storage.delete(profile.cvStorageId);
+      } catch {
+        // File may already be gone — safe to ignore
+      }
+    }
+
+    await ctx.db.patch(profile._id, {
+      cvStorageId: args.storageId,
+      cvFileName: args.fileName,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * QUERY: getCvDownloadUrl
+ * Returns the download URL and metadata for the current user's stored CV.
+ */
+export const getCvDownloadUrl = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") return null;
+
+    const profile = await ctx.db
+      .query("studentProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile || !profile.cvStorageId) return null;
+
+    const url = await ctx.storage.getUrl(profile.cvStorageId);
+    if (!url) return null;
+
+    return {
+      url,
+      fileName: profile.cvFileName ?? "CV.pdf",
+      storageId: profile.cvStorageId,
+    };
+  },
+});
+
+/**
+ * QUERY: getPublicStudentProfileDetail
+ * Fetches a richer read-only student profile for employer-facing profile pages.
+ */
+export const getPublicStudentProfileDetail = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db.get(args.userId);
+    if (!user || user.role !== "student") return null;
+
+    const profile = await ctx.db
+      .query("studentProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    const applications = await ctx.db
+      .query("applications")
+      .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
+      .collect();
+
+    const completedApplications = applications.filter(
+      (app) => app.status === "completed",
+    );
+
+    const completedWork = (
+      await Promise.all(
+        completedApplications.map(async (app) => {
+          const task = await ctx.db.get(app.taskId);
+          if (!task) return null;
+
+          const employerProfile = await ctx.db
+            .query("employerProfiles")
+            .withIndex("by_userId", (q) => q.eq("userId", task.employerId))
+            .unique();
+
+          return {
+            applicationId: app._id,
+            taskId: task._id,
+            title: task.title,
+            description: task.description,
+            category: task.category,
+            skillLevel: task.skillLevel,
+            skills: task.skills,
+            companyName: employerProfile?.companyName ?? "Unknown Company",
+            recordedAt: app.createdAt,
+          };
+        }),
+      )
+    )
+      .filter((item) => item !== null)
+      .sort((a, b) => b.recordedAt - a.recordedAt);
+
+    const rating =
+      completedApplications.length > 0
+        ? 4.5 + Math.min(completedApplications.length * 0.1, 0.5)
+        : 0;
+
+    const cvUrl =
+      profile?.cvStorageId !== undefined
+        ? await ctx.storage.getUrl(profile.cvStorageId)
+        : null;
+
+    return {
+      userId: user._id,
+      clerkUserId: user.clerkUserId,
+      name: [user.firstName, user.lastName].filter(Boolean).join(" ") || "User",
+      email: user.email,
+      role: user.role as "student",
+      memberSince: user.createdAt,
+      rating,
+      completedTasks: completedApplications.length,
+      studentProfile: profile
+        ? {
+            title: profile.title,
+            location: profile.location,
+            description: profile.description,
+            academicStatus: profile.academicStatus,
+            fieldOfStudy: profile.fieldOfStudy,
+            skills: profile.skills ?? [],
+            portfolio: profile.portfolio,
+            github: profile.github,
+            linkedin: profile.linkedin,
+            university: profile.university,
+            degree: profile.degree,
+            graduationYear: profile.graduationYear,
+            gpa: profile.gpa,
+            phone: profile.phone,
+            city: profile.city,
+          }
+        : null,
+      cv: profile?.cvStorageId
+        ? {
+            url: cvUrl,
+            fileName: profile.cvFileName ?? "CV.pdf",
+          }
+        : null,
+      completedWork,
+    };
+  },
+});
+
+/**
+ * MUTATION: deleteCvFromProfile
+ * Removes the stored CV from both storage and the student profile record.
+ */
+export const deleteCvFromProfile = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") {
+      throw new Error("Only students can manage CVs.");
+    }
+
+    const profile = await ctx.db
+      .query("studentProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile) throw new Error("Student profile not found.");
+
+    if (profile.cvStorageId) {
+      try {
+        await ctx.storage.delete(profile.cvStorageId);
+      } catch {
+        // Already gone
+      }
+    }
+
+    await ctx.db.patch(profile._id, {
+      cvStorageId: undefined,
+      cvFileName: undefined,
+      updatedAt: Date.now(),
+    });
   },
 });

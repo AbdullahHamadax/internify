@@ -294,6 +294,7 @@ export default function StudentDashboard() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const routeTab = searchParams.get("tab");
+  const initialConversationId = searchParams.get("conversationId");
   const normalizedRouteTab =
     routeTab &&
     ["dashboard", "explore", "profile", "settings", "messages", "notifications"].includes(
@@ -356,7 +357,12 @@ export default function StudentDashboard() {
         )}
         {activeNav === "profile" && <StudentProfile />}
         {activeNav === "settings" && <SettingsPage />}
-        {activeNav === "messages" && <Messages role="student" />}
+        {activeNav === "messages" && (
+          <Messages
+            role="student"
+            initialConversationId={initialConversationId}
+          />
+        )}
         {activeNav === "notifications" && (
           <Notifications role="student" onNavigate={handleNavigate} />
         )}

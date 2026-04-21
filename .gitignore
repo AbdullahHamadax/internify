@@ -49,3 +49,6 @@ next-env.d.ts
 
 # convex generated
 convex/_generated
+
+AGENTS.md
+CLAUDE.md
