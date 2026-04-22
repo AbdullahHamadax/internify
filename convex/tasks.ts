@@ -16,9 +16,24 @@ const attachmentValidator = v.array(
 
 /** Maximum number of attachments allowed per task. */
 const MAX_ATTACHMENTS = 10;
+const CONTRIBUTION_LOOKBACK_DAYS = 365;
 
 /** Allowed MIME-type prefixes for attachments. */
 const ALLOWED_MIME_PREFIXES = ["image/", "application/pdf"];
+
+function getContributionRange(now = Date.now()) {
+  const rangeEndDate = new Date(now);
+  rangeEndDate.setHours(23, 59, 59, 999);
+
+  const rangeStartDate = new Date(rangeEndDate);
+  rangeStartDate.setDate(rangeStartDate.getDate() - CONTRIBUTION_LOOKBACK_DAYS);
+  rangeStartDate.setHours(0, 0, 0, 0);
+
+  return {
+    rangeStart: rangeStartDate.getTime(),
+    rangeEnd: rangeEndDate.getTime(),
+  };
+}
 
 /**
  * Validates attachment constraints server-side.
@@ -987,6 +1002,8 @@ export const getStudentApplications = query({
           taskId: app.taskId,
           status: app.status,
           acceptedAt: app.createdAt,
+          completedAt:
+            app.completedAt ?? existingSubmission?.submittedAt ?? app.createdAt,
           hasSubmission: !!existingSubmission,
           task: {
             title: task.title,
@@ -1003,6 +1020,83 @@ export const getStudentApplications = query({
     );
 
     return enriched.filter((item) => item !== null);
+  },
+});
+
+/**
+ * Get completed task timestamps for a student's contribution graph.
+ * Counts only completed applications tied to completed tasks and a submission date.
+ */
+export const getStudentContributionDates = query({
+  args: {
+    studentId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const student = await ctx.db.get(args.studentId);
+    const { rangeStart, rangeEnd } = getContributionRange();
+
+    if (!student || student.role !== "student") {
+      return {
+        completedTaskDates: [] as number[],
+        total: 0,
+        rangeStart,
+        rangeEnd,
+      };
+    }
+
+    const applications = await ctx.db
+      .query("applications")
+      .withIndex("by_studentId", (q) => q.eq("studentId", args.studentId))
+      .collect();
+
+    const completedTaskDates = (
+      await Promise.all(
+        applications.map(async (application) => {
+          if (application.status !== "completed") {
+            return null;
+          }
+
+          const task = await ctx.db.get(application.taskId);
+          if (!task || task.status !== "completed") {
+            return null;
+          }
+
+          const submission = await ctx.db
+            .query("submissions")
+            .withIndex("by_applicationId", (q) =>
+              q.eq("applicationId", application._id),
+            )
+            .unique();
+
+          const completedAt =
+            application.completedAt ?? submission?.submittedAt ?? null;
+
+          if (
+            completedAt === null ||
+            completedAt < rangeStart ||
+            completedAt > rangeEnd
+          ) {
+            return null;
+          }
+
+          return completedAt;
+        }),
+      )
+    )
+      .filter((completedAt): completedAt is number => completedAt !== null)
+      .sort((a, b) => a - b);
+
+    return {
+      completedTaskDates,
+      total: completedTaskDates.length,
+      rangeStart,
+      rangeEnd,
+    };
   },
 });
 
@@ -1062,6 +1156,8 @@ export const submitTask = mutation({
       throw new Error("At least one file is required");
     }
 
+    const completedAt = Date.now();
+
     // Create submission
     await ctx.db.insert("submissions", {
       applicationId: args.applicationId,
@@ -1069,16 +1165,19 @@ export const submitTask = mutation({
       taskId: application.taskId,
       files: args.files,
       note: args.note,
-      submittedAt: Date.now(),
+      submittedAt: completedAt,
     });
 
     // Mark application as completed
-    await ctx.db.patch(args.applicationId, { status: "completed" });
+    await ctx.db.patch(args.applicationId, {
+      status: "completed",
+      completedAt,
+    });
 
     // Mark task as completed so it appears in the employer's Completed tab
     await ctx.db.patch(application.taskId, {
       status: "completed",
-      updatedAt: Date.now(),
+      updatedAt: completedAt,
     });
 
     // Notify the employer about the submission
@@ -1093,7 +1192,7 @@ export const submitTask = mutation({
       relatedUserId: user._id,
       relatedUserName: studentName,
       isRead: false,
-      createdAt: Date.now(),
+      createdAt: completedAt,
     });
 
     // ── Award Skill XP ──

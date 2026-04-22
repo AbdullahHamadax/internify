@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { Typography } from "@/components/ui/Typography";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import TaskContributionsGraph from "@/components/shared/TaskContributionsGraph";
 import {
   Briefcase,
   MapPin,
@@ -41,10 +42,22 @@ import deviconData from "devicon/devicon.json";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { SKILL_CATALOG } from "@/lib/skillCatalog";
 import { generateCvPdf } from "@/lib/cvPdfGenerator";
 import { extractTextFromPdf } from "@/lib/pdfTextExtractor";
 import { getMissingRequiredCvProfileFields } from "@/lib/studentCvOnboarding";
+import {
+  getStudentAvailabilityMeta,
+  normalizeStudentAvailabilityStatus,
+  STUDENT_AVAILABILITY_OPTIONS,
+  type StudentAvailabilityStatus,
+} from "@/lib/availability";
 
 // ── Skill XP Helpers ──
 type SkillLevel = "Beginner" | "Intermediate" | "Advanced";
@@ -487,6 +500,9 @@ export default function StudentProfile() {
     (u) => u.userId === currentUserData?.user?._id,
   );
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
+  const updateStudentAvailabilityStatus = useMutation(
+    api.users.updateStudentAvailabilityStatus,
+  );
   const skillXpData = useQuery(api.users.getStudentSkillXp);
 
   const studentProfile = currentUserData?.studentProfile;
@@ -531,6 +547,9 @@ export default function StudentProfile() {
   });
   const [skillInput, setSkillInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [optimisticAvailabilityStatus, setOptimisticAvailabilityStatus] =
+    useState<StudentAvailabilityStatus | null>(null);
+  const [isAvailabilitySaving, setIsAvailabilitySaving] = useState(false);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   // CV Modal State
@@ -575,6 +594,14 @@ export default function StudentProfile() {
   );
   const canPreviewUploadedCv =
     cvData?.fileName.toLowerCase().endsWith(".pdf") ?? false;
+  const availabilityStatus =
+    optimisticAvailabilityStatus ??
+    normalizeStudentAvailabilityStatus(studentProfile?.availabilityStatus);
+  const availabilityMeta = getStudentAvailabilityMeta(availabilityStatus);
+
+  useEffect(() => {
+    setOptimisticAvailabilityStatus(null);
+  }, [studentProfile?.availabilityStatus]);
 
   useEffect(() => {
     if (!canPreviewUploadedCv || !cvData?.url) {
@@ -696,6 +723,29 @@ export default function StudentProfile() {
     }
   };
 
+  const handleAvailabilityStatusChange = async (nextValue: string) => {
+    if (!studentProfile) return;
+
+    const nextStatus = normalizeStudentAvailabilityStatus(nextValue);
+    if (nextStatus === availabilityStatus) return;
+
+    const previousStatus = availabilityStatus;
+    setOptimisticAvailabilityStatus(nextStatus);
+    setIsAvailabilitySaving(true);
+
+    try {
+      await updateStudentAvailabilityStatus({
+        availabilityStatus: nextStatus,
+      });
+    } catch (error) {
+      console.error("Failed to update availability status:", error);
+      setOptimisticAvailabilityStatus(previousStatus);
+      alert("Failed to update availability status.");
+    } finally {
+      setIsAvailabilitySaving(false);
+    }
+  };
+
   // Skill Picker Logic
   const normalize = (s: string) => s.trim().toLowerCase();
   const trimmedSkillQuery = skillInput.trim();
@@ -802,7 +852,7 @@ export default function StudentProfile() {
           category: app.task.category,
           skillLevel: app.task.skillLevel,
           skills: app.task.skills,
-          completedDate: new Date(app.acceptedAt).toLocaleDateString("en-US", {
+          completedDate: new Date(app.completedAt).toLocaleDateString("en-US", {
             month: "long",
             year: "numeric",
           }),
@@ -1088,9 +1138,44 @@ export default function StudentProfile() {
         <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
           {/* Main Profile Card */}
           <div className="bg-card border-4 border-border shadow-[8px_8px_0_0_var(--border)] p-6 relative">
-            <div className="absolute -top-4 -right-4 bg-[#2563EB] text-white border-4 border-black dark:border-white px-3 py-1 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] z-10 rotate-3 hover:rotate-6 transition-transform">
-              Available
-            </div>
+            <Select
+              value={availabilityStatus}
+              onValueChange={handleAvailabilityStatusChange}
+              disabled={!studentProfile || isAvailabilitySaving}
+            >
+              <SelectTrigger
+                aria-label="Student availability status"
+                className={`absolute -top-4 -right-4 z-10 h-auto min-h-0 w-auto min-w-[12.75rem] rounded-none border-4 border-black px-3 py-1 text-xs font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] transition-transform hover:rotate-6 disabled:opacity-80 dark:border-white dark:shadow-[4px_4px_0_0_#fff] ${availabilityMeta.badgeClassName}`}
+              >
+                <span
+                  className={`size-2.5 border-2 border-black dark:border-white ${availabilityMeta.dotClassName}`}
+                />
+                <span className="min-w-0 truncate">
+                  {availabilityMeta.label}
+                </span>
+                {isAvailabilitySaving && (
+                  <Loader2 className="size-3 animate-spin opacity-90" />
+                )}
+              </SelectTrigger>
+              <SelectContent
+                align="end"
+                position="popper"
+                className="z-[9999] rounded-none border-4 border-black bg-card p-1 shadow-[6px_6px_0_0_#000] dark:border-white dark:shadow-[6px_6px_0_0_#fff]"
+              >
+                {STUDENT_AVAILABILITY_OPTIONS.map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    className={`rounded-none border-2 border-transparent py-2 pr-8 pl-2 text-xs font-black uppercase tracking-widest data-[state=checked]:border-black dark:data-[state=checked]:border-white ${option.itemClassName}`}
+                  >
+                    <span
+                      className={`size-2.5 border-2 border-black dark:border-white ${option.dotClassName}`}
+                    />
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <div className="flex flex-col items-center text-center space-y-4 pt-4">
               {/* Brutalist Avatar */}
@@ -1456,6 +1541,8 @@ export default function StudentProfile() {
             </div>
           </div>
 
+          <TaskContributionsGraph studentId={dbUser?._id ?? null} />
+
           {/* Completed Tasks Overview */}
           <div className="space-y-4 flex-1">
             <Typography variant="h3" className="flex items-center gap-3">
@@ -1510,7 +1597,7 @@ export default function StudentProfile() {
                             <span className="hidden sm:inline-block w-1.5 h-1.5 bg-black dark:bg-white rotate-45" />
                             <span className="flex items-center gap-1 font-medium">
                               Completed on{" "}
-                              {new Date(app.acceptedAt).toLocaleDateString()}
+                              {new Date(app.completedAt).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
