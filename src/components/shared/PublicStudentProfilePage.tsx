@@ -34,6 +34,7 @@ import { useRouter } from "next/navigation";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Typography } from "@/components/ui/Typography";
+import TaskContributionsGraph from "@/components/shared/TaskContributionsGraph";
 import { useConvexTokenReady } from "@/lib/convexAuth";
 import {
   formatExternalLinkLabel,
@@ -41,6 +42,10 @@ import {
   getLinkedinProfileLink,
   normalizeExternalLink,
 } from "@/lib/profileLinks";
+import {
+  getStudentAvailabilityMeta,
+  normalizeStudentAvailabilityStatus,
+} from "@/lib/availability";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -266,10 +271,6 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
     api.users.getPublicStudentProfileDetail,
     isConvexTokenReady ? { userId: userId as Id<"users"> } : "skip",
   );
-  const globalPresence = useQuery(
-    api.presence.listRoom,
-    isConvexTokenReady ? { roomId: "global:online" } : "skip",
-  );
   const getOrCreateConversation = useMutation(
     api.messages.getOrCreateConversation,
   );
@@ -378,12 +379,10 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
     year: "numeric",
   });
   const hasContactLinks = Boolean(portfolioUrl || githubUrl || linkedinUrl);
-  const isStudentActive =
-    globalPresence?.some((u) => u.userId === profile.userId) ?? false;
-  const statusLabel = isStudentActive ? "Active / Available" : "Inactive / Not available";
-  const statusClassName = isStudentActive
-    ? "bg-[#DCFCE7] text-[#166534]"
-    : "bg-[#E5E7EB] text-[#374151]";
+  const availabilityStatus = normalizeStudentAvailabilityStatus(
+    studentProfile?.availabilityStatus,
+  );
+  const availabilityMeta = getStudentAvailabilityMeta(availabilityStatus);
   const showEmployerActions = currentUser.user.role === "employer";
 
   const handleMessageStudent = async () => {
@@ -470,14 +469,12 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                   <span className="hidden h-2 w-2 rotate-45 bg-black sm:inline-block dark:bg-white" />
                   <span className="text-muted-foreground">Member since {memberSince}</span>
                   <span
-                    className={`inline-flex items-center gap-2 border-2 border-black px-3 py-1 font-black uppercase tracking-widest shadow-[2px_2px_0_0_#000] dark:border-white dark:shadow-[2px_2px_0_0_#fff] ${statusClassName}`}
+                    className={`inline-flex items-center gap-2 border-2 border-black px-3 py-1 font-black uppercase tracking-widest shadow-[2px_2px_0_0_#000] dark:border-white dark:shadow-[2px_2px_0_0_#fff] ${availabilityMeta.badgeClassName}`}
                   >
                     <span
-                      className={`h-2.5 w-2.5 border border-black dark:border-white ${
-                        isStudentActive ? "bg-green-500" : "bg-gray-500"
-                      }`}
+                      className={`h-2.5 w-2.5 border border-black dark:border-white ${availabilityMeta.dotClassName}`}
                     />
-                    {statusLabel}
+                    {availabilityMeta.label}
                   </span>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
@@ -538,6 +535,8 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
 
         <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
           <section className="space-y-6">
+            <TaskContributionsGraph studentId={profile.userId as Id<"users">} />
+
             <div className="border-4 border-black bg-card p-6 shadow-[8px_8px_0_0_#000] dark:border-white dark:shadow-[8px_8px_0_0_#fff]">
               <Typography variant="h3" className="mb-4 flex items-center gap-3 uppercase">
                 <span className="border-2 border-black bg-[#A7F3D0] p-1 text-black shadow-[2px_2px_0_0_#000] dark:border-white dark:shadow-[2px_2px_0_0_#fff]">
@@ -758,14 +757,28 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                 <div className="flex flex-wrap gap-2">
                   {studentProfile.skills.map((skill) => {
                     const devicon = getDeviconClass(skill);
+                    const xpEntry = studentProfile.skillXp?.find((e: { skill: string; xp: number }) => e.skill === skill);
+                    const xp = xpEntry?.xp ?? 0;
+                    const level = xp >= 1500 ? "Advanced" : xp >= 1000 ? "Intermediate" : "Beginner";
+                    const levelStyle =
+                      level === "Advanced"
+                        ? "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-700"
+                        : level === "Intermediate"
+                          ? "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-700"
+                          : "bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600";
 
                     return (
                       <span
                         key={skill}
-                        className="inline-flex items-center gap-1.5 border-2 border-border bg-card px-3 py-1.5 text-[11px] font-black uppercase tracking-wider shadow-[2px_2px_0_0_var(--border)]"
+                        className="flex flex-col items-start gap-1 border-2 border-border bg-card px-3 py-1.5 shadow-[2px_2px_0_0_var(--border)]"
                       >
-                        {devicon && <i className={`${devicon} text-sm`} />}
-                        {skill}
+                        <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider">
+                          {devicon && <i className={`${devicon} text-sm`} />}
+                          {skill}
+                        </span>
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${levelStyle}`}>
+                          {level}
+                        </span>
                       </span>
                     );
                   })}

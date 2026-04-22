@@ -46,6 +46,17 @@ export const skillLevelValidator = v.union(
   v.literal("advanced"),
 );
 
+/**
+ * STUDENT AVAILABILITY STATUS VALIDATOR
+ * This captures the student's hiring availability preference.
+ */
+export const studentAvailabilityStatusValidator = v.union(
+  v.literal("available_now"),
+  v.literal("open_to_offers"),
+  v.literal("busy"),
+  v.literal("unavailable"),
+);
+
 export default defineSchema({
   /**
    * USERS TABLE
@@ -81,6 +92,7 @@ export default defineSchema({
     github: v.optional(v.string()),
     linkedin: v.optional(v.string()),
     skills: v.optional(v.array(v.string())),
+    availabilityStatus: v.optional(studentAvailabilityStatusValidator),
     cvStorageId: v.optional(v.id("_storage")), // Example: A file ID for their uploaded PDF resume
     cvFileName: v.optional(v.string()), // Example: "Alice_Resume_2024.pdf"
     // ── Education (extended) ──
@@ -160,6 +172,7 @@ export default defineSchema({
       v.literal("in_progress"),
       v.literal("completed"),
     ),
+    completedAt: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_studentId", ["studentId"])
