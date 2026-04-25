@@ -4,8 +4,11 @@ import {
   roleValidator,
   academicStatusValidator,
   rankLevelValidator,
+  studentAvailabilityStatusValidator,
 } from "./schema";
 import { assertValidUserNameFields } from "./nameLimits";
+
+const DEFAULT_STUDENT_AVAILABILITY_STATUS = "available_now" as const;
 
 /**
  * QUERY: currentUser
@@ -48,6 +51,36 @@ export const currentUser = query({
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
     return { user, studentProfile: null, employerProfile };
+  },
+});
+
+/**
+ * QUERY: getStudentSkillXp
+ * Returns the current student's skillXp array for rendering skill levels and tooltips.
+ */
+export const getStudentSkillXp = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") return null;
+
+    const profile = await ctx.db
+      .query("studentProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile) return null;
+
+    return profile.skillXp ?? [];
   },
 });
 
@@ -98,6 +131,7 @@ export const upsertCurrentUser = mutation({
         gpa: v.optional(v.number()),
         phone: v.optional(v.string()),
         city: v.optional(v.string()),
+        availabilityStatus: v.optional(studentAvailabilityStatusValidator),
       }),
     ),
     employerProfile: v.optional(
@@ -207,15 +241,41 @@ export const upsertCurrentUser = mutation({
           ? { cvFileName: args.studentProfile.cvFileName }
           : {}),
       };
+      const availabilityStatusUpdate =
+        args.studentProfile.availabilityStatus !== undefined
+          ? { availabilityStatus: args.studentProfile.availabilityStatus }
+          : {};
 
       if (existingStudentProfile) {
+        // Sync skillXp: preserve XP for existing skills, add 0 XP for new skills, drop removed skills
+        const newSkills = args.studentProfile.skills ?? [];
+        const existingXpMap = new Map(
+          (existingStudentProfile.skillXp ?? []).map((entry) => [entry.skill, entry.xp]),
+        );
+        const syncedSkillXp = newSkills.map((skill) => ({
+          skill,
+          xp: existingXpMap.get(skill) ?? 0,
+        }));
+
         // Update existing student info
-        await ctx.db.patch(existingStudentProfile._id, studentProfileUpdate);
+        await ctx.db.patch(existingStudentProfile._id, {
+          ...studentProfileUpdate,
+          ...availabilityStatusUpdate,
+          skillXp: syncedSkillXp,
+        });
       } else {
-        // Create new student info
+        // Create new student info — all skills start at 0 XP
+        const initialSkillXp = (args.studentProfile.skills ?? []).map((skill) => ({
+          skill,
+          xp: 0,
+        }));
         await ctx.db.insert("studentProfiles", {
           userId,
           ...studentProfileUpdate,
+          availabilityStatus:
+            args.studentProfile.availabilityStatus ??
+            DEFAULT_STUDENT_AVAILABILITY_STATUS,
+          skillXp: initialSkillXp,
         });
       }
     }
@@ -255,6 +315,76 @@ export const upsertCurrentUser = mutation({
     }
 
     return { userId, role: args.role };
+  },
+});
+
+/**
+ * MUTATION: updateStudentAvailabilityStatus
+ * Lets the current student update their live hiring availability.
+ */
+export const updateStudentAvailabilityStatus = mutation({
+  args: {
+    availabilityStatus: studentAvailabilityStatusValidator,
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") {
+      throw new Error("Only students can update availability.");
+    }
+
+    const profile = await ctx.db
+      .query("studentProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile) {
+      throw new Error("Student profile not found.");
+    }
+
+    await ctx.db.patch(profile._id, {
+      availabilityStatus: args.availabilityStatus,
+      updatedAt: Date.now(),
+    });
+
+    return args.availabilityStatus;
+  },
+});
+
+/**
+ * MUTATION: migrateStudentAvailabilityStatuses
+ * One-time migration for existing student profiles that predate availabilityStatus.
+ */
+export const migrateStudentAvailabilityStatuses = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("studentProfiles").collect();
+    let migrated = 0;
+    let skipped = 0;
+
+    for (const profile of profiles) {
+      if (profile.availabilityStatus) {
+        skipped += 1;
+        continue;
+      }
+
+      await ctx.db.patch(profile._id, {
+        availabilityStatus: DEFAULT_STUDENT_AVAILABILITY_STATUS,
+      });
+      migrated += 1;
+    }
+
+    return { migrated, skipped, total: profiles.length };
   },
 });
 
@@ -386,6 +516,10 @@ export const getPublicProfile = query({
               academicStatus: profile.academicStatus,
               fieldOfStudy: profile.fieldOfStudy,
               skills: profile.skills ?? [],
+              skillXp: profile.skillXp ?? [],
+              availabilityStatus:
+                profile.availabilityStatus ??
+                DEFAULT_STUDENT_AVAILABILITY_STATUS,
               portfolio: profile.portfolio,
               github: profile.github,
               linkedin: profile.linkedin,
@@ -545,6 +679,12 @@ export const getPublicStudentProfileDetail = query({
             .query("employerProfiles")
             .withIndex("by_userId", (q) => q.eq("userId", task.employerId))
             .unique();
+          const submission = await ctx.db
+            .query("submissions")
+            .withIndex("by_applicationId", (q) =>
+              q.eq("applicationId", app._id),
+            )
+            .unique();
 
           return {
             applicationId: app._id,
@@ -555,7 +695,7 @@ export const getPublicStudentProfileDetail = query({
             skillLevel: task.skillLevel,
             skills: task.skills,
             companyName: employerProfile?.companyName ?? "Unknown Company",
-            recordedAt: app.createdAt,
+            recordedAt: app.completedAt ?? submission?.submittedAt ?? app.createdAt,
           };
         }),
       )
@@ -590,6 +730,10 @@ export const getPublicStudentProfileDetail = query({
             academicStatus: profile.academicStatus,
             fieldOfStudy: profile.fieldOfStudy,
             skills: profile.skills ?? [],
+            skillXp: profile.skillXp ?? [],
+            availabilityStatus:
+              profile.availabilityStatus ??
+              DEFAULT_STUDENT_AVAILABILITY_STATUS,
             portfolio: profile.portfolio,
             github: profile.github,
             linkedin: profile.linkedin,
