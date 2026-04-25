@@ -1145,7 +1145,7 @@ export default function StudentProfile() {
             >
               <SelectTrigger
                 aria-label="Student availability status"
-                className={`absolute -top-4 -right-4 z-10 h-auto min-h-0 w-auto min-w-[12.75rem] rounded-none border-4 border-black px-3 py-1 text-xs font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] transition-transform hover:rotate-6 disabled:opacity-80 dark:border-white dark:shadow-[4px_4px_0_0_#fff] ${availabilityMeta.badgeClassName}`}
+                className={`absolute -top-4 -right-4 z-10 h-auto min-h-0 w-auto min-w-[12.75rem] cursor-pointer rounded-none border-4 border-black px-3 py-1 text-xs font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] transition-transform hover:rotate-6 disabled:opacity-80 dark:border-white dark:shadow-[4px_4px_0_0_#fff] [&_svg]:!text-black [&_svg]:!opacity-100 ${availabilityMeta.badgeClassName}`}
               >
                 <span
                   className={`size-2.5 border-2 border-black dark:border-white ${availabilityMeta.dotClassName}`}
@@ -1166,7 +1166,7 @@ export default function StudentProfile() {
                   <SelectItem
                     key={option.value}
                     value={option.value}
-                    className={`rounded-none border-2 border-transparent py-2 pr-8 pl-2 text-xs font-black uppercase tracking-widest data-[state=checked]:border-black dark:data-[state=checked]:border-white ${option.itemClassName}`}
+                    className={`cursor-pointer rounded-none border-2 border-transparent py-2 pr-8 pl-2 text-xs font-black uppercase tracking-widest data-[state=checked]:border-black dark:data-[state=checked]:border-white [&_svg]:!text-black [&_svg]:!opacity-100 ${option.itemClassName}`}
                   >
                     <span
                       className={`size-2.5 border-2 border-black dark:border-white ${option.dotClassName}`}
