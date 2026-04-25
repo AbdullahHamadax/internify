@@ -30,6 +30,10 @@ import {
   getLinkedinProfileLink,
   normalizeExternalLink,
 } from "@/lib/profileLinks";
+import {
+  getStudentAvailabilityMeta,
+  normalizeStudentAvailabilityStatus,
+} from "@/lib/availability";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -81,6 +85,10 @@ export default function ProfileViewModal({
   const portfolioUrl = normalizeExternalLink(sp?.portfolio);
   const githubUrl = getGithubProfileLink(sp?.github);
   const linkedinUrl = getLinkedinProfileLink(sp?.linkedin);
+  const availabilityStatus = normalizeStudentAvailabilityStatus(
+    sp?.availabilityStatus,
+  );
+  const availabilityMeta = getStudentAvailabilityMeta(availabilityStatus);
 
   return (
     <AnimatePresence>
@@ -183,6 +191,14 @@ export default function ProfileViewModal({
                         {sp.title}
                       </Typography>
                     )}
+                    <span
+                      className={`mt-2 inline-flex items-center gap-1.5 border-2 border-black px-2.5 py-1 text-[10px] font-black uppercase tracking-widest shadow-[2px_2px_0_0_#000] dark:border-white dark:shadow-[2px_2px_0_0_#fff] ${availabilityMeta.badgeClassName}`}
+                    >
+                      <span
+                        className={`size-2 border border-black dark:border-white ${availabilityMeta.dotClassName}`}
+                      />
+                      {availabilityMeta.label}
+                    </span>
                     {profile.rating > 0 && (
                       <div className="flex items-center gap-1.5 mt-1">
                         <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
@@ -246,15 +262,29 @@ export default function ProfileViewModal({
                     <div className="flex flex-wrap gap-2">
                       {sp.skills.map((skill) => {
                         const devicon = getDeviconClass(skill);
+                        const xpEntry = sp.skillXp?.find((e: { skill: string; xp: number }) => e.skill === skill);
+                        const xp = xpEntry?.xp ?? 0;
+                        const level = xp >= 1500 ? "Advanced" : xp >= 1000 ? "Intermediate" : "Beginner";
+                        const levelStyle =
+                          level === "Advanced"
+                            ? "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-700"
+                            : level === "Intermediate"
+                              ? "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-700"
+                              : "bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600";
                         return (
                           <span
                             key={skill}
-                            className="flex items-center gap-1.5 py-1.5 px-3 bg-card border-2 border-border shadow-[2px_2px_0_0_var(--border)] text-xs font-black uppercase tracking-wider"
+                            className="flex flex-col items-start gap-1 py-1.5 px-3 bg-card border-2 border-border shadow-[2px_2px_0_0_var(--border)]"
                           >
-                            {devicon && (
-                              <i className={`${devicon} text-sm`} />
-                            )}
-                            {skill}
+                            <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider">
+                              {devicon && (
+                                <i className={`${devicon} text-sm`} />
+                              )}
+                              {skill}
+                            </span>
+                            <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${levelStyle}`}>
+                              {level}
+                            </span>
                           </span>
                         );
                       })}

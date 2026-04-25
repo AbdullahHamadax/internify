@@ -23,6 +23,13 @@ import {
   getGithubProfileLink,
   getLinkedinProfileLink,
 } from "@/lib/profileLinks";
+import {
+  getStudentAvailabilityMeta,
+  normalizeStudentAvailabilityStatus,
+  STUDENT_AVAILABILITY_OPTIONS,
+  STUDENT_AVAILABILITY_SORT_RANK,
+  type StudentAvailabilityStatus,
+} from "@/lib/availability";
 
 const ICON_MAPPINGS: Record<string, string> = {
   Vue: "vuejs",
@@ -44,11 +51,7 @@ function getDeviconClass(skill: string): string | null {
   return match ? `devicon-${match.name}-plain colored` : null;
 }
 
-const STATUS_FILTERS = [
-  "Available now",
-  "Actively interviewing",
-  "Not looking",
-];
+const STATUS_FILTERS = STUDENT_AVAILABILITY_OPTIONS;
 
 export default function TalentSearch() {
   const students = useQuery(api.users.getStudentsForEmployer);
@@ -72,7 +75,9 @@ export default function TalentSearch() {
               role: s.profile?.title || "Student",
               university: uniStr.trim() || "University of Internify",
               location: s.profile?.location || "Remote",
-              status: "Available now",
+              status: normalizeStudentAvailabilityStatus(
+                s.profile?.availabilityStatus,
+              ),
               skills: s.profile?.skills || [],
               bio:
                 s.profile?.description ||
@@ -124,7 +129,9 @@ export default function TalentSearch() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<
+    StudentAvailabilityStatus[]
+  >([]);
   const [skillSearchQuery, setSkillSearchQuery] = useState("");
   const { openProfile } = useProfileModal();
 
@@ -134,7 +141,7 @@ export default function TalentSearch() {
     );
   };
 
-  const toggleStatus = (status: string) => {
+  const toggleStatus = (status: StudentAvailabilityStatus) => {
     setSelectedStatuses((prev) =>
       prev.includes(status)
         ? prev.filter((item) => item !== status)
@@ -142,24 +149,31 @@ export default function TalentSearch() {
     );
   };
 
-  const filteredTalent = talentData.filter((talent) => {
-    const matchesSearch =
-      talent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      talent.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      talent.skills.some((s) =>
-        s.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredTalent = talentData
+    .filter((talent) => {
+      const matchesSearch =
+        talent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        talent.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        talent.skills.some((s) =>
+          s.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+
+      const matchesSkills = entityMatchesSkillFilter(
+        talent.skills,
+        selectedSkills,
       );
 
-    const matchesSkills = entityMatchesSkillFilter(
-      talent.skills,
-      selectedSkills,
+      const matchesStatus =
+        selectedStatuses.length === 0 ||
+        selectedStatuses.includes(talent.status);
+
+      return matchesSearch && matchesSkills && matchesStatus;
+    })
+    .sort(
+      (a, b) =>
+        STUDENT_AVAILABILITY_SORT_RANK[a.status] -
+        STUDENT_AVAILABILITY_SORT_RANK[b.status],
     );
-
-    const matchesStatus =
-      selectedStatuses.length === 0 || selectedStatuses.includes(talent.status);
-
-    return matchesSearch && matchesSkills && matchesStatus;
-  });
 
   return (
     <div className="flex flex-col xl:flex-row gap-8 h-full animate-in fade-in duration-500">
@@ -186,33 +200,36 @@ export default function TalentSearch() {
                 Availability
               </Typography>
               <div className="space-y-3">
-                {STATUS_FILTERS.map((status) => (
-                  <label
-                    key={status}
-                    className="flex items-center gap-3 cursor-pointer group"
-                  >
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={selectedStatuses.includes(status)}
-                      onChange={() => toggleStatus(status)}
-                    />
-                    <div
-                      className={`size-5 flex items-center justify-center border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-colors ${
-                        selectedStatuses.includes(status)
-                          ? "bg-[#AB47BC] text-white group-hover:bg-[#8E24AA]"
-                          : "bg-white dark:bg-black group-hover:bg-[#F3E5F5]"
-                      }`}
+                {STATUS_FILTERS.map((status) => {
+                  const selected = selectedStatuses.includes(status.value);
+                  return (
+                    <label
+                      key={status.value}
+                      className="flex items-center gap-3 cursor-pointer group"
                     >
-                      {selectedStatuses.includes(status) && (
-                        <CheckCircle2 className="size-3" strokeWidth={4} />
-                      )}
-                    </div>
-                    <span className="text-sm font-bold uppercase tracking-wider text-foreground/80 group-hover:text-[#7B1FA2] transition-colors">
-                      {status}
-                    </span>
-                  </label>
-                ))}
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={selected}
+                        onChange={() => toggleStatus(status.value)}
+                      />
+                      <div
+                        className={`size-5 flex items-center justify-center border-2 border-black shadow-[2px_2px_0_0_#000] transition-colors dark:border-white dark:shadow-[2px_2px_0_0_#fff] ${
+                          selected
+                            ? status.badgeClassName
+                            : "bg-white dark:bg-black group-hover:bg-[#F3E5F5]"
+                        }`}
+                      >
+                        {selected && (
+                          <CheckCircle2 className="size-3" strokeWidth={4} />
+                        )}
+                      </div>
+                      <span className="text-sm font-bold uppercase tracking-wider text-foreground/80 transition-colors group-hover:text-[#7B1FA2]">
+                        {status.label}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
@@ -331,11 +348,17 @@ export default function TalentSearch() {
             filteredTalent.map((talent) => {
               const githubUrl = getGithubProfileLink(talent.github);
               const linkedinUrl = getLinkedinProfileLink(talent.linkedin);
+              const statusMeta = getStudentAvailabilityMeta(talent.status);
+              const isUnavailable = talent.status === "unavailable";
 
               return (
                 <div
                   key={talent.id}
-                  className="bg-card border-4 border-black dark:border-white p-6 shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0_0_#000] dark:hover:shadow-[12px_12px_0_0_#fff] transition-all duration-200 flex flex-col group relative"
+                  className={`bg-card border-4 border-black p-6 shadow-[8px_8px_0_0_#000] transition-all duration-200 dark:border-white dark:shadow-[8px_8px_0_0_#fff] flex flex-col group relative ${
+                    isUnavailable
+                      ? "grayscale opacity-60"
+                      : "hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0_0_#000] dark:hover:shadow-[12px_12px_0_0_#fff]"
+                  }`}
                 >
                   {/* Match Badge (Absolute Top Right) */}
                   <div className="absolute -top-4 -right-4 bg-[#AB47BC] text-white border-4 border-black dark:border-white px-3 py-1 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] z-10 rotate-3 group-hover:rotate-6 transition-transform">
@@ -390,15 +413,13 @@ export default function TalentSearch() {
                     </div>
                     <div className="flex items-center gap-3 text-sm font-bold text-foreground/80">
                       <Briefcase className="size-5 text-[#AB47BC]" />
-                      <span className="flex items-center gap-2 uppercase tracking-wider">
+                      <span
+                        className={`inline-flex items-center gap-2 border-2 border-black px-2.5 py-1 text-[11px] font-black uppercase tracking-widest shadow-[2px_2px_0_0_#000] dark:border-white dark:shadow-[2px_2px_0_0_#fff] ${statusMeta.badgeClassName}`}
+                      >
                         <span
-                          className={`size-2.5 border-2 border-black dark:border-white ${
-                            talent.status.includes("now")
-                              ? "bg-green-500"
-                              : "bg-amber-500"
-                          }`}
+                          className={`size-2.5 border-2 border-black dark:border-white ${statusMeta.dotClassName}`}
                         />
-                        {talent.status}
+                        {statusMeta.label}
                       </span>
                     </div>
                   </div>

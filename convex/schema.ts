@@ -46,6 +46,17 @@ export const skillLevelValidator = v.union(
   v.literal("advanced"),
 );
 
+/**
+ * STUDENT AVAILABILITY STATUS VALIDATOR
+ * This captures the student's hiring availability preference.
+ */
+export const studentAvailabilityStatusValidator = v.union(
+  v.literal("available_now"),
+  v.literal("open_to_offers"),
+  v.literal("busy"),
+  v.literal("unavailable"),
+);
+
 export default defineSchema({
   /**
    * USERS TABLE
@@ -81,6 +92,7 @@ export default defineSchema({
     github: v.optional(v.string()),
     linkedin: v.optional(v.string()),
     skills: v.optional(v.array(v.string())),
+    availabilityStatus: v.optional(studentAvailabilityStatusValidator),
     cvStorageId: v.optional(v.id("_storage")), // Example: A file ID for their uploaded PDF resume
     cvFileName: v.optional(v.string()), // Example: "Alice_Resume_2024.pdf"
     // ── Education (extended) ──
@@ -91,6 +103,11 @@ export default defineSchema({
     // ── Contact & Location ──
     phone: v.optional(v.string()),
     city: v.optional(v.string()),            // Egyptian city; country is always "Egypt"
+    // ── Skill XP Tracking ──
+    skillXp: v.optional(v.array(v.object({
+      skill: v.string(),    // Skill name (matches skills array entries)
+      xp: v.number(),       // Current XP (0–2000)
+    }))),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
 
@@ -138,6 +155,7 @@ export default defineSchema({
     ),
     createdAt: v.number(),
     updatedAt: v.number(),
+    xpPerSkill: v.optional(v.number()), // XP awarded per required skill on completion
   })
     .index("by_employerId", ["employerId"])
     .index("by_status", ["status"]),
@@ -154,6 +172,7 @@ export default defineSchema({
       v.literal("in_progress"),
       v.literal("completed"),
     ),
+    completedAt: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_studentId", ["studentId"])
