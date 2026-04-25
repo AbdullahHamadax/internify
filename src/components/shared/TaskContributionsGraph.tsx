@@ -11,13 +11,9 @@ import { Typography } from "@/components/ui/Typography";
 const WEEK_COUNT = 52;
 const DAY_COUNT = 7;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const CELL_SIZE = 10;
-const CELL_GAP = 2;
-const WEEK_STEP = CELL_SIZE + CELL_GAP;
-const GRAPH_WIDTH = WEEK_COUNT * CELL_SIZE + (WEEK_COUNT - 1) * CELL_GAP;
 const ROW_LABEL_WIDTH = 28;
-const MONTH_LABEL_WIDTH = 34;
-const MIN_MONTH_LABEL_SPACING = 36;
+const LEGEND_CELL_SIZE = 12;
+const MIN_WEEK_SPACING = 3;
 const MONTH_LABELS = [
   "Jan",
   "Feb",
@@ -171,28 +167,22 @@ export default function TaskContributionsGraph({
           firstDay.getMonth() !== previousWeek?.days[0].date.getMonth();
 
         return isNewMonth
-          ? {
-              label: MONTH_LABELS[firstDay.getMonth()],
-              weekIndex,
-              left: weekIndex * WEEK_STEP,
-            }
+          ? { label: MONTH_LABELS[firstDay.getMonth()], weekIndex }
           : null;
       })
       .filter(
-        (
-          item,
-        ): item is { label: string; weekIndex: number; left: number } =>
+        (item): item is { label: string; weekIndex: number } =>
           item !== null,
       );
 
     const monthLabels = rawMonthLabels.reduce<
-      Array<{ label: string; weekIndex: number; left: number }>
+      Array<{ label: string; weekIndex: number }>
     >((labels, label) => {
       const previous = labels.at(-1);
 
       if (
         previous &&
-        label.left - previous.left < MIN_MONTH_LABEL_SPACING
+        label.weekIndex - previous.weekIndex < MIN_WEEK_SPACING
       ) {
         if (previous.weekIndex === 0) {
           labels[labels.length - 1] = label;
@@ -252,49 +242,45 @@ export default function TaskContributionsGraph({
         </div>
       </div>
 
-      <div className="overflow-x-auto pb-1">
-        <div
-          style={{ minWidth: ROW_LABEL_WIDTH + 8 + GRAPH_WIDTH }}
-        >
-          <div
-            className="relative ml-9 h-4 text-[10px] font-bold text-muted-foreground"
-            style={{ width: GRAPH_WIDTH }}
-          >
-            {graph.monthLabels.map((month) => (
-              <div
-                key={`${month.label}-${month.weekIndex}`}
-                className="absolute top-0 h-4 whitespace-nowrap"
-                style={{
-                  left: month.left,
-                  width: MONTH_LABEL_WIDTH,
-                }}
-              >
-                {month.label}
-              </div>
-            ))}
+      <div className="pb-1">
+        <div>
+          {/* Month labels */}
+          <div className="flex gap-2">
+            <div style={{ width: ROW_LABEL_WIDTH, flexShrink: 0 }} />
+            <div className="relative h-5 min-w-0 flex-1">
+              {graph.monthLabels.map((month) => (
+                <span
+                  key={`${month.label}-${month.weekIndex}`}
+                  className="absolute top-0 text-[10px] font-bold text-muted-foreground"
+                  style={{ left: `${(month.weekIndex / WEEK_COUNT) * 100}%` }}
+                >
+                  {month.label}
+                </span>
+              ))}
+            </div>
           </div>
 
+          {/* Grid */}
           <div className="flex gap-2">
             <div
-              className="grid grid-rows-7 gap-[2px] pt-[2px] text-[10px] font-bold text-muted-foreground"
-              style={{ width: ROW_LABEL_WIDTH }}
+              className="flex flex-col gap-[3px] pt-[3px] text-[10px] font-bold text-muted-foreground"
+              style={{ width: ROW_LABEL_WIDTH, flexShrink: 0 }}
             >
               {ROW_LABELS.map((label, index) => (
                 <div
                   key={`${label}-${index}`}
-                  className="leading-[10px]"
-                  style={{ height: CELL_SIZE }}
+                  className="flex flex-1 items-center leading-none"
                 >
                   {label}
                 </div>
               ))}
             </div>
 
-            <div className="flex gap-[2px]">
+            <div className="flex min-w-0 flex-1 gap-[3px]">
               {graph.weeks.map((week, weekIndex) => (
                 <div
                   key={`week-${weekIndex}`}
-                  className="flex flex-col gap-[2px]"
+                  className="flex min-w-0 flex-1 flex-col gap-[3px]"
                 >
                   {week.days.map((day) => (
                     <button
@@ -309,8 +295,7 @@ export default function TaskContributionsGraph({
                         showTooltip(event.currentTarget, day.date, day.count)
                       }
                       onBlur={() => setTooltip(null)}
-                      className={`border border-black/10 transition-transform hover:scale-125 focus:outline-none focus:ring-2 focus:ring-[#047857] dark:border-white/10 ${getContributionClass(day.count, day.isFuture)}`}
-                      style={{ width: CELL_SIZE, height: CELL_SIZE }}
+                      className={`aspect-square w-full border border-black/10 transition-transform hover:scale-125 focus:outline-none focus:ring-2 focus:ring-[#047857] dark:border-white/10 ${getContributionClass(day.count, day.isFuture)}`}
                     />
                   ))}
                 </div>
@@ -318,13 +303,14 @@ export default function TaskContributionsGraph({
             </div>
           </div>
 
+          {/* Legend */}
           <div className="mt-3 flex items-center justify-end gap-2 text-[11px] font-bold text-muted-foreground">
             <span>Less</span>
             {LEGEND_CLASSES.map((className) => (
               <span
                 key={className}
                 className={`border border-black/10 dark:border-white/10 ${className}`}
-                style={{ width: CELL_SIZE, height: CELL_SIZE }}
+                style={{ width: LEGEND_CELL_SIZE, height: LEGEND_CELL_SIZE }}
               />
             ))}
             <span>More</span>

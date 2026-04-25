@@ -2,10 +2,10 @@ export const STUDENT_AVAILABILITY_OPTIONS = [
   {
     value: "available_now",
     label: "Available Now",
-    badgeClassName: "bg-[#A7F3D0] text-[#047857]",
+    badgeClassName: "bg-[#A7F3D0] text-black",
     dotClassName: "bg-[#047857]",
     itemClassName:
-      "focus:bg-[#A7F3D0] focus:text-[#047857] data-[state=checked]:bg-[#A7F3D0] data-[state=checked]:text-[#047857]",
+      "focus:bg-[#A7F3D0] focus:text-black data-[state=checked]:bg-[#A7F3D0] data-[state=checked]:text-black",
   },
   {
     value: "open_to_offers",
