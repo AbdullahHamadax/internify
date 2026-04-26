@@ -1,6 +1,8 @@
 "use client";
 
-import { X, CalendarDays, Users, Trash2, Tag, FileText, Download, User } from "lucide-react";
+
+import { useState } from "react";
+import { X, CalendarDays, Users, Trash2, Tag, FileText, Download, User, Sparkles } from "lucide-react";
 
 import Image from "next/image";
 import { useQuery } from "convex/react";
@@ -11,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import type { Task } from "./TaskManagement";
 import deviconData from "devicon/devicon.json";
 import { useProfileModal } from "@/components/shared/ProfileModalContext";
+import EvaluationResults, { type EvaluationData } from "@/components/student/EvaluationResults";
 
 const ICON_MAPPINGS: Record<string, string> = {
   "Vue": "vuejs",
@@ -36,9 +39,23 @@ export default function TaskDetailModal({
   onEdit,
 }: TaskDetailModalProps) {
   const { openProfile } = useProfileModal();
+  const [selectedEvaluation, setSelectedEvaluation] = useState<{
+    data: EvaluationData;
+    studentName: string;
+  } | null>(null);
   const submissions = useQuery(
     api.tasks.getTaskSubmissions,
     open && task ? { taskId: task.id as Id<"tasks"> } : "skip",
+  );
+
+  const evaluations = useQuery(
+    api.evaluations.getEvaluationsByTask,
+    open && task ? { taskId: task.id as Id<"tasks"> } : "skip",
+  );
+
+  // Build a map of studentId -> evaluation for quick lookup
+  const evaluationMap = new Map(
+    (evaluations ?? []).map((ev) => [ev.studentId, ev]),
   );
 
   if (!open || !task) return null;
@@ -274,6 +291,31 @@ export default function TaskDetailModal({
                       >
                         {sub.studentName}
                       </span>
+                      {/* AI Score Badge */}
+                      {(() => {
+                        const ev = evaluationMap.get(sub.studentId);
+                        if (!ev) return null;
+                        const scoreColor =
+                          ev.overallScore >= 90 ? "#059669" :
+                          ev.overallScore >= 75 ? "#2563EB" :
+                          ev.overallScore >= 60 ? "#D97706" :
+                          ev.overallScore >= 40 ? "#EA580C" : "#DC2626";
+                        const scoreBg =
+                          ev.overallScore >= 90 ? "#D1FAE5" :
+                          ev.overallScore >= 75 ? "#DBEAFE" :
+                          ev.overallScore >= 60 ? "#FEF3C7" :
+                          ev.overallScore >= 40 ? "#FFEDD5" : "#FEE2E2";
+                        return (
+                          <span
+                            className="inline-flex items-center gap-1 text-xs font-black px-2 py-0.5 border border-black dark:border-white"
+                            style={{ backgroundColor: scoreBg, color: scoreColor }}
+                            title={`AI Score: ${ev.overallScore}/100 — ${ev.verdict}`}
+                          >
+                            <Sparkles className="w-3 h-3" />
+                            {ev.overallScore}
+                          </span>
+                        );
+                      })()}
                       <span className="text-xs text-muted-foreground ml-auto">
                         {new Date(sub.submittedAt).toLocaleString("en-US", {
                           month: "short",
@@ -307,6 +349,35 @@ export default function TaskDetailModal({
                         </a>
                       ))}
                     </div>
+
+                    {/* View AI Report Button */}
+                    {(() => {
+                      const ev = evaluationMap.get(sub.studentId);
+                      if (!ev) return null;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedEvaluation({
+                              data: {
+                                agentType: ev.agentType,
+                                overallScore: ev.overallScore,
+                                verdict: ev.verdict,
+                                scores: ev.scores,
+                                strengths: ev.strengths,
+                                improvements: ev.improvements,
+                                summary: ev.summary,
+                              },
+                              studentName: sub.studentName,
+                            })
+                          }
+                          className="mt-3 w-full flex items-center justify-center gap-2 py-2 text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white shadow-[3px_3px_0_0_#000] dark:shadow-[3px_3px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0_0_#000] dark:hover:shadow-[1px_1px_0_0_#fff] transition-all bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          View AI Report
+                        </button>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
@@ -357,6 +428,16 @@ export default function TaskDetailModal({
           </div>
         </div>
       </div>
+
+      {/* AI Evaluation Report Overlay */}
+      {selectedEvaluation && (
+        <EvaluationResults
+          evaluation={selectedEvaluation.data}
+          taskTitle={task.title}
+          companyName={selectedEvaluation.studentName}
+          onClose={() => setSelectedEvaluation(null)}
+        />
+      )}
     </div>
   );
 }
