@@ -195,11 +195,59 @@ export default defineSchema({
       }),
     ),
     note: v.optional(v.string()),
+    submissionType: v.optional(
+      v.union(
+        v.literal("file_upload"),
+        v.literal("github_url"),
+        v.literal("plain_text"),
+      ),
+    ),
+    githubUrl: v.optional(v.string()),
+    plainText: v.optional(v.string()),
+    evaluationStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("evaluating"),
+        v.literal("completed"),
+        v.literal("failed"),
+      ),
+    ),
     submittedAt: v.number(),
   })
     .index("by_taskId", ["taskId"])
     .index("by_applicationId", ["applicationId"])
     .index("by_studentId", ["studentId"]),
+
+  /**
+   * EVALUATIONS TABLE
+   * AI-generated evaluation results for student submissions.
+   * Each evaluation is produced by a domain-specific agent (web, ai_ml, fullstack, se, cybersec).
+   */
+  evaluations: defineTable({
+    submissionId: v.id("submissions"),
+    applicationId: v.id("applications"),
+    studentId: v.id("users"),
+    taskId: v.id("tasks"),
+    agentType: v.string(),
+    overallScore: v.number(),
+    verdict: v.string(),
+    scores: v.array(
+      v.object({
+        dimension: v.string(),
+        score: v.number(),
+        comment: v.string(),
+      }),
+    ),
+    strengths: v.array(v.string()),
+    improvements: v.array(v.string()),
+    summary: v.string(),
+    rawResponse: v.optional(v.string()),
+    evaluatedAt: v.number(),
+  })
+    .index("by_submissionId", ["submissionId"])
+    .index("by_studentId", ["studentId"])
+    .index("by_taskId", ["taskId"])
+    .index("by_applicationId", ["applicationId"]),
 
   /**
    * CONVERSATIONS TABLE

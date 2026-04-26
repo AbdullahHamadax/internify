@@ -1115,6 +1115,15 @@ export const submitTask = mutation({
       }),
     ),
     note: v.optional(v.string()),
+    submissionType: v.optional(
+      v.union(
+        v.literal("file_upload"),
+        v.literal("github_url"),
+        v.literal("plain_text"),
+      ),
+    ),
+    githubUrl: v.optional(v.string()),
+    plainText: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -1152,19 +1161,31 @@ export const submitTask = mutation({
       .unique();
     if (existing) throw new Error("You have already submitted for this task");
 
-    if (args.files.length === 0) {
+    // Validate based on submission type
+    const subType = args.submissionType ?? "file_upload";
+    if (subType === "file_upload" && args.files.length === 0) {
       throw new Error("At least one file is required");
+    }
+    if (subType === "github_url" && (!args.githubUrl || !args.githubUrl.trim())) {
+      throw new Error("A GitHub URL is required");
+    }
+    if (subType === "plain_text" && (!args.plainText || !args.plainText.trim())) {
+      throw new Error("Submission text content is required");
     }
 
     const completedAt = Date.now();
 
     // Create submission
-    await ctx.db.insert("submissions", {
+    const submissionId = await ctx.db.insert("submissions", {
       applicationId: args.applicationId,
       studentId: user._id,
       taskId: application.taskId,
       files: args.files,
       note: args.note,
+      submissionType: subType,
+      githubUrl: args.githubUrl,
+      plainText: args.plainText,
+      evaluationStatus: "pending",
       submittedAt: completedAt,
     });
 
@@ -1250,6 +1271,8 @@ export const submitTask = mutation({
         });
       }
     }
+
+    return submissionId;
   },
 });
 
