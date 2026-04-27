@@ -221,6 +221,7 @@ export const createTask = mutation({
     maxApplicants: v.optional(v.number()),
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
+    customRubric: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -266,6 +267,7 @@ export const createTask = mutation({
       applicantCount: 0,
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
+      customRubric: args.customRubric,
       status: "pending",
       createdAt: now,
       updatedAt: now,
@@ -760,6 +762,7 @@ export const updateTask = mutation({
     maxApplicants: v.optional(v.number()),
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
+    customRubric: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -827,6 +830,7 @@ export const updateTask = mutation({
       maxApplicants: args.maxApplicants,
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
+      customRubric: args.customRubric,
       updatedAt: Date.now(),
     });
   },
@@ -1015,6 +1019,7 @@ export const getStudentApplications = query({
             deadline: task.deadline,
             status: task.status,
             companyName: employerProfile?.companyName ?? "Unknown Company",
+            customRubric: task.customRubric,
           },
         };
       }),
@@ -1287,5 +1292,22 @@ export const getTaskSubmissions = query({
     );
 
     return enriched;
+  },
+});
+
+/**
+ * Resolve an array of Convex storage IDs to signed download URLs.
+ * Used by the evaluation pipeline to fetch uploaded file contents.
+ */
+export const getFileUrls = query({
+  args: { storageIds: v.array(v.id("_storage")) },
+  handler: async (ctx, args) => {
+    const results = await Promise.all(
+      args.storageIds.map(async (id) => {
+        const url = await ctx.storage.getUrl(id);
+        return { storageId: id, url };
+      }),
+    );
+    return results;
   },
 });

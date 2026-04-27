@@ -156,6 +156,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
     xpPerSkill: v.optional(v.number()), // XP awarded per required skill on completion
+    customRubric: v.optional(v.array(v.string())), // Employer-defined evaluation rubric dimensions
   })
     .index("by_employerId", ["employerId"])
     .index("by_status", ["status"]),

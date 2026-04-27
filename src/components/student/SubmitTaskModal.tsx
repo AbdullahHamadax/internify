@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import {
   X,
   Upload,
-  FileText,
   Trash2,
   Loader2,
   CheckCircle2,
@@ -32,6 +31,7 @@ interface SubmitTaskModalProps {
   companyName: string;
   deadline: number;
   hasSubmission: boolean;
+  customRubric?: string[];
   onClose: () => void;
   onSubmitted: () => void;
 }
@@ -73,6 +73,7 @@ export default function SubmitTaskModal({
   companyName,
   deadline,
   hasSubmission,
+  customRubric,
   onClose,
   onSubmitted,
 }: SubmitTaskModalProps) {
@@ -227,7 +228,7 @@ export default function SubmitTaskModal({
     try {
       // ── Step 1: Upload files to Convex storage (if file mode) ──
       const uploadedFiles: { storageId: Id<"_storage">; name: string; type: string }[] = [];
-      const fileUrls: { url: string; name: string; type: string }[] = [];
+      const fileUrls: { storageId: string; name: string; type: string }[] = [];
 
       if (mode === "file_upload") {
         for (const pf of pendingFiles) {
@@ -267,14 +268,11 @@ export default function SubmitTaskModal({
         status: "evaluating",
       });
 
-      // ── Step 4: Resolve file URLs for the API route ──
+      // ── Step 4: Build file info for the API route ──
+      // Pass storageIds directly — the API route resolves real Convex URLs server-side
       if (mode === "file_upload" && uploadedFiles.length > 0) {
-        // We need the actual download URLs for files
-        // The API route will fetch content from these URLs
-        // For Convex storage, we use the storage URL endpoint
         for (const file of uploadedFiles) {
-          const url = `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/storage/${file.storageId}`;
-          fileUrls.push({ url, name: file.name, type: file.type });
+          fileUrls.push({ storageId: file.storageId as string, name: file.name, type: file.type });
         }
       }
 
@@ -290,6 +288,7 @@ export default function SubmitTaskModal({
           githubUrl: mode === "github_url" ? githubUrl.trim() : undefined,
           plainText: mode === "plain_text" ? plainText.trim() : undefined,
           submissionType: mode,
+          customRubric,
         }),
       });
 

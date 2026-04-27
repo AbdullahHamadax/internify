@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 // ── Agent Routing ──
 
@@ -113,9 +118,26 @@ If the submission contains potentially malicious code, note it as a security con
   },
 };
 
-function buildSystemPrompt(agentType: string, taskDescription: string, taskSkills: string[]): string {
+function buildSystemPrompt(
+  agentType: string,
+  taskDescription: string,
+  taskSkills: string[],
+  customRubric?: string[],
+): string {
   const config = AGENT_CONFIGS[agentType] ?? AGENT_CONFIGS.se;
-  const dimensionsList = config.dimensions.map((d, i) => `${i + 1}. **${d}** (0-100)`).join("\n");
+
+  // Merge agent default dimensions with employer custom rubric (deduplicated)
+  const allDimensions = [...config.dimensions];
+  if (customRubric && customRubric.length > 0) {
+    for (const dim of customRubric) {
+      const trimmed = dim.trim();
+      if (trimmed && !allDimensions.some((d) => d.toLowerCase() === trimmed.toLowerCase())) {
+        allDimensions.push(trimmed);
+      }
+    }
+  }
+
+  const dimensionsList = allDimensions.map((d, i) => `${i + 1}. **${d}** (0-100)`).join("\n");
 
   return `You are an ${config.role}.
 
@@ -319,7 +341,12 @@ async function extractFromZip(url: string): Promise<string> {
     try {
       const text = await file.async("text");
       if (text.length <= 100_000) {
-        contents.push(`// ── File: ${path} ──\n${text}`);
+        // Parse .ipynb notebooks found inside the ZIP
+        if (path.endsWith(".ipynb")) {
+          contents.push(`// ── File: ${path} ──\n${extractFromIpynb(text)}`);
+        } else {
+          contents.push(`// ── File: ${path} ──\n${text}`);
+        }
       }
     } catch {
       // Skip binary or corrupt files
@@ -336,7 +363,7 @@ async function extractFromZip(url: string): Promise<string> {
 // ── Main Route Handler ──
 
 interface FileInfo {
-  url: string;
+  storageId: string;
   name: string;
   type: string;
 }
@@ -352,6 +379,8 @@ export async function POST(req: NextRequest) {
       githubUrl,
       plainText,
       submissionType,
+      customRubric,
+      authToken,
     } = body as {
       taskDescription: string;
       taskCategory: string;
@@ -360,6 +389,8 @@ export async function POST(req: NextRequest) {
       githubUrl?: string;
       plainText?: string;
       submissionType: string;
+      customRubric?: string[];
+      authToken?: string;
     };
 
     if (!taskDescription || !taskCategory) {
@@ -377,23 +408,45 @@ export async function POST(req: NextRequest) {
     } else if (submissionType === "plain_text" && plainText) {
       extractedContent = plainText.trim();
     } else if (files && files.length > 0) {
+      // Resolve real Convex storage URLs server-side
+      const storageIds = files.map((f) => f.storageId as Id<"_storage">);
+
+      let resolvedUrls: { storageId: string; url: string | null }[] = [];
+      try {
+        resolvedUrls = await convex.query(api.tasks.getFileUrls, { storageIds });
+      } catch (err) {
+        console.error("Failed to resolve file URLs via Convex:", err);
+        return NextResponse.json(
+          { error: "Failed to access uploaded files. Please try again." },
+          { status: 500 },
+        );
+      }
+
+      // Build a map of storageId -> url for quick lookup
+      const urlMap = new Map(resolvedUrls.map((r) => [r.storageId, r.url]));
+
       // Process uploaded files
       const fileParts: string[] = [];
 
       for (const file of files) {
         try {
+          const fileUrl = urlMap.get(file.storageId);
+          if (!fileUrl) {
+            fileParts.push(`// ── File: ${file.name} ── [Could not resolve storage URL]`);
+            continue;
+          }
+
           const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
 
           if (ext === "ipynb") {
-            const raw = await extractTextFromUrl(file.url);
+            const raw = await extractTextFromUrl(fileUrl);
             fileParts.push(`// ── File: ${file.name} ──\n${extractFromIpynb(raw)}`);
           } else if (ext === "zip") {
-            const zipContent = await extractFromZip(file.url);
+            const zipContent = await extractFromZip(fileUrl);
             fileParts.push(zipContent);
           } else if (ext === "pdf") {
             // For PDFs, we'll extract what we can via fetch (text-based PDFs)
-            // Full PDF parsing with pdfjs-dist requires Node runtime
-            const raw = await extractTextFromUrl(file.url);
+            const raw = await extractTextFromUrl(fileUrl);
             // Check if it looks like readable text or binary PDF
             const printableRatio = raw.slice(0, 500).replace(/[^\x20-\x7E\n\r\t]/g, "").length / Math.min(raw.length, 500);
             if (printableRatio > 0.7) {
@@ -403,7 +456,7 @@ export async function POST(req: NextRequest) {
             }
           } else {
             // Code files: .py, .js, .ts, .tsx, .java, .cpp, .c, .html, .css, etc.
-            const text = await extractTextFromUrl(file.url);
+            const text = await extractTextFromUrl(fileUrl);
             fileParts.push(`// ── File: ${file.name} ──\n${text}`);
           }
         } catch (err) {
@@ -426,7 +479,7 @@ export async function POST(req: NextRequest) {
 
     // ── Step 2: Route to Specialist Agent ──
     const agentType = resolveAgent(taskCategory);
-    const systemPrompt = buildSystemPrompt(agentType, taskDescription, taskSkills ?? []);
+    const systemPrompt = buildSystemPrompt(agentType, taskDescription, taskSkills ?? [], customRubric);
 
     // ── Step 3: Call LLM ──
     const chatCompletion = await groq.chat.completions.create({
