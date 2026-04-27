@@ -19,9 +19,14 @@ const CATEGORY_TO_AGENT: Record<string, string> = {
   "Deep Learning": "ai_ml",
   "Software Engineering": "se",
   "DevOps": "se",
+  "Cloud Computing": "se",
+  "Database Administration": "se",
+  "Networking": "se",
+  "Embedded Systems": "se",
+  "Game Development": "fullstack",
+  "Blockchain": "fullstack",
   "Cybersecurity": "cybersec",
   "Security": "cybersec",
-  "Marketing": "se",
 };
 
 function resolveAgent(category: string): string {
@@ -131,7 +136,14 @@ SCORING GUIDELINES:
 - 75-89: Good — meets requirements with minor issues
 - 60-74: Satisfactory — functional but needs improvement
 - 40-59: Needs Work — significant issues, partially meets requirements
-- 0-39: Insufficient — major gaps, does not meet requirements
+- 20-39: Poor — major gaps, barely meets minimum requirements
+- 0-19: Absent/Insufficient — content for this dimension is missing or completely inadequate
+
+CRITICAL SCORING CALIBRATION (MANDATORY):
+- If a dimension's content is COMPLETELY ABSENT (e.g., no tests at all, no documentation, no error handling), the score MUST be 0-15. You CANNOT give 60+ for something that doesn't exist.
+- Your comment and score must be LOGICALLY CONSISTENT. If you write "no tests found", the score must be 0-15, NOT 60.
+- A score of 60+ means the submission DEMONSTRABLY contains working content for that dimension.
+- When in doubt, score LOWER. Students can resubmit to improve.
 
 IMPORTANT RULES:
 - Reference SPECIFIC code, patterns, or content from the submission in your comments
@@ -237,8 +249,16 @@ async function extractFromGitHub(repoUrl: string): Promise<string> {
     .filter((f: { type: string; path: string; size?: number }) => {
       if (f.type !== "blob") return false;
       if (excludePaths.some((ex) => f.path.includes(ex))) return false;
-      if ((f.size ?? 0) > 100_000) return false; // Skip files >100KB
+      // Allow larger .ipynb files (up to 500KB) since notebooks contain output data
+      const sizeLimit = f.path.endsWith(".ipynb") ? 500_000 : 100_000;
+      if ((f.size ?? 0) > sizeLimit) return false;
       return codeExtensions.some((ext) => f.path.endsWith(ext));
+    })
+    // Prioritize .ipynb files first (they contain the actual work for data science tasks)
+    .sort((a: { path: string }, b: { path: string }) => {
+      const aIsNb = a.path.endsWith(".ipynb") ? -1 : 0;
+      const bIsNb = b.path.endsWith(".ipynb") ? -1 : 0;
+      return aIsNb - bIsNb;
     })
     .slice(0, 15); // Limit to 15 files to stay within context
 
@@ -251,7 +271,12 @@ async function extractFromGitHub(repoUrl: string): Promise<string> {
       });
       if (contentResponse.ok) {
         const text = await contentResponse.text();
-        contents.push(`// ── File: ${file.path} ──\n${text}`);
+        // Parse .ipynb notebooks into readable code/markdown cells
+        if (file.path.endsWith(".ipynb")) {
+          contents.push(`// ── File: ${file.path} ──\n${extractFromIpynb(text)}`);
+        } else {
+          contents.push(`// ── File: ${file.path} ──\n${text}`);
+        }
       }
     } catch {
       // Skip files that fail to fetch

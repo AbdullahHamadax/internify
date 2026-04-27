@@ -2,7 +2,7 @@
 
 
 import { useState } from "react";
-import { X, CalendarDays, Users, Trash2, Tag, FileText, Download, User, Sparkles } from "lucide-react";
+import { X, CalendarDays, Users, Trash2, Tag, FileText, Download, User, Sparkles, Github, ExternalLink } from "lucide-react";
 
 import Image from "next/image";
 import { useQuery } from "convex/react";
@@ -330,6 +330,22 @@ export default function TaskDetailModal({
                       <p className="text-sm text-muted-foreground mb-3 italic">
                         &ldquo;{sub.note}&rdquo;
                       </p>
+                    )}
+
+                    {/* GitHub Repository Link */}
+                    {sub.githubUrl && (
+                      <a
+                        href={sub.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2.5 p-3 mb-3 bg-[#0D1117] dark:bg-[#161B22] text-white border-2 border-black dark:border-white shadow-[3px_3px_0_0_#000] dark:shadow-[3px_3px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0_0_#000] dark:hover:shadow-[1px_1px_0_0_#fff] transition-all group"
+                      >
+                        <Github className="w-5 h-5 shrink-0" />
+                        <span className="text-sm font-bold truncate flex-1">
+                          {sub.githubUrl.replace(/^https?:\/\/(www\.)?github\.com\//, '')}
+                        </span>
+                        <ExternalLink className="w-4 h-4 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />
+                      </a>
                     )}
 
                     <div className="space-y-1.5">

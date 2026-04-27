@@ -69,7 +69,8 @@ function validateTaskDeadline(deadline: number) {
   if (deadline <= now) {
     throw new Error("Deadline must be in the future.");
   }
-  if (deadline - now < MIN_TASK_DEADLINE_LEAD_MS) {
+  // Allow 1 minute tolerance since datetime-local inputs have minute precision
+  if (deadline - now < MIN_TASK_DEADLINE_LEAD_MS - 60_000) {
     throw new Error(
       "Deadline must be at least 24 hours from now so students have reasonable time to complete the work.",
     );
@@ -1102,7 +1103,9 @@ export const getStudentContributionDates = query({
 
 /**
  * Submit files for a task (student).
- * Creates a submission record and marks the application as completed.
+ * Creates a submission record. Does NOT mark application as completed — that
+ * happens in storeEvaluation once the student achieves a passing score (≥60%).
+ * If a previous submission exists with a failing score, it is replaced.
  */
 export const submitTask = mutation({
   args: {
@@ -1152,14 +1155,39 @@ export const submitTask = mutation({
       throw new Error("The deadline for this task has passed");
     }
 
-    // Prevent duplicate submissions
+    // If already completed with a passing score, block resubmission
+    if (application.status === "completed") {
+      throw new Error("This task has already been completed with a passing score");
+    }
+
+    // Check for existing submission
     const existing = await ctx.db
       .query("submissions")
       .withIndex("by_applicationId", (q) =>
         q.eq("applicationId", args.applicationId),
       )
       .unique();
-    if (existing) throw new Error("You have already submitted for this task");
+
+    if (existing) {
+      // Check if there's a passing evaluation — if so, block resubmission
+      const existingEval = await ctx.db
+        .query("evaluations")
+        .withIndex("by_submissionId", (q) =>
+          q.eq("submissionId", existing._id),
+        )
+        .unique();
+
+      if (existingEval && existingEval.overallScore >= 60) {
+        throw new Error("This task has already been completed with a passing score");
+      }
+
+      // Delete old evaluation if it exists (failing score)
+      if (existingEval) {
+        await ctx.db.delete(existingEval._id);
+      }
+      // Delete old submission to make room for the new one
+      await ctx.db.delete(existing._id);
+    }
 
     // Validate based on submission type
     const subType = args.submissionType ?? "file_upload";
@@ -1173,7 +1201,7 @@ export const submitTask = mutation({
       throw new Error("Submission text content is required");
     }
 
-    const completedAt = Date.now();
+    const submittedAt = Date.now();
 
     // Create submission
     const submissionId = await ctx.db.insert("submissions", {
@@ -1186,20 +1214,13 @@ export const submitTask = mutation({
       githubUrl: args.githubUrl,
       plainText: args.plainText,
       evaluationStatus: "pending",
-      submittedAt: completedAt,
+      submittedAt,
     });
 
-    // Mark application as completed
-    await ctx.db.patch(args.applicationId, {
-      status: "completed",
-      completedAt,
-    });
-
-    // Mark task as completed so it appears in the employer's Completed tab
-    await ctx.db.patch(application.taskId, {
-      status: "completed",
-      updatedAt: completedAt,
-    });
+    // Ensure application is in_progress (in case it was reset)
+    if (application.status !== "in_progress") {
+      await ctx.db.patch(args.applicationId, { status: "in_progress" });
+    }
 
     // Notify the employer about the submission
     const studentName =
@@ -1213,64 +1234,8 @@ export const submitTask = mutation({
       relatedUserId: user._id,
       relatedUserName: studentName,
       isRead: false,
-      createdAt: completedAt,
+      createdAt: submittedAt,
     });
-
-    // ── Award Skill XP ──
-    // Use stored xpPerSkill, or fall back to difficulty-based defaults
-    const fallbackXp: Record<string, number> = {
-      beginner: 65,
-      intermediate: 115,
-      advanced: 175,
-    };
-    const xpToAward = task.xpPerSkill ?? fallbackXp[task.skillLevel] ?? 65;
-    const MAX_SKILL_XP = 2000;
-
-    const studentProfile = await ctx.db
-      .query("studentProfiles")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .unique();
-
-    if (studentProfile) {
-      const taskSkills = task.skills ?? [];
-      if (taskSkills.length > 0) {
-        // Build XP map from existing skillXp entries
-        const existingXp = studentProfile.skillXp ?? [];
-        const xpEntryMap = new Map(existingXp.map((entry) => [entry.skill, entry.xp]));
-
-        // Award XP to ALL task skills (create entries for new skills too)
-        for (const skill of taskSkills) {
-          const current = xpEntryMap.get(skill) ?? 0;
-          xpEntryMap.set(skill, Math.min(current + xpToAward, MAX_SKILL_XP));
-        }
-
-        // Also ensure all existing student skills are preserved
-        for (const entry of existingXp) {
-          if (!xpEntryMap.has(entry.skill)) {
-            xpEntryMap.set(entry.skill, entry.xp);
-          }
-        }
-
-        // Rebuild the full skillXp array
-        const updatedSkillXp = Array.from(xpEntryMap.entries()).map(([skill, xp]) => ({
-          skill,
-          xp,
-        }));
-
-        // Also add any new task skills to the student's skills array if missing
-        const currentSkills = studentProfile.skills ?? [];
-        const skillSet = new Set(currentSkills);
-        const newSkills = taskSkills.filter((s) => !skillSet.has(s));
-        const updatedSkills = newSkills.length > 0
-          ? [...currentSkills, ...newSkills]
-          : currentSkills;
-
-        await ctx.db.patch(studentProfile._id, {
-          skillXp: updatedSkillXp,
-          ...(newSkills.length > 0 ? { skills: updatedSkills } : {}),
-        });
-      }
-    }
 
     return submissionId;
   },
@@ -1315,6 +1280,8 @@ export const getTaskSubmissions = query({
           note: sub.note,
           submittedAt: sub.submittedAt,
           files: resolvedFiles.filter((f) => f !== null),
+          submissionType: sub.submissionType,
+          githubUrl: sub.githubUrl,
         };
       }),
     );

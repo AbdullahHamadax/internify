@@ -13,6 +13,7 @@ import {
   Brain,
   Globe,
   Layers,
+  RotateCcw,
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
 
@@ -32,11 +33,17 @@ export interface EvaluationData {
   summary: string;
 }
 
+/** Minimum score to pass — must match backend PASSING_SCORE_THRESHOLD */
+const PASSING_SCORE = 60;
+
 interface EvaluationResultsProps {
   evaluation: EvaluationData;
   taskTitle: string;
   companyName: string;
   onClose: () => void;
+  /** When provided and score < 60%, a "Try Again" button is shown */
+  onRetry?: () => void;
+  retryLoading?: boolean;
 }
 
 // Agent display metadata
@@ -179,7 +186,10 @@ export default function EvaluationResults({
   taskTitle,
   companyName,
   onClose,
+  onRetry,
+  retryLoading,
 }: EvaluationResultsProps) {
+  const canRetry = onRetry && evaluation.overallScore < PASSING_SCORE;
   const agentMeta = AGENT_META[evaluation.agentType] ?? AGENT_META.se;
   const scoreColor = getScoreColor(evaluation.overallScore);
 
@@ -328,15 +338,48 @@ export default function EvaluationResults({
           </motion.div>
         </div>
 
+        {/* ── Retry Encouragement Banner ── */}
+        {canRetry && (
+          <div className="mx-5 mb-0 p-4 bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-500 dark:border-amber-400">
+            <Typography variant="p" className="text-sm font-bold text-amber-800 dark:text-amber-300">
+              💪 Don&apos;t give up! Review the feedback above, improve your work, and submit again.
+              You need at least <span className="font-black">{PASSING_SCORE}%</span> to complete this task.
+            </Typography>
+          </div>
+        )}
+
         {/* ── Footer ── */}
-        <div className="p-5 border-t-4 border-black dark:border-white flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2.5 border-2 border-black dark:border-white font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] transition-all bg-[#2563EB] text-white"
-          >
-            Close Report
-          </button>
+        <div className="p-5 border-t-4 border-black dark:border-white flex items-center justify-between gap-3">
+          {canRetry ? (
+            <>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2.5 border-2 border-black dark:border-white font-black uppercase text-xs tracking-widest shadow-[3px_3px_0_0_#000] dark:shadow-[3px_3px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0_0_#000] dark:hover:shadow-[1px_1px_0_0_#fff] transition-all bg-card"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={onRetry}
+                disabled={retryLoading}
+                className="flex items-center gap-2 px-6 py-2.5 border-2 border-black dark:border-white font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] transition-all bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <RotateCcw className={`w-4 h-4 ${retryLoading ? 'animate-spin' : ''}`} />
+                {retryLoading ? 'Preparing...' : 'Try Again'}
+              </button>
+            </>
+          ) : (
+            <div className="ml-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2.5 border-2 border-black dark:border-white font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] transition-all bg-[#2563EB] text-white"
+              >
+                Close Report
+              </button>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
