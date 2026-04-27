@@ -396,6 +396,7 @@ export default function EmployerDashboard() {
         imageUrls: t.imageUrls,
         resolvedAttachments: t.resolvedAttachments,
         acceptedBy: t.acceptedBy,
+        customRubric: t.customRubric,
       })) || [],
     [employerTasks, now],
   );
@@ -479,6 +480,7 @@ export default function EmployerDashboard() {
                   type: string;
                 }[]
               | undefined,
+            customRubric: taskData.customRubric,
           });
           setEditingTask(null);
         } else {
@@ -500,6 +502,7 @@ export default function EmployerDashboard() {
                   type: string;
                 }[]
               | undefined,
+            customRubric: taskData.customRubric,
           });
         }
         setModalOpen(false);

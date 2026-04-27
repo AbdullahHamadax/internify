@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect, useMemo, type ChangeEvent } from "react";
-import { X, Plus, Save, Upload, Trash2, FileText, Loader2 } from "lucide-react";
+import { X, Plus, Save, Upload, Trash2, FileText, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,7 @@ export interface PostTaskData {
     name: string;
     type: string;
   }[];
+  customRubric?: string[];
 }
 
 /** Matches convex/tasks.ts — deadlines must be future and at least this far ahead. */
@@ -69,6 +70,76 @@ const SKILL_LEVELS = [
   { value: "advanced", label: "Advanced" },
 ];
 
+// Default agent rubric dimensions per category (mirrors evaluate-submission route)
+const CATEGORY_AGENT_MAP: Record<string, string> = {
+  "Web Development": "web",
+  "Frontend Development": "web",
+  "UI/UX Design": "web",
+  "Backend Development": "fullstack",
+  "Full Stack Development": "fullstack",
+  "Mobile Development": "fullstack",
+  "Game Development": "fullstack",
+  "Blockchain": "fullstack",
+  "AI/ML": "ai_ml",
+  "Data Science": "ai_ml",
+  "Machine Learning": "ai_ml",
+  "Software Engineering": "se",
+  "DevOps": "se",
+  "Cloud Computing": "se",
+  "Database Administration": "se",
+  "Networking": "se",
+  "Embedded Systems": "se",
+  "Cybersecurity": "cybersec",
+};
+
+const DEFAULT_RUBRICS: Record<string, string[]> = {
+  web: [
+    "Semantic HTML & Structure",
+    "CSS Quality & Responsive Design",
+    "JavaScript / Framework Correctness",
+    "Accessibility (a11y)",
+    "User Experience & Visual Design",
+    "Code Organization & Best Practices",
+  ],
+  ai_ml: [
+    "Data Preprocessing & Cleaning",
+    "Model Choice & Justification",
+    "Evaluation Metrics & Validation",
+    "Data Leakage Prevention",
+    "Code Clarity & Documentation",
+    "Results Interpretation",
+  ],
+  fullstack: [
+    "API Design & RESTful Practices",
+    "Database Schema & Queries",
+    "Authentication & Authorization",
+    "Error Handling & Edge Cases",
+    "Separation of Concerns",
+    "Code Quality & Maintainability",
+  ],
+  se: [
+    "Code Structure & Architecture",
+    "Naming Conventions & Readability",
+    "Testing & Test Coverage",
+    "Design Patterns & SOLID Principles",
+    "Documentation & Comments",
+    "Error Handling & Robustness",
+  ],
+  cybersec: [
+    "OWASP Top 10 Compliance",
+    "Input Validation & Sanitization",
+    "Authentication & Session Management",
+    "Secrets Management",
+    "Threat Modeling Awareness",
+    "Secure Coding Practices",
+  ],
+};
+
+function getDefaultRubric(cat: string): string[] {
+  const agent = CATEGORY_AGENT_MAP[cat];
+  return agent ? DEFAULT_RUBRICS[agent] ?? DEFAULT_RUBRICS.se : DEFAULT_RUBRICS.se;
+}
+
 interface PostTaskModalProps {
   open: boolean;
   onClose: () => void;
@@ -89,6 +160,8 @@ export default function PostTaskModal({
   const [skills, setSkills] = useState<string[]>([]);
   const [deadline, setDeadline] = useState("");
   const [maxApplicants, setMaxApplicants] = useState("");
+  const [customRubric, setCustomRubric] = useState<string[]>([]);
+  const [newRubricDim, setNewRubricDim] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imageStorageIds, setImageStorageIds] = useState<string[]>([]);
@@ -115,6 +188,7 @@ export default function PostTaskModal({
         setImageStorageIds(initialData.imageStorageIds || []);
         setImageUrls(initialData.imageUrls || []);
         setAttachments(initialData.resolvedAttachments || []);
+        setCustomRubric(initialData.customRubric || []);
 
         if (initialData.deadline) {
           const d = new Date(initialData.deadline);
@@ -171,6 +245,8 @@ export default function PostTaskModal({
     setImageStorageIds([]);
     setImageUrls([]);
     setAttachments([]);
+    setCustomRubric([]);
+    setNewRubricDim("");
   };
 
   const validate = (): boolean => {
@@ -279,6 +355,7 @@ export default function PostTaskModal({
           })),
           ...uploadedAttachments,
         ],
+        customRubric: customRubric.length > 0 ? customRubric : undefined,
       });
 
       resetForm();
@@ -418,6 +495,98 @@ export default function PostTaskModal({
           <div className="emp-modal__field">
             <Label>Required Skills</Label>
             <SkillPicker skills={skills} onChange={setSkills} />
+          </div>
+
+          {/* Evaluation Rubric (optional) */}
+          <div className="emp-modal__field">
+            <Label className="flex items-center gap-2">
+              <Sparkles className="size-4 text-[#2563EB]" />
+              Evaluation Rubric (Optional)
+            </Label>
+            <p className="text-sm text-muted-foreground mb-3">
+              The AI will evaluate submissions against default dimensions for the selected category.
+              You can add your own custom criteria based on your task requirements.
+            </p>
+
+            {/* Default agent dimensions */}
+            {category && (
+              <div className="mb-3">
+                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-2">
+                  Default AI Dimensions ({CATEGORY_AGENT_MAP[category] ?? "se"})
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {getDefaultRubric(category).map((dim) => (
+                    <span
+                      key={dim}
+                      className="inline-flex items-center px-2 py-1 text-[10px] font-bold uppercase tracking-wide border-2 border-border bg-muted/50 text-muted-foreground"
+                    >
+                      {dim}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Custom rubric dimensions */}
+            {customRubric.length > 0 && (
+              <div className="mb-3">
+                <span className="text-xs font-bold uppercase tracking-widest text-foreground block mb-2">
+                  Your Custom Dimensions
+                </span>
+                <div className="space-y-1.5">
+                  {customRubric.map((dim, i) => (
+                    <div
+                      key={`rubric-${i}`}
+                      className="flex items-center gap-2 p-2 border-2 border-[#2563EB] bg-blue-50 dark:bg-blue-950/30"
+                    >
+                      <Sparkles className="size-3 text-[#2563EB] shrink-0" />
+                      <span className="text-xs font-bold flex-1">{dim}</span>
+                      <button
+                        type="button"
+                        onClick={() => setCustomRubric((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add new rubric dimension */}
+            <div className="flex gap-2">
+              <Input
+                value={newRubricDim}
+                onChange={(e) => setNewRubricDim(e.target.value)}
+                placeholder="e.g. Mobile Responsiveness, API Error Handling..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newRubricDim.trim()) {
+                    e.preventDefault();
+                    const trimmed = newRubricDim.trim();
+                    if (!customRubric.some((d) => d.toLowerCase() === trimmed.toLowerCase())) {
+                      setCustomRubric((prev) => [...prev, trimmed]);
+                    }
+                    setNewRubricDim("");
+                  }
+                }}
+                className="rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] text-sm"
+              />
+              <Button
+                type="button"
+                onClick={() => {
+                  const trimmed = newRubricDim.trim();
+                  if (trimmed && !customRubric.some((d) => d.toLowerCase() === trimmed.toLowerCase())) {
+                    setCustomRubric((prev) => [...prev, trimmed]);
+                    setNewRubricDim("");
+                  }
+                }}
+                disabled={!newRubricDim.trim()}
+                className="rounded-none border-2 border-border bg-[#2563EB] text-white shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shrink-0"
+              >
+                <Plus className="size-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Deadline */}

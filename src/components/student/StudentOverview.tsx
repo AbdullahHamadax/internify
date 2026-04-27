@@ -119,6 +119,7 @@ export default function StudentOverview({
       skills: string[];
       companyName: string;
       deadline: number;
+      customRubric?: string[];
     };
   };
 
@@ -398,6 +399,7 @@ export default function StudentOverview({
           companyName={selectedApp.task.companyName}
           deadline={selectedApp.task.deadline}
           hasSubmission={selectedApp.hasSubmission}
+          customRubric={selectedApp.task.customRubric}
           onClose={() => setSelectedApp(null)}
           onSubmitted={() => setSelectedApp(null)}
         />
