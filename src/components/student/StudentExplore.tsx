@@ -161,12 +161,28 @@ export default function StudentExplore({
     { label: "All", match: [] },
     {
       label: "Development",
-      match: ["Web Development", "Mobile Development", "DevOps"],
+      match: [
+        "Web Development",
+        "Backend Development",
+        "Full Stack Development",
+        "Mobile Development",
+        "Software Engineering",
+      ],
     },
     { label: "Design", match: ["UI/UX Design"] },
-    { label: "Data & AI", match: ["Data Science", "Machine Learning"] },
-    { label: "Writing", match: ["Content Writing", "Marketing"] },
-    { label: "Cloud & Security", match: ["Cloud Computing", "Cybersecurity"] },
+    {
+      label: "Data & AI",
+      match: ["Data Science", "Machine Learning", "AI/ML"],
+    },
+    {
+      label: "Infrastructure",
+      match: ["Cloud Computing", "DevOps", "Networking", "Database Administration"],
+    },
+    { label: "Security", match: ["Cybersecurity"] },
+    {
+      label: "Specialized",
+      match: ["Game Development", "Embedded Systems", "Blockchain"],
+    },
   ];
 
   const toggleSkillLevel = (level: string) => {

@@ -234,7 +234,24 @@ export default function StudentOverview({
                 </Typography>
               </div>
             ) : (
-              applications.map((app) => (
+              (() => {
+                // Sort: in_progress → accepted (under review) → completed
+                // Within each group: soonest deadline first (most urgent)
+                const statusOrder: Record<string, number> = {
+                  in_progress: 0,
+                  accepted: 1,
+                  completed: 2,
+                };
+                const sorted = [...applications].sort((a, b) => {
+                  const aOrder = statusOrder[a.status] ?? 1;
+                  const bOrder = statusOrder[b.status] ?? 1;
+                  if (aOrder !== bOrder) return aOrder - bOrder;
+                  // Within same status group: soonest deadline first for active, newest first for completed
+                  if (a.status === "completed") return b.task.deadline - a.task.deadline;
+                  return a.task.deadline - b.task.deadline;
+                });
+                return sorted;
+              })().map((app) => (
                 <div
                   key={app._id}
                   className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-card border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none min-h-[100px] w-full min-w-0 cursor-pointer"

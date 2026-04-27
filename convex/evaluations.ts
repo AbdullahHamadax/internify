@@ -1,9 +1,16 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+/** Minimum score required to pass and complete a task */
+const PASSING_SCORE_THRESHOLD = 60;
+
 /**
  * Store a new AI evaluation result for a submission.
  * Called from the client after the API route returns evaluation data.
+ *
+ * Score-gating logic:
+ * - Score ≥ 60%: marks application + task as "completed", awards XP
+ * - Score < 60%: keeps application as "in_progress", student can retry
  */
 export const storeEvaluation = mutation({
   args: {
@@ -46,7 +53,8 @@ export const storeEvaluation = mutation({
       throw new Error("Submission not found or unauthorized");
     }
 
-    // Prevent duplicate evaluations
+    // If an old evaluation already exists for this submission, delete it
+    // (this can happen in edge cases with rapid resubmission)
     const existing = await ctx.db
       .query("evaluations")
       .withIndex("by_submissionId", (q) =>
@@ -54,7 +62,7 @@ export const storeEvaluation = mutation({
       )
       .unique();
     if (existing) {
-      throw new Error("Evaluation already exists for this submission");
+      await ctx.db.delete(existing._id);
     }
 
     // Store the evaluation
@@ -79,7 +87,146 @@ export const storeEvaluation = mutation({
       evaluationStatus: "completed",
     });
 
+    // ── Score-Gating: Only complete the task if score meets threshold ──
+    const passed = args.overallScore >= PASSING_SCORE_THRESHOLD;
+
+    if (passed) {
+      const completedAt = Date.now();
+
+      // Mark application as completed
+      await ctx.db.patch(args.applicationId, {
+        status: "completed",
+        completedAt,
+      });
+
+      // Mark task as completed so it appears in the employer's Completed tab
+      const task = await ctx.db.get(args.taskId);
+      if (task) {
+        await ctx.db.patch(args.taskId, {
+          status: "completed",
+          updatedAt: completedAt,
+        });
+
+        // ── Award Skill XP (only on passing score) ──
+        const fallbackXp: Record<string, number> = {
+          beginner: 65,
+          intermediate: 115,
+          advanced: 175,
+        };
+        const xpToAward = task.xpPerSkill ?? fallbackXp[task.skillLevel] ?? 65;
+        const MAX_SKILL_XP = 2000;
+
+        const studentProfile = await ctx.db
+          .query("studentProfiles")
+          .withIndex("by_userId", (q) => q.eq("userId", user._id))
+          .unique();
+
+        if (studentProfile) {
+          const taskSkills = task.skills ?? [];
+          if (taskSkills.length > 0) {
+            const existingXp = studentProfile.skillXp ?? [];
+            const xpEntryMap = new Map(existingXp.map((entry) => [entry.skill, entry.xp]));
+
+            for (const skill of taskSkills) {
+              const current = xpEntryMap.get(skill) ?? 0;
+              xpEntryMap.set(skill, Math.min(current + xpToAward, MAX_SKILL_XP));
+            }
+
+            for (const entry of existingXp) {
+              if (!xpEntryMap.has(entry.skill)) {
+                xpEntryMap.set(entry.skill, entry.xp);
+              }
+            }
+
+            const updatedSkillXp = Array.from(xpEntryMap.entries()).map(([skill, xp]) => ({
+              skill,
+              xp,
+            }));
+
+            const currentSkills = studentProfile.skills ?? [];
+            const skillSet = new Set(currentSkills);
+            const newSkills = taskSkills.filter((s) => !skillSet.has(s));
+            const updatedSkills = newSkills.length > 0
+              ? [...currentSkills, ...newSkills]
+              : currentSkills;
+
+            await ctx.db.patch(studentProfile._id, {
+              skillXp: updatedSkillXp,
+              ...(newSkills.length > 0 ? { skills: updatedSkills } : {}),
+            });
+          }
+        }
+      }
+    }
+    // If score < threshold: application stays "in_progress", student can retry
+
     return evaluationId;
+  },
+});
+
+/**
+ * Delete a submission and its evaluation so the student can retry.
+ * Only allowed when the score is below the passing threshold.
+ */
+export const deleteSubmissionForRetry = mutation({
+  args: {
+    applicationId: v.id("applications"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") {
+      throw new Error("Unauthorized");
+    }
+
+    const application = await ctx.db.get(args.applicationId);
+    if (!application || application.studentId !== user._id) {
+      throw new Error("Application not found or unauthorized");
+    }
+
+    // Block retry on already-completed (passing) tasks
+    if (application.status === "completed") {
+      throw new Error("Cannot retry a completed task");
+    }
+
+    // Find and delete the submission
+    const submission = await ctx.db
+      .query("submissions")
+      .withIndex("by_applicationId", (q) =>
+        q.eq("applicationId", args.applicationId),
+      )
+      .unique();
+
+    if (submission) {
+      // Delete associated evaluation first
+      const evaluation = await ctx.db
+        .query("evaluations")
+        .withIndex("by_submissionId", (q) =>
+          q.eq("submissionId", submission._id),
+        )
+        .unique();
+
+      if (evaluation) {
+        // Safety check: don't allow deleting passing evaluations
+        if (evaluation.overallScore >= PASSING_SCORE_THRESHOLD) {
+          throw new Error("Cannot retry — score meets the passing threshold");
+        }
+        await ctx.db.delete(evaluation._id);
+      }
+
+      await ctx.db.delete(submission._id);
+    }
+
+    // Ensure application is back to in_progress
+    await ctx.db.patch(args.applicationId, { status: "in_progress" });
   },
 });
 

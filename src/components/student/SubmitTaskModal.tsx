@@ -86,24 +86,49 @@ export default function SubmitTaskModal({
   const [evaluating, setEvaluating] = useState(false);
   const [evaluationResult, setEvaluationResult] = useState<EvaluationData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [retryLoading, setRetryLoading] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
   const submitTask = useMutation(api.tasks.submitTask);
   const storeEvaluation = useMutation(api.evaluations.storeEvaluation);
   const updateEvaluationStatus = useMutation(api.evaluations.updateEvaluationStatus);
+  const deleteForRetry = useMutation(api.evaluations.deleteSubmissionForRetry);
 
-  // Check for existing evaluation
+  // Check for existing evaluation (skip during active retry to avoid stale data flash)
   const existingEvaluation = useQuery(
     api.evaluations.getEvaluationByApplication,
-    hasSubmission ? { applicationId: applicationId as Id<"applications"> } : "skip",
+    hasSubmission && !isRetrying ? { applicationId: applicationId as Id<"applications"> } : "skip",
   );
 
   const isExpired = deadline <= now;
 
   if (!open) return null;
 
-  // If showing evaluation results
+  // ── Retry handler ──
+  const handleRetry = async () => {
+    setRetryLoading(true);
+    try {
+      await deleteForRetry({
+        applicationId: applicationId as Id<"applications">,
+      });
+      // Reset all form state
+      setEvaluationResult(null);
+      setPendingFiles([]);
+      setGithubUrl("");
+      setPlainText("");
+      setNote("");
+      setError(null);
+      setIsRetrying(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to prepare retry");
+    } finally {
+      setRetryLoading(false);
+    }
+  };
+
+  // If showing evaluation results (fresh — just evaluated)
   if (evaluationResult) {
     return (
       <EvaluationResults
@@ -114,12 +139,32 @@ export default function SubmitTaskModal({
           setEvaluationResult(null);
           onClose();
         }}
+        onRetry={handleRetry}
+        retryLoading={retryLoading}
       />
     );
   }
 
+  // If submission exists and we're still loading the evaluation query, show a loading state
+  // instead of briefly flashing the "Already Submitted" screen
+  if (hasSubmission && !isRetrying && existingEvaluation === undefined) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative w-full max-w-md bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff] p-8 flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-[#2563EB]" />
+          <Typography variant="p" color="muted" className="text-sm">
+            Loading evaluation report...
+          </Typography>
+        </div>
+      </div>
+    );
+  }
+
   // If existing evaluation is available and submission is complete
-  if (hasSubmission && existingEvaluation) {
+  if (hasSubmission && !isRetrying && existingEvaluation) {
     return (
       <EvaluationResults
         evaluation={{
@@ -134,6 +179,8 @@ export default function SubmitTaskModal({
         taskTitle={taskTitle}
         companyName={companyName}
         onClose={onClose}
+        onRetry={handleRetry}
+        retryLoading={retryLoading}
       />
     );
   }
@@ -275,6 +322,7 @@ export default function SubmitTaskModal({
       // ── Step 7: Show results ──
       setEvaluationResult(evaluation);
       setEvaluating(false);
+      setIsRetrying(false);
       onSubmitted();
     } catch (err: unknown) {
       // If evaluation fails, still mark submission as done (the upload succeeded)
@@ -349,11 +397,13 @@ export default function SubmitTaskModal({
         <div className="flex items-center justify-between p-5 border-b-4 border-black dark:border-white">
           <div className="min-w-0 flex-1 pr-4">
             <Typography variant="h3" className="uppercase font-black tracking-tight truncate">
-              {hasSubmission
+              {hasSubmission && !isRetrying
                 ? "Submission Complete"
                 : isExpired
                   ? "Deadline Passed"
-                  : "Submit Work"}
+                  : isRetrying
+                    ? "Resubmit Work"
+                    : "Submit Work"}
             </Typography>
             <Typography variant="span" color="muted" className="text-sm truncate block mt-1">
               {taskTitle} • {companyName}
@@ -370,7 +420,7 @@ export default function SubmitTaskModal({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          {hasSubmission ? (
+          {hasSubmission && !isRetrying ? (
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
               <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
                 <CheckCircle2 className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
@@ -577,7 +627,7 @@ export default function SubmitTaskModal({
         </div>
 
         {/* Footer */}
-        {!hasSubmission && !isExpired && (
+        {(!hasSubmission || isRetrying) && !isExpired && (
           <div className="p-5 border-t-4 border-black dark:border-white flex justify-end gap-3">
             <button
               type="button"

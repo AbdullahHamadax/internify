@@ -44,16 +44,23 @@ function toDatetimeLocalValue(d: Date) {
 }
 
 const CATEGORIES = [
-  "Web Development",
-  "Mobile Development",
-  "Data Science",
-  "Machine Learning",
-  "UI/UX Design",
-  "Marketing",
-  "Content Writing",
-  "Cybersecurity",
+  "AI/ML",
+  "Backend Development",
+  "Blockchain",
   "Cloud Computing",
+  "Cybersecurity",
+  "Data Science",
+  "Database Administration",
   "DevOps",
+  "Embedded Systems",
+  "Full Stack Development",
+  "Game Development",
+  "Machine Learning",
+  "Mobile Development",
+  "Networking",
+  "Software Engineering",
+  "UI/UX Design",
+  "Web Development",
 ];
 
 const SKILL_LEVELS = [
@@ -181,7 +188,9 @@ export default function PostTaskModal({
         const now = Date.now();
         if (ts <= now) {
           newErrors.deadline = "Deadline cannot be in the past.";
-        } else if (ts - now < MIN_TASK_DEADLINE_LEAD_MS) {
+        // Allow 1 minute tolerance since datetime-local has minute precision
+        // and Date.now() advances between picking and validating
+        } else if (ts - now < MIN_TASK_DEADLINE_LEAD_MS - 60_000) {
           newErrors.deadline =
             "Deadline must be at least 24 hours from now — shorter windows are not allowed.";
         }
