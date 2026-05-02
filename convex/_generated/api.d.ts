@@ -13,6 +13,8 @@ import type * as messages from "../messages.js";
 import type * as nameLimits from "../nameLimits.js";
 import type * as notifications from "../notifications.js";
 import type * as presence from "../presence.js";
+import type * as recommendationHelpers from "../recommendationHelpers.js";
+import type * as recommendations from "../recommendations.js";
 import type * as seedSkillXp from "../seedSkillXp.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
@@ -29,6 +31,8 @@ declare const fullApi: ApiFromModules<{
   nameLimits: typeof nameLimits;
   notifications: typeof notifications;
   presence: typeof presence;
+  recommendationHelpers: typeof recommendationHelpers;
+  recommendations: typeof recommendations;
   seedSkillXp: typeof seedSkillXp;
   tasks: typeof tasks;
   users: typeof users;

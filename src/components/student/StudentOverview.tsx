@@ -35,6 +35,9 @@ import {
   ArrowRight,
   Star,
   Loader2,
+  Sparkles,
+  Zap,
+  Target,
 } from "lucide-react";
 
 import { useQuery } from "convex/react";
@@ -43,6 +46,7 @@ import { api } from "../../../convex/_generated/api";
 import { Typography } from "@/components/ui/Typography";
 import SubmitTaskModal from "./SubmitTaskModal";
 import { useLiveNow } from "@/lib/useLiveNow";
+import { useConvexTokenReady } from "@/lib/convexAuth";
 
 function deadlineToDuration(deadline: number, now: number): string {
   const diff = Math.max(0, deadline - now);
@@ -55,34 +59,18 @@ function deadlineToDuration(deadline: number, now: number): string {
   return `${months} month${months !== 1 ? "s" : ""}`;
 }
 
-// Mock stats removed
+function getMatchBadgeColor(score: number) {
+  if (score >= 85) return "bg-emerald-500";
+  if (score >= 65) return "bg-[#2563EB]";
+  if (score >= 45) return "bg-[#AB47BC]";
+  return "bg-zinc-500";
+}
 
-const MOCK_RECOMMENDATIONS = [
-  {
-    id: "r1",
-    title: "React Native UI Overhaul",
-    company: "TechNova",
-    duration: "2 weeks",
-    tags: ["React Native", "UI/UX", "Tailwind"],
-    matchScore: 98,
-  },
-  {
-    id: "r2",
-    title: "Next.js Authentication Integration",
-    company: "SecureShare",
-    duration: "1 week",
-    tags: ["Next.js", "Clerk", "TypeScript"],
-    matchScore: 92,
-  },
-  {
-    id: "r3",
-    title: "PostgreSQL Database Migration",
-    company: "DataFlow",
-    duration: "3 weeks",
-    tags: ["SQL", "PostgreSQL", "Backend"],
-    matchScore: 85,
-  },
-];
+function getMatchIcon(score: number) {
+  if (score >= 85) return <Zap className="w-3 h-3" />;
+  if (score >= 65) return <Target className="w-3 h-3" />;
+  return <Sparkles className="w-3 h-3" />;
+}
 
 // Motion Variants
 const containerVariants: Variants = {
@@ -125,16 +113,40 @@ export default function StudentOverview({
 
   const { user } = useUser();
   const firstName = user?.firstName || "there";
+  const isConvexTokenReady = useConvexTokenReady();
 
   const [selectedApp, setSelectedApp] = useState<SelectedApplication | null>(
     null,
   );
 
   const applications = useQuery(api.tasks.getStudentApplications);
+  const recommendations = useQuery(
+    api.recommendations.getRecommendedTasks,
+    isConvexTokenReady ? {} : "skip",
+  ) as Array<{
+    taskId: string;
+    title: string;
+    description: string;
+    category: string;
+    skillLevel: string;
+    skills: string[];
+    deadline: number;
+    maxApplicants?: number;
+    applicantCount?: number;
+    createdAt: number;
+    companyName: string;
+    employerId: string;
+    matchScore: number;
+    matchedSkills: string[];
+    unmatchedSkills: string[];
+    matchReason: string;
+    matchTier: string;
+  }> | undefined;
+  const topRecs = (recommendations ?? []).slice(0, 3);
   const activeCount = applications
     ? applications.filter(
-        (app) => app.status === "in_progress" || app.status === "accepted",
-      ).length
+      (app) => app.status === "in_progress" || app.status === "accepted",
+    ).length
     : 0;
 
   const completedCount = applications
@@ -164,7 +176,7 @@ export default function StudentOverview({
             </span>{" "}
             active applications and{" "}
             <span className="inline-flex items-center justify-center font-black text-black bg-[#FCD34D] px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] rotate-2 text-xl md:text-2xl">
-              {MOCK_RECOMMENDATIONS.length}
+              {topRecs.length}
             </span>{" "}
             new high-match opportunities waiting for you today.
           </Typography>
@@ -288,13 +300,12 @@ export default function StudentOverview({
 
                   <div className="w-full sm:w-auto flex flex-col items-end gap-2 shrink-0">
                     <span
-                      className={`text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white px-3 py-1 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${
-                        app.status === "in_progress"
+                      className={`text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white px-3 py-1 shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${app.status === "in_progress"
                           ? "bg-[#1E40AF] text-white"
                           : app.status === "completed"
                             ? "bg-emerald-600 text-white"
                             : "bg-[#2563EB] text-white"
-                      }`}
+                        }`}
                     >
                       {app.status === "in_progress"
                         ? "In Progress"
@@ -327,53 +338,82 @@ export default function StudentOverview({
           </div>
 
           <div className="space-y-3">
-            {MOCK_RECOMMENDATIONS.map((rec) => (
-              <div
-                key={rec.id}
-                className="group block p-4 bg-card border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all cursor-pointer hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-white bg-[#2563EB] px-2 py-1 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
-                    {rec.matchScore}% Match
-                  </span>
-                </div>
-
-                <Typography
-                  variant="h4"
-                  className="mb-1 leading-tight group-hover:text-blue-600 transition-colors"
-                >
-                  {rec.title}
-                </Typography>
-
-                <Typography
-                  variant="span"
-                  color="muted"
-                  className="flex items-center gap-2 mb-3"
-                >
-                  {rec.company} • {rec.duration}
-                </Typography>
-
-                <div className="flex flex-wrap gap-2">
-                  {rec.tags.slice(0, 3).map((tag) => {
-                    const devicon = getDeviconClass(tag);
-                    return (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 border-2 border-black dark:border-white bg-white dark:bg-black text-[10px] font-black uppercase tracking-widest text-foreground transition-colors group-hover:bg-[#AB47BC] group-hover:text-white"
-                      >
-                        {devicon && <i className={`${devicon} text-[14px]`} />}
-                        {tag}
-                      </span>
-                    );
-                  })}
-                  {rec.tags.length > 3 && (
-                    <span className="inline-flex items-center px-2.5 py-1 border-2 border-black dark:border-white bg-white dark:bg-black text-[10px] font-black uppercase tracking-widest text-foreground transition-colors">
-                      +{rec.tags.length - 3}
-                    </span>
-                  )}
-                </div>
+            {recommendations === undefined ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
-            ))}
+            ) : topRecs.length === 0 ? (
+              <div className="p-6 text-center bg-zinc-100 dark:bg-zinc-900 border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
+                <Typography variant="p" color="muted" className="text-sm">
+                  Add skills to your profile to get personalized task recommendations.
+                </Typography>
+              </div>
+            ) : (
+              topRecs.map((rec, idx) => (
+                <div
+                  key={rec.taskId}
+                  className="group block p-4 bg-card border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all cursor-pointer hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+                  onClick={() => onNavigate?.("explore")}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-white px-2 py-1 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${getMatchBadgeColor(rec.matchScore)}`}>
+                      {getMatchIcon(rec.matchScore)}
+                      {rec.matchScore}% Match
+                    </span>
+                    {idx === 0 && (
+                      <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-current" /> #1
+                      </span>
+                    )}
+                  </div>
+
+                  <Typography
+                    variant="h4"
+                    className="mb-1 leading-tight group-hover:text-blue-600 transition-colors"
+                  >
+                    {rec.title}
+                  </Typography>
+
+                  <Typography
+                    variant="span"
+                    color="muted"
+                    className="flex items-center gap-2 mb-2"
+                  >
+                    {rec.companyName} • {deadlineToDuration(rec.deadline, now)}
+                  </Typography>
+
+                  {/* Match reason */}
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#2563EB] dark:text-[#60A5FA] uppercase tracking-wider mb-3 px-2 py-1 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                    <Sparkles className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{rec.matchReason}</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {rec.skills.slice(0, 3).map((skill) => {
+                      const devicon = getDeviconClass(skill);
+                      const isMatched = rec.matchedSkills.includes(skill);
+                      return (
+                        <span
+                          key={skill}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 border-2 border-black dark:border-white text-[10px] font-black uppercase tracking-widest transition-colors ${isMatched
+                              ? "bg-[#2563EB] text-white"
+                              : "bg-white dark:bg-black text-foreground/60"
+                            }`}
+                        >
+                          {devicon && <i className={`${devicon} text-[14px]`} />}
+                          {skill}
+                        </span>
+                      );
+                    })}
+                    {rec.skills.length > 3 && (
+                      <span className="inline-flex items-center px-2.5 py-1 border-2 border-black dark:border-white bg-white dark:bg-black text-[10px] font-black uppercase tracking-widest text-foreground transition-colors">
+                        +{rec.skills.length - 3}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <button

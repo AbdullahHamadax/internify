@@ -1307,6 +1307,686 @@
   font-size: 0.8125rem;
 }
 
+/* ── AI Suggested Skills Panel ── */
+
+.ai-suggestions {
+  margin-top: 0.5rem;
+  border: 2px solid var(--border);
+  border-radius: 0;
+  background: var(--card);
+  overflow: hidden;
+  box-shadow: 4px 4px 0 0 var(--border);
+  animation: ai-panel-in 0.25s ease;
+}
+
+@keyframes ai-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-suggestions__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, hsl(263 70% 50% / 0.12), hsl(290 84% 60% / 0.08));
+  border-bottom: 2px solid var(--border);
+  font-size: 0.6875rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dark .ai-suggestions__header {
+  background: linear-gradient(135deg, hsl(263 70% 50% / 0.2), hsl(290 84% 60% / 0.15));
+}
+
+.ai-suggestions__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: hsl(263 70% 50%);
+  animation: ai-sparkle 2s ease-in-out infinite;
+}
+
+.dark .ai-suggestions__icon {
+  color: hsl(290 70% 70%);
+}
+
+@keyframes ai-sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.9); }
+}
+
+.ai-suggestions__title {
+  color: var(--foreground);
+}
+
+.ai-suggestions__spinner {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: hsl(263 70% 50%);
+  animation: spin 1s linear infinite;
+  margin-left: auto;
+}
+
+.dark .ai-suggestions__spinner {
+  color: hsl(290 70% 70%);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Skeleton loading */
+
+.ai-suggestions__loading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.ai-suggestions__skeleton {
+  height: 1.75rem;
+  width: 5.5rem;
+  border-radius: 0;
+  border: 2px solid var(--border);
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    hsl(263 70% 50% / 0.08) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+.ai-suggestions__skeleton--short {
+  width: 4rem;
+}
+
+.ai-suggestions__skeleton--medium {
+  width: 6.5rem;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Error state */
+
+.ai-suggestions__error {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: hsl(0 84% 60%);
+}
+
+/* Chip container */
+
+.ai-suggestions__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+/* Individual suggestion chip */
+
+.ai-suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 0;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid hsl(263 70% 50%);
+  background: hsl(263 70% 50% / 0.08);
+  color: hsl(263 70% 50%);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 0 hsl(263 70% 50% / 0.3);
+  user-select: none;
+}
+
+.dark .ai-suggestion-chip {
+  border-color: hsl(290 70% 70%);
+  background: hsl(290 70% 70% / 0.1);
+  color: hsl(290 70% 70%);
+  box-shadow: 2px 2px 0 0 hsl(290 70% 70% / 0.3);
+}
+
+.ai-suggestion-chip:hover {
+  background: hsl(263 70% 50% / 0.2);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 0 hsl(263 70% 50% / 0.4);
+}
+
+.dark .ai-suggestion-chip:hover {
+  background: hsl(290 70% 70% / 0.22);
+  box-shadow: 3px 3px 0 0 hsl(290 70% 70% / 0.4);
+}
+
+.ai-suggestion-chip:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.ai-suggestion-chip__grip {
+  width: 0.625rem;
+  height: 0.625rem;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+.ai-suggestion-chip:hover .ai-suggestion-chip__grip {
+  opacity: 0.8;
+}
+
+/* Dragging state */
+.ai-suggestion-chip--dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+  box-shadow: none;
+}
+
+/* Already added state */
+.ai-suggestion-chip--added {
+  border-color: hsl(160 84% 39%);
+  background: hsl(160 84% 39% / 0.1);
+  color: hsl(160 84% 39%);
+  box-shadow: 2px 2px 0 0 hsl(160 84% 39% / 0.3);
+  cursor: default;
+  opacity: 0.7;
+}
+
+.dark .ai-suggestion-chip--added {
+  border-color: hsl(160 84% 55%);
+  background: hsl(160 84% 55% / 0.1);
+  color: hsl(160 84% 55%);
+  box-shadow: 2px 2px 0 0 hsl(160 84% 55% / 0.3);
+}
+
+.ai-suggestion-chip--added:hover {
+  transform: none;
+  box-shadow: 2px 2px 0 0 hsl(160 84% 39% / 0.3);
+  background: hsl(160 84% 39% / 0.1);
+}
+
+.dark .ai-suggestion-chip--added:hover {
+  box-shadow: 2px 2px 0 0 hsl(160 84% 55% / 0.3);
+  background: hsl(160 84% 55% / 0.1);
+}
+
+/* ── AI-Detected Badge on Selected Skills ── */
+
+.emp-tag--ai-detected {
+  position: relative;
+}
+
+.emp-tag__ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  margin-left: 0.25rem;
+  padding: 0 0.25rem;
+  font-size: 0.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: hsl(0 0% 100% / 0.25);
+  border-radius: 0;
+  border: 1px solid hsl(0 0% 100% / 0.3);
+  color: inherit;
+  line-height: 1.4;
+}
+
+.dark .emp-tag__ai-badge {
+  background: hsl(0 0% 0% / 0.2);
+  border-color: hsl(0 0% 0% / 0.3);
+}
+
+/* ── Skill Picker Drop Target Highlight ── */
+
+.emp-skill-picker--drop-active {
+  border-color: hsl(263 70% 50%) !important;
+  box-shadow: 0 0 0 3px hsl(263 70% 50% / 0.2), 4px 4px 0 0 hsl(263 70% 50%) !important;
+}
+
+.dark .emp-skill-picker--drop-active {
+  border-color: hsl(290 70% 70%) !important;
+  box-shadow: 0 0 0 3px hsl(290 70% 70% / 0.2), 4px 4px 0 0 hsl(290 70% 70%) !important;
+}
+
+/* ── Rubric Builder ── */
+
+.rubric-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.rubric-builder__dims {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-height: 2rem;
+}
+
+.rubric-builder__empty {
+  text-align: center;
+  padding: 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  border: 2px dashed var(--border);
+}
+
+.rubric-builder__add {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rubric-builder__reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  align-self: flex-start;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  box-shadow: 2px 2px 0 0 var(--border);
+}
+
+.rubric-builder__reset:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 0 var(--border);
+  background: var(--border);
+  color: var(--card);
+}
+
+/* ── Individual Rubric Dimension Card ── */
+
+.rubric-dim {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border: 2px solid var(--border);
+  background: var(--card);
+  cursor: grab;
+  transition: all 0.12s ease;
+  box-shadow: 2px 2px 0 0 var(--border);
+  user-select: none;
+}
+
+.rubric-dim:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 0 var(--border);
+}
+
+.rubric-dim:active {
+  cursor: grabbing;
+}
+
+.rubric-dim__grip {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--muted-foreground);
+  opacity: 0.4;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+
+.rubric-dim:hover .rubric-dim__grip {
+  opacity: 0.8;
+}
+
+.rubric-dim__label {
+  flex: 1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 0;
+}
+
+.rubric-dim__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0 0.3rem;
+  font-size: 0.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  border: 1.5px solid;
+  flex-shrink: 0;
+}
+
+.rubric-dim__badge--default {
+  background: hsl(217 91% 60% / 0.12);
+  border-color: hsl(217 91% 60% / 0.3);
+  color: #3B82F6;
+}
+
+.dark .rubric-dim__badge--default {
+  background: hsl(217 91% 60% / 0.2);
+  border-color: hsl(217 91% 60% / 0.4);
+  color: hsl(217 91% 75%);
+}
+
+.rubric-dim__badge--suggested {
+  background: hsl(263 70% 50% / 0.12);
+  border-color: hsl(263 70% 50% / 0.3);
+  color: #8B5CF6;
+}
+
+.dark .rubric-dim__badge--suggested {
+  background: hsl(263 70% 60% / 0.2);
+  border-color: hsl(263 70% 60% / 0.4);
+  color: hsl(263 70% 75%);
+}
+
+.rubric-dim__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: all 0.12s ease;
+}
+
+.rubric-dim:hover .rubric-dim__remove {
+  opacity: 1;
+}
+
+.rubric-dim__remove:hover {
+  color: hsl(0 84% 60%);
+  background: hsl(0 84% 60% / 0.1);
+}
+
+/* ── Dimension Type Colors ── */
+
+/* Default (blue accent) */
+.rubric-dim--default {
+  border-left: 4px solid #3B82F6;
+  background: hsl(217 91% 60% / 0.04);
+}
+
+.rubric-dim--default:hover {
+  background: hsl(217 91% 60% / 0.1);
+}
+
+.dark .rubric-dim--default {
+  background: hsl(217 91% 60% / 0.06);
+  border-left-color: hsl(217 91% 70%);
+}
+
+.dark .rubric-dim--default:hover {
+  background: hsl(217 91% 60% / 0.14);
+}
+
+/* Suggested (purple accent) */
+.rubric-dim--suggested {
+  border-left: 4px solid #8B5CF6;
+  background: hsl(263 70% 50% / 0.04);
+}
+
+.rubric-dim--suggested:hover {
+  background: hsl(263 70% 50% / 0.1);
+}
+
+.dark .rubric-dim--suggested {
+  background: hsl(263 70% 60% / 0.06);
+  border-left-color: hsl(263 70% 70%);
+}
+
+.dark .rubric-dim--suggested:hover {
+  background: hsl(263 70% 60% / 0.14);
+}
+
+/* Manual (neutral) */
+.rubric-dim--manual {
+  border-left: 4px solid var(--border);
+}
+
+.rubric-dim--manual:hover {
+  background: var(--muted);
+}
+
+/* ── Drag States ── */
+
+.rubric-dim--dragging {
+  opacity: 0.4;
+  transform: scale(0.97) !important;
+  box-shadow: none !important;
+}
+
+.rubric-dim--drop-target {
+  border-top: 3px solid #3B82F6 !important;
+}
+
+.dark .rubric-dim--drop-target {
+  border-top: 3px solid hsl(217 91% 70%) !important;
+}
+
+/* ── Rubric Suggestions Panel ── */
+
+.rubric-suggestions {
+  margin-top: 0.25rem;
+  border: 2px solid var(--border);
+  background: var(--card);
+  overflow: hidden;
+  box-shadow: 4px 4px 0 0 var(--border);
+  animation: ai-panel-in 0.25s ease;
+}
+
+.rubric-suggestions__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, hsl(263 70% 50% / 0.08), hsl(290 84% 60% / 0.05));
+  border-bottom: 2px solid var(--border);
+  font-size: 0.6875rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dark .rubric-suggestions__header {
+  background: linear-gradient(135deg, hsl(263 70% 50% / 0.15), hsl(290 84% 60% / 0.1));
+}
+
+.rubric-suggestions__icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #8B5CF6;
+  animation: ai-sparkle 2s ease-in-out infinite;
+}
+
+.dark .rubric-suggestions__icon {
+  color: hsl(263 70% 75%);
+}
+
+.rubric-suggestions__title {
+  color: var(--foreground);
+}
+
+.rubric-suggestions__spinner {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #8B5CF6;
+  animation: spin 1s linear infinite;
+  margin-left: auto;
+}
+
+.dark .rubric-suggestions__spinner {
+  color: hsl(263 70% 75%);
+}
+
+.rubric-suggestions__loading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.rubric-suggestions__skeleton {
+  height: 1.75rem;
+  width: 7rem;
+  border: 2px solid var(--border);
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    hsl(263 70% 50% / 0.06) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+.rubric-suggestions__skeleton--short {
+  width: 5rem;
+}
+
+.rubric-suggestions__skeleton--medium {
+  width: 8.5rem;
+}
+
+.rubric-suggestions__error {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: hsl(0 84% 60%);
+}
+
+.rubric-suggestions__empty {
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+.rubric-suggestions__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+/* ── Rubric Suggestion Chip ── */
+
+.rubric-suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid #8B5CF6;
+  background: hsl(263 70% 50% / 0.06);
+  color: #8B5CF6;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 0 hsl(263 70% 50% / 0.25);
+  user-select: none;
+}
+
+.dark .rubric-suggestion-chip {
+  border-color: hsl(263 70% 70%);
+  background: hsl(263 70% 70% / 0.08);
+  color: hsl(263 70% 75%);
+  box-shadow: 2px 2px 0 0 hsl(263 70% 70% / 0.25);
+}
+
+.rubric-suggestion-chip:hover {
+  background: hsl(263 70% 50% / 0.16);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 0 hsl(263 70% 50% / 0.35);
+}
+
+.dark .rubric-suggestion-chip:hover {
+  background: hsl(263 70% 70% / 0.2);
+  box-shadow: 3px 3px 0 0 hsl(263 70% 70% / 0.35);
+}
+
+.rubric-suggestion-chip:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.rubric-suggestion-chip__grip {
+  width: 0.625rem;
+  height: 0.625rem;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+.rubric-suggestion-chip:hover .rubric-suggestion-chip__grip {
+  opacity: 0.8;
+}
+
+/* Added state */
+.rubric-suggestion-chip--added {
+  border-color: hsl(160 84% 39%);
+  background: hsl(160 84% 39% / 0.08);
+  color: hsl(160 84% 39%);
+  box-shadow: 2px 2px 0 0 hsl(160 84% 39% / 0.25);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.dark .rubric-suggestion-chip--added {
+  border-color: hsl(160 84% 55%);
+  background: hsl(160 84% 55% / 0.08);
+  color: hsl(160 84% 55%);
+  box-shadow: 2px 2px 0 0 hsl(160 84% 55% / 0.25);
+}
+
+.rubric-suggestion-chip--added:hover {
+  transform: none;
+  background: hsl(160 84% 39% / 0.08);
+  box-shadow: 2px 2px 0 0 hsl(160 84% 39% / 0.25);
+}
+
+.dark .rubric-suggestion-chip--added:hover {
+  background: hsl(160 84% 55% / 0.08);
+  box-shadow: 2px 2px 0 0 hsl(160 84% 55% / 0.25);
+}
+
 /* ── Force selects inside modal to render ABOVE the overlay ── */
 
 .emp-modal [data-slot="select-trigger"] {
