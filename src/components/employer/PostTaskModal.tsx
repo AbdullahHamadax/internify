@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useMemo, type ChangeEvent } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, type ChangeEvent } from "react";
 import { X, Plus, Save, Upload, Trash2, FileText, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,13 @@ import {
 } from "@/components/ui/select";
 import type { Task } from "./TaskManagement";
 import SkillPicker from "./SkillPicker";
+import AiSuggestedSkills from "./AiSuggestedSkills";
+import RubricBuilder, { type RubricDimension, nextId } from "./RubricBuilder";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Typography } from "@/components/ui/Typography";
+import { useAiSkillDetection } from "@/lib/useAiSkillDetection";
+import { useAiRubricSuggestion } from "@/lib/useAiRubricSuggestion";
 
 export interface PostTaskData {
   title: string;
@@ -160,8 +164,10 @@ export default function PostTaskModal({
   const [skills, setSkills] = useState<string[]>([]);
   const [deadline, setDeadline] = useState("");
   const [maxApplicants, setMaxApplicants] = useState("");
-  const [customRubric, setCustomRubric] = useState<string[]>([]);
-  const [newRubricDim, setNewRubricDim] = useState("");
+  /* ── Rubric dimensions (rich model) ── */
+  const [rubricDimensions, setRubricDimensions] = useState<RubricDimension[]>([]);
+  const [discardedDefaults, setDiscardedDefaults] = useState<string[]>([]);
+  const prevCategoryRef = useRef<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imageStorageIds, setImageStorageIds] = useState<string[]>([]);
@@ -175,20 +181,107 @@ export default function PostTaskModal({
     }[]
   >([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  /* ── AI Skill Detection ── */
+  const handleAiAutoSelect = useCallback((newSkills: string[]) => {
+    setSkills(newSkills);
+  }, []);
+
+  const {
+    suggestedSkills,
+    isDetecting,
+    error: aiError,
+    triggerDetection,
+    clearResults: clearAiResults,
+    aiDetectedSet,
+  } = useAiSkillDetection(skills, handleAiAutoSelect);
+
+  /* ── AI Rubric Suggestion ── */
+  const {
+    suggestedDimensions: suggestedRubricDims,
+    isSuggesting: isRubricSuggesting,
+    error: rubricSuggestError,
+    descriptionTooShort: rubricDescTooShort,
+    triggerSuggestion: triggerRubricSuggestion,
+    clearSuggestions: clearRubricSuggestions,
+  } = useAiRubricSuggestion();
+
+  const handleDescriptionChange = useCallback(
+    (value: string) => {
+      setDescription(value);
+      triggerDetection(value);
+      // Trigger rubric dimension extraction — description is primary input
+      const existingLabels = rubricDimensions.map((d) => d.label);
+      triggerRubricSuggestion(value, category, existingLabels);
+    },
+    [triggerDetection, triggerRubricSuggestion, category, rubricDimensions],
+  );
+
+  const handleAddSuggestedSkill = useCallback(
+    (skill: string) => {
+      if (!skills.includes(skill)) {
+        setSkills((prev) => [...prev, skill]);
+      }
+    },
+    [skills],
+  );
   const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
+
+  /* ── Auto-populate rubric defaults on category change ── */
+  useEffect(() => {
+    if (!category || category === prevCategoryRef.current) return;
+    prevCategoryRef.current = category;
+
+    // Remove old defaults, keep manual + suggested
+    const nonDefaults = rubricDimensions.filter((d) => d.type !== "default");
+    const newDefaults: RubricDimension[] = getDefaultRubric(category).map((label) => ({
+      id: nextId("def"),
+      label,
+      type: "default" as const,
+      source: "ai" as const,
+    }));
+    setRubricDimensions([...newDefaults, ...nonDefaults]);
+    setDiscardedDefaults([]);
+
+    // Trigger rubric suggestions if we have a description
+    if (description.trim().length >= 20) {
+      const existingLabels = [...newDefaults, ...nonDefaults].map((d) => d.label);
+      triggerRubricSuggestion(description, category, existingLabels);
+    }
+  }, [category]);
 
   useEffect(() => {
     if (open) {
       if (initialData) {
         setTitle(initialData.title);
         setCategory(initialData.category);
+        prevCategoryRef.current = initialData.category;
         setSkillLevel(initialData.skillLevel.toLowerCase());
         setDescription(initialData.description || "");
         setSkills(initialData.skills || []);
         setImageStorageIds(initialData.imageStorageIds || []);
         setImageUrls(initialData.imageUrls || []);
         setAttachments(initialData.resolvedAttachments || []);
-        setCustomRubric(initialData.customRubric || []);
+
+        // Convert existing custom rubric labels back to RubricDimension objects
+        const defaultLabels = getDefaultRubric(initialData.category);
+        const defaultSet = new Set(defaultLabels.map((l) => l.toLowerCase()));
+        const defaultDims: RubricDimension[] = defaultLabels.map((label) => ({
+          id: nextId("def"),
+          label,
+          type: "default" as const,
+          source: "ai" as const,
+        }));
+        const customDims: RubricDimension[] = (initialData.customRubric || [])
+          .filter((l) => !defaultSet.has(l.toLowerCase()))
+          .map((label) => ({
+            id: nextId("man"),
+            label,
+            type: "manual" as const,
+            source: "manual" as const,
+          }));
+        setRubricDimensions([...defaultDims, ...customDims]);
+        setDiscardedDefaults([]);
 
         if (initialData.deadline) {
           const d = new Date(initialData.deadline);
@@ -235,6 +328,7 @@ export default function PostTaskModal({
   const resetForm = () => {
     setTitle("");
     setCategory("");
+    prevCategoryRef.current = "";
     setSkillLevel("");
     setDescription("");
     setSkills([]);
@@ -245,8 +339,10 @@ export default function PostTaskModal({
     setImageStorageIds([]);
     setImageUrls([]);
     setAttachments([]);
-    setCustomRubric([]);
-    setNewRubricDim("");
+    setRubricDimensions([]);
+    setDiscardedDefaults([]);
+    clearAiResults();
+    clearRubricSuggestions();
   };
 
   const validate = (): boolean => {
@@ -355,7 +451,9 @@ export default function PostTaskModal({
           })),
           ...uploadedAttachments,
         ],
-        customRubric: customRubric.length > 0 ? customRubric : undefined,
+        customRubric: rubricDimensions.length > 0
+          ? rubricDimensions.map((d) => d.label)
+          : undefined,
       });
 
       resetForm();
@@ -483,110 +581,52 @@ export default function PostTaskModal({
               className="emp-modal__textarea"
               placeholder="Describe the task requirements, deliverables, and what students will learn…"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => handleDescriptionChange(e.target.value)}
               aria-invalid={!!errors.description}
             />
             {errors.description && (
               <span className="emp-modal__error">{errors.description}</span>
             )}
+
+            {/* AI Suggested Skills — rendered directly below description */}
+            <AiSuggestedSkills
+              suggestedSkills={suggestedSkills}
+              isDetecting={isDetecting}
+              error={aiError}
+              selectedSkills={skills}
+              onAddSkill={handleAddSuggestedSkill}
+            />
           </div>
 
           {/* Skills picker */}
           <div className="emp-modal__field">
             <Label>Required Skills</Label>
-            <SkillPicker skills={skills} onChange={setSkills} />
+            <SkillPicker skills={skills} onChange={setSkills} aiDetectedSet={aiDetectedSet} />
           </div>
 
           {/* Evaluation Rubric (optional) */}
           <div className="emp-modal__field">
             <Label className="flex items-center gap-2">
-              <Sparkles className="size-4 text-[#2563EB]" />
+              <Sparkles className="size-4 text-[#3B82F6]" />
               Evaluation Rubric (Optional)
             </Label>
-            <p className="text-sm text-muted-foreground mb-3">
-              The AI will evaluate submissions against default dimensions for the selected category.
-              You can add your own custom criteria based on your task requirements.
+            <p className="text-sm text-muted-foreground mb-2">
+              The AI will evaluate submissions against these dimensions.
+              Default dimensions are auto-populated from the category. You can add, remove, reorder, or accept AI suggestions.
             </p>
 
-            {/* Default agent dimensions */}
-            {category && (
-              <div className="mb-3">
-                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-2">
-                  Default AI Dimensions ({CATEGORY_AGENT_MAP[category] ?? "se"})
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {getDefaultRubric(category).map((dim) => (
-                    <span
-                      key={dim}
-                      className="inline-flex items-center px-2 py-1 text-[10px] font-bold uppercase tracking-wide border-2 border-border bg-muted/50 text-muted-foreground"
-                    >
-                      {dim}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Custom rubric dimensions */}
-            {customRubric.length > 0 && (
-              <div className="mb-3">
-                <span className="text-xs font-bold uppercase tracking-widest text-foreground block mb-2">
-                  Your Custom Dimensions
-                </span>
-                <div className="space-y-1.5">
-                  {customRubric.map((dim, i) => (
-                    <div
-                      key={`rubric-${i}`}
-                      className="flex items-center gap-2 p-2 border-2 border-[#2563EB] bg-blue-50 dark:bg-blue-950/30"
-                    >
-                      <Sparkles className="size-3 text-[#2563EB] shrink-0" />
-                      <span className="text-xs font-bold flex-1">{dim}</span>
-                      <button
-                        type="button"
-                        onClick={() => setCustomRubric((prev) => prev.filter((_, idx) => idx !== i))}
-                        className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                      >
-                        <Trash2 className="size-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Add new rubric dimension */}
-            <div className="flex gap-2">
-              <Input
-                value={newRubricDim}
-                onChange={(e) => setNewRubricDim(e.target.value)}
-                placeholder="e.g. Mobile Responsiveness, API Error Handling..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && newRubricDim.trim()) {
-                    e.preventDefault();
-                    const trimmed = newRubricDim.trim();
-                    if (!customRubric.some((d) => d.toLowerCase() === trimmed.toLowerCase())) {
-                      setCustomRubric((prev) => [...prev, trimmed]);
-                    }
-                    setNewRubricDim("");
-                  }
-                }}
-                className="rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] text-sm"
-              />
-              <Button
-                type="button"
-                onClick={() => {
-                  const trimmed = newRubricDim.trim();
-                  if (trimmed && !customRubric.some((d) => d.toLowerCase() === trimmed.toLowerCase())) {
-                    setCustomRubric((prev) => [...prev, trimmed]);
-                    setNewRubricDim("");
-                  }
-                }}
-                disabled={!newRubricDim.trim()}
-                className="rounded-none border-2 border-border bg-[#2563EB] text-white shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shrink-0"
-              >
-                <Plus className="size-4" />
-              </Button>
-            </div>
+            <RubricBuilder
+              dimensions={rubricDimensions}
+              onDimensionsChange={setRubricDimensions}
+              defaultLabels={category ? getDefaultRubric(category) : []}
+              discardedDefaults={discardedDefaults}
+              onDiscardedDefaultsChange={setDiscardedDefaults}
+              suggestedDimensions={suggestedRubricDims}
+              isSuggesting={isRubricSuggesting}
+              suggestionError={rubricSuggestError}
+              descriptionTooShort={rubricDescTooShort}
+              agentLabel={category ? (CATEGORY_AGENT_MAP[category] ?? "se") : "se"}
+            />
           </div>
 
           {/* Deadline */}

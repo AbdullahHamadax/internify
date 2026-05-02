@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useMemo, type KeyboardEvent } from "react";
-import { X, Tag, Plus, Search } from "lucide-react";
+import { useState, useRef, useMemo, type KeyboardEvent, type DragEvent } from "react";
+import { X, Tag, Plus, Search, Sparkles } from "lucide-react";
 import deviconData from "devicon/devicon.json";
 import { SKILL_CATALOG } from "@/lib/skillCatalog";
 
@@ -33,10 +33,13 @@ function getDeviconClass(skill: string): string | null {
 interface SkillPickerProps {
   skills: string[];
   onChange: (skills: string[]) => void;
+  /** Set of skill names that were auto-detected by AI */
+  aiDetectedSet?: Set<string>;
 }
 
-export default function SkillPicker({ skills, onChange }: SkillPickerProps) {
+export default function SkillPicker({ skills, onChange, aiDetectedSet }: SkillPickerProps) {
   const [query, setQuery] = useState("");
+  const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   /* Normalize for comparison */
@@ -100,17 +103,47 @@ export default function SkillPicker({ skills, onChange }: SkillPickerProps) {
     }
   };
 
+  /* ── Drag & Drop handlers ── */
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    // Only set false if leaving the actual container (not entering a child)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const skill = e.dataTransfer.getData("text/plain");
+    if (skill && !skills.includes(skill)) {
+      onChange([...skills, skill]);
+    }
+  };
+
   return (
-    <div className="emp-skill-picker">
+    <div
+      className={`emp-skill-picker${isDragOver ? " emp-skill-picker--drop-active" : ""}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* Selected skills (shown as tags above the input) */}
       {skills.length > 0 && (
         <div className="emp-skill-picker__selected">
           {skills.map((skill) => {
             const iconClass = getDeviconClass(skill);
+            const isAiDetected = aiDetectedSet?.has(skill) ?? false;
             return (
               <span
                 key={skill}
-                className="emp-tag flex items-center pr-1 pl-2.5"
+                className={`emp-tag flex items-center pr-1 pl-2.5${isAiDetected ? " emp-tag--ai-detected" : ""}`}
               >
                 {iconClass ? (
                   <i className={`${iconClass} text-sm mr-1.5 opacity-90`}></i>
@@ -118,6 +151,12 @@ export default function SkillPicker({ skills, onChange }: SkillPickerProps) {
                   <Tag className="w-3.5 h-3.5 mr-1.5 opacity-70" />
                 )}
                 {skill}
+                {isAiDetected && (
+                  <span className="emp-tag__ai-badge">
+                    <Sparkles className="size-2" />
+                    AI
+                  </span>
+                )}
                 <button
                   type="button"
                   className="emp-tag__remove ml-1"
