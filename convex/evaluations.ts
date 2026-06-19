@@ -1,8 +1,24 @@
 import { mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 
 /** Minimum score required to pass and complete a task */
 const PASSING_SCORE_THRESHOLD = 60;
+
+/**
+ * Generates a unique, human-readable certificate ID for verification.
+ * Format: INF-<year>-<6 chars>, e.g. "INF-2026-7K4QX9".
+ * Uses an unambiguous alphabet (no 0/O/1/I) so IDs are easy to read and type.
+ */
+function generateCertificateId(completedAt: number): string {
+  const year = new Date(completedAt).getFullYear();
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let suffix = "";
+  for (let i = 0; i < 6; i++) {
+    suffix += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return `INF-${year}-${suffix}`;
+}
 
 /**
  * Store a new AI evaluation result for a submission.
@@ -159,6 +175,67 @@ export const storeEvaluation = mutation({
       }
     }
     // If score < threshold: application stays "in_progress", student can retry
+
+    // ── Generate certificate when passing ──
+    if (passed) {
+      const studentUser = user;
+      const studentName =
+        [studentUser.firstName, studentUser.lastName].filter(Boolean).join(" ") || "Student";
+
+      const task = await ctx.db.get(args.taskId);
+      const taskTitle = task?.title ?? "Unknown Task";
+
+      // Get employer profile for company name and logo
+      let companyName = "Unknown Company";
+      let companyLogoStorageId = undefined as undefined | Id<"_storage">;
+      if (task) {
+        const employerProfile = await ctx.db
+          .query("employerProfiles")
+          .withIndex("by_userId", (q) => q.eq("userId", task.employerId))
+          .unique();
+        if (employerProfile) {
+          companyName = employerProfile.companyName;
+          companyLogoStorageId = employerProfile.logoStorageId;
+        }
+      }
+
+      // Check if certificate already exists for this evaluation
+      const existingCert = await ctx.db
+        .query("certificates")
+        .withIndex("by_evaluationId", (q) => q.eq("evaluationId", evaluationId))
+        .unique();
+
+      if (!existingCert) {
+        const completedAt = Date.now();
+
+        // Generate a unique certificate ID, retrying on the rare collision.
+        let certificateId = generateCertificateId(completedAt);
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const clash = await ctx.db
+            .query("certificates")
+            .withIndex("by_certificateId", (q) =>
+              q.eq("certificateId", certificateId),
+            )
+            .unique();
+          if (!clash) break;
+          certificateId = generateCertificateId(completedAt);
+        }
+
+        await ctx.db.insert("certificates", {
+          evaluationId,
+          studentId: user._id,
+          taskId: args.taskId,
+          certificateId,
+          studentName,
+          taskTitle,
+          companyName,
+          companyLogoStorageId,
+          finalScore: args.overallScore,
+          completedAt,
+          createdAt: completedAt,
+        });
+      }
+    }
 
     return evaluationId;
   },
@@ -356,5 +433,37 @@ export const getEvaluationsByTask = query({
       .query("evaluations")
       .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
       .take(50);
+  },
+});
+
+/**
+ * Get certificate by evaluation ID.
+ * Returns the certificate record if one exists (score >= 60), otherwise null.
+ */
+export const getCertificateByEvaluation = query({
+  args: { evaluationId: v.id("evaluations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const cert = await ctx.db
+      .query("certificates")
+      .withIndex("by_evaluationId", (q) =>
+        q.eq("evaluationId", args.evaluationId),
+      )
+      .unique();
+
+    if (!cert) return null;
+
+    // Resolve logo URL if there's a logo
+    let companyLogoUrl: string | null = null;
+    if (cert.companyLogoStorageId) {
+      companyLogoUrl = await ctx.storage.getUrl(cert.companyLogoStorageId);
+    }
+
+    return {
+      ...cert,
+      companyLogoUrl,
+    };
   },
 });
