@@ -112,11 +112,17 @@ export function validateUserNameFields(
   const f = (firstName ?? "").trim();
   const l = (lastName ?? "").trim();
 
-  const firstErr = validateSingleNameField(f, "First name");
-  if (firstErr) return firstErr;
+  // Only validate if the field is actually provided (non-empty).
+  // Clerk OAuth flows don't always supply both names.
+  if (f.length > 0) {
+    const firstErr = validateSingleNameField(f, "First name");
+    if (firstErr) return firstErr;
+  }
 
-  const lastErr = validateSingleNameField(l, "Last name");
-  if (lastErr) return lastErr;
+  if (l.length > 0) {
+    const lastErr = validateSingleNameField(l, "Last name");
+    if (lastErr) return lastErr;
+  }
 
   return null;
 }

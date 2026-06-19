@@ -69,7 +69,8 @@ function validateTaskDeadline(deadline: number) {
   if (deadline <= now) {
     throw new Error("Deadline must be in the future.");
   }
-  if (deadline - now < MIN_TASK_DEADLINE_LEAD_MS) {
+  // Allow 1 minute tolerance since datetime-local inputs have minute precision
+  if (deadline - now < MIN_TASK_DEADLINE_LEAD_MS - 60_000) {
     throw new Error(
       "Deadline must be at least 24 hours from now so students have reasonable time to complete the work.",
     );
@@ -220,6 +221,7 @@ export const createTask = mutation({
     maxApplicants: v.optional(v.number()),
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
+    customRubric: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -265,6 +267,7 @@ export const createTask = mutation({
       applicantCount: 0,
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
+      customRubric: args.customRubric,
       status: "pending",
       createdAt: now,
       updatedAt: now,
@@ -759,6 +762,7 @@ export const updateTask = mutation({
     maxApplicants: v.optional(v.number()),
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
+    customRubric: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -826,6 +830,7 @@ export const updateTask = mutation({
       maxApplicants: args.maxApplicants,
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
+      customRubric: args.customRubric,
       updatedAt: Date.now(),
     });
   },
@@ -1014,6 +1019,7 @@ export const getStudentApplications = query({
             deadline: task.deadline,
             status: task.status,
             companyName: employerProfile?.companyName ?? "Unknown Company",
+            customRubric: task.customRubric,
           },
         };
       }),
@@ -1102,7 +1108,9 @@ export const getStudentContributionDates = query({
 
 /**
  * Submit files for a task (student).
- * Creates a submission record and marks the application as completed.
+ * Creates a submission record. Does NOT mark application as completed — that
+ * happens in storeEvaluation once the student achieves a passing score (≥60%).
+ * If a previous submission exists with a failing score, it is replaced.
  */
 export const submitTask = mutation({
   args: {
@@ -1115,6 +1123,15 @@ export const submitTask = mutation({
       }),
     ),
     note: v.optional(v.string()),
+    submissionType: v.optional(
+      v.union(
+        v.literal("file_upload"),
+        v.literal("github_url"),
+        v.literal("plain_text"),
+      ),
+    ),
+    githubUrl: v.optional(v.string()),
+    plainText: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -1143,42 +1160,72 @@ export const submitTask = mutation({
       throw new Error("The deadline for this task has passed");
     }
 
-    // Prevent duplicate submissions
+    // If already completed with a passing score, block resubmission
+    if (application.status === "completed") {
+      throw new Error("This task has already been completed with a passing score");
+    }
+
+    // Check for existing submission
     const existing = await ctx.db
       .query("submissions")
       .withIndex("by_applicationId", (q) =>
         q.eq("applicationId", args.applicationId),
       )
       .unique();
-    if (existing) throw new Error("You have already submitted for this task");
 
-    if (args.files.length === 0) {
-      throw new Error("At least one file is required");
+    if (existing) {
+      // Check if there's a passing evaluation — if so, block resubmission
+      const existingEval = await ctx.db
+        .query("evaluations")
+        .withIndex("by_submissionId", (q) =>
+          q.eq("submissionId", existing._id),
+        )
+        .unique();
+
+      if (existingEval && existingEval.overallScore >= 60) {
+        throw new Error("This task has already been completed with a passing score");
+      }
+
+      // Delete old evaluation if it exists (failing score)
+      if (existingEval) {
+        await ctx.db.delete(existingEval._id);
+      }
+      // Delete old submission to make room for the new one
+      await ctx.db.delete(existing._id);
     }
 
-    const completedAt = Date.now();
+    // Validate based on submission type
+    const subType = args.submissionType ?? "file_upload";
+    if (subType === "file_upload" && args.files.length === 0) {
+      throw new Error("At least one file is required");
+    }
+    if (subType === "github_url" && (!args.githubUrl || !args.githubUrl.trim())) {
+      throw new Error("A GitHub URL is required");
+    }
+    if (subType === "plain_text" && (!args.plainText || !args.plainText.trim())) {
+      throw new Error("Submission text content is required");
+    }
+
+    const submittedAt = Date.now();
 
     // Create submission
-    await ctx.db.insert("submissions", {
+    const submissionId = await ctx.db.insert("submissions", {
       applicationId: args.applicationId,
       studentId: user._id,
       taskId: application.taskId,
       files: args.files,
       note: args.note,
-      submittedAt: completedAt,
+      submissionType: subType,
+      githubUrl: args.githubUrl,
+      plainText: args.plainText,
+      evaluationStatus: "pending",
+      submittedAt,
     });
 
-    // Mark application as completed
-    await ctx.db.patch(args.applicationId, {
-      status: "completed",
-      completedAt,
-    });
-
-    // Mark task as completed so it appears in the employer's Completed tab
-    await ctx.db.patch(application.taskId, {
-      status: "completed",
-      updatedAt: completedAt,
-    });
+    // Ensure application is in_progress (in case it was reset)
+    if (application.status !== "in_progress") {
+      await ctx.db.patch(args.applicationId, { status: "in_progress" });
+    }
 
     // Notify the employer about the submission
     const studentName =
@@ -1192,64 +1239,10 @@ export const submitTask = mutation({
       relatedUserId: user._id,
       relatedUserName: studentName,
       isRead: false,
-      createdAt: completedAt,
+      createdAt: submittedAt,
     });
 
-    // ── Award Skill XP ──
-    // Use stored xpPerSkill, or fall back to difficulty-based defaults
-    const fallbackXp: Record<string, number> = {
-      beginner: 65,
-      intermediate: 115,
-      advanced: 175,
-    };
-    const xpToAward = task.xpPerSkill ?? fallbackXp[task.skillLevel] ?? 65;
-    const MAX_SKILL_XP = 2000;
-
-    const studentProfile = await ctx.db
-      .query("studentProfiles")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .unique();
-
-    if (studentProfile) {
-      const taskSkills = task.skills ?? [];
-      if (taskSkills.length > 0) {
-        // Build XP map from existing skillXp entries
-        const existingXp = studentProfile.skillXp ?? [];
-        const xpEntryMap = new Map(existingXp.map((entry) => [entry.skill, entry.xp]));
-
-        // Award XP to ALL task skills (create entries for new skills too)
-        for (const skill of taskSkills) {
-          const current = xpEntryMap.get(skill) ?? 0;
-          xpEntryMap.set(skill, Math.min(current + xpToAward, MAX_SKILL_XP));
-        }
-
-        // Also ensure all existing student skills are preserved
-        for (const entry of existingXp) {
-          if (!xpEntryMap.has(entry.skill)) {
-            xpEntryMap.set(entry.skill, entry.xp);
-          }
-        }
-
-        // Rebuild the full skillXp array
-        const updatedSkillXp = Array.from(xpEntryMap.entries()).map(([skill, xp]) => ({
-          skill,
-          xp,
-        }));
-
-        // Also add any new task skills to the student's skills array if missing
-        const currentSkills = studentProfile.skills ?? [];
-        const skillSet = new Set(currentSkills);
-        const newSkills = taskSkills.filter((s) => !skillSet.has(s));
-        const updatedSkills = newSkills.length > 0
-          ? [...currentSkills, ...newSkills]
-          : currentSkills;
-
-        await ctx.db.patch(studentProfile._id, {
-          skillXp: updatedSkillXp,
-          ...(newSkills.length > 0 ? { skills: updatedSkills } : {}),
-        });
-      }
-    }
+    return submissionId;
   },
 });
 
@@ -1292,10 +1285,29 @@ export const getTaskSubmissions = query({
           note: sub.note,
           submittedAt: sub.submittedAt,
           files: resolvedFiles.filter((f) => f !== null),
+          submissionType: sub.submissionType,
+          githubUrl: sub.githubUrl,
         };
       }),
     );
 
     return enriched;
+  },
+});
+
+/**
+ * Resolve an array of Convex storage IDs to signed download URLs.
+ * Used by the evaluation pipeline to fetch uploaded file contents.
+ */
+export const getFileUrls = query({
+  args: { storageIds: v.array(v.id("_storage")) },
+  handler: async (ctx, args) => {
+    const results = await Promise.all(
+      args.storageIds.map(async (id) => {
+        const url = await ctx.storage.getUrl(id);
+        return { storageId: id, url };
+      }),
+    );
+    return results;
   },
 });
