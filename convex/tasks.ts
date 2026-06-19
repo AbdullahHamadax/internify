@@ -1280,6 +1280,7 @@ export const getTaskSubmissions = query({
 
         return {
           _id: sub._id,
+          applicationId: sub.applicationId,
           studentId: sub.studentId,
           studentName,
           note: sub.note,

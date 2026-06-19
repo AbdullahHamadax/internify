@@ -500,11 +500,37 @@ export const getPublicProfile = query({
         .query("applications")
         .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
         .collect();
-      const completedTasks = applications.filter(
+      const completedApps = applications.filter(
         (app) => app.status === "completed",
-      ).length;
+      );
+      const completedTasks = completedApps.length;
+
+      // Blended overall rating (employer stars 60/40 with AI score; AI alone
+      // when unrated). Mirrors ratings.getStudentRatingSummary.
+      const blendedValues: number[] = [];
+      for (const app of completedApps) {
+        const evaluation = await ctx.db
+          .query("evaluations")
+          .withIndex("by_applicationId", (q) => q.eq("applicationId", app._id))
+          .unique();
+        const ratingRecord = await ctx.db
+          .query("ratings")
+          .withIndex("by_applicationId", (q) => q.eq("applicationId", app._id))
+          .unique();
+        const aiScore = evaluation?.overallScore ?? null;
+        const stars = ratingRecord?.stars ?? null;
+        if (aiScore == null && stars == null) continue;
+        const aiStars = Math.max(0, Math.min(5, (aiScore ?? stars! * 20) / 20));
+        blendedValues.push(stars != null ? stars * 0.6 + aiStars * 0.4 : aiStars);
+      }
       const rating =
-        completedTasks > 0 ? 4.5 + Math.min(completedTasks * 0.1, 0.5) : 0;
+        blendedValues.length > 0
+          ? Math.round(
+              (blendedValues.reduce((sum, v) => sum + v, 0) /
+                blendedValues.length) *
+                10,
+            ) / 10
+          : 0;
 
       return {
         userId: user._id,
@@ -693,6 +719,18 @@ export const getPublicStudentProfileDetail = query({
               q.eq("applicationId", app._id),
             )
             .unique();
+          const evaluation = await ctx.db
+            .query("evaluations")
+            .withIndex("by_applicationId", (q) =>
+              q.eq("applicationId", app._id),
+            )
+            .unique();
+          const ratingRecord = await ctx.db
+            .query("ratings")
+            .withIndex("by_applicationId", (q) =>
+              q.eq("applicationId", app._id),
+            )
+            .unique();
 
           return {
             applicationId: app._id,
@@ -703,6 +741,9 @@ export const getPublicStudentProfileDetail = query({
             skillLevel: task.skillLevel,
             skills: task.skills,
             companyName: employerProfile?.companyName ?? "Unknown Company",
+            aiScore: evaluation?.overallScore ?? null,
+            stars: ratingRecord?.stars ?? null,
+            comment: ratingRecord?.comment ?? null,
             recordedAt: app.completedAt ?? submission?.submittedAt ?? app.createdAt,
           };
         }),
@@ -711,9 +752,21 @@ export const getPublicStudentProfileDetail = query({
       .filter((item) => item !== null)
       .sort((a, b) => b.recordedAt - a.recordedAt);
 
+    // Blended overall rating (0–5): employer stars weighted 60/40 with AI score,
+    // AI score alone when not yet rated. Mirrors ratings.getStudentRatingSummary.
+    const blendedValues = completedWork
+      .filter((w) => w.aiScore != null || w.stars != null)
+      .map((w) => {
+        const aiStars = Math.max(0, Math.min(5, (w.aiScore ?? w.stars! * 20) / 20));
+        return w.stars != null ? w.stars * 0.6 + aiStars * 0.4 : aiStars;
+      });
     const rating =
-      completedApplications.length > 0
-        ? 4.5 + Math.min(completedApplications.length * 0.1, 0.5)
+      blendedValues.length > 0
+        ? Math.round(
+            (blendedValues.reduce((sum, v) => sum + v, 0) /
+              blendedValues.length) *
+              10,
+          ) / 10
         : 0;
 
     const cvUrl =

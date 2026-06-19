@@ -162,8 +162,9 @@ export default function StudentExplore({
     {
       label: "Development",
       match: [
-        "Web Development",
+        "Frontend Development",
         "Backend Development",
+        "Web Development",
         "Full Stack Development",
         "Mobile Development",
         "Software Engineering",

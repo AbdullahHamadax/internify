@@ -277,6 +277,26 @@ export default defineSchema({
     .index("by_certificateId", ["certificateId"]),
 
   /**
+   * RATINGS TABLE
+   * An employer's star rating (1–5) + optional written feedback for a student's
+   * completed submission. One rating per (employer, application). Feeds into the
+   * student's blended overall rating and the per-task ratings shown on their profile.
+   */
+  ratings: defineTable({
+    applicationId: v.id("applications"),
+    taskId: v.id("tasks"),
+    studentId: v.id("users"),
+    employerId: v.id("users"),
+    stars: v.number(), // 1–5
+    comment: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_studentId", ["studentId"])
+    .index("by_applicationId", ["applicationId"])
+    .index("by_taskId", ["taskId"]),
+
+  /**
    * CONVERSATIONS TABLE
    * Tracks unique chat threads between two users.
    * participantOne is always the employer, participantTwo is the student.

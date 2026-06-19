@@ -57,6 +57,10 @@ function getCategoryClass(category: string): string {
   const lower = category.toLowerCase();
   if (
     lower.includes("web") ||
+    lower.includes("frontend") ||
+    lower.includes("backend") ||
+    lower.includes("full stack") ||
+    lower.includes("software") ||
     lower.includes("e-commerce") ||
     lower.includes("cloud") ||
     lower.includes("devops")

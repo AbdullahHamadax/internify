@@ -181,8 +181,15 @@ export default function EmployerProfile() {
             <div className="flex flex-col items-center text-center space-y-4 pt-4">
               {/* Brutalist Avatar */}
               <div className="relative shrink-0 w-32 h-32">
-                <div className="w-full h-full border-4 border-border bg-[#FCD34D] shadow-[4px_4px_0_0_var(--border)] flex items-center justify-center overflow-hidden">
-                  {user?.imageUrl ? (
+                <div className="w-full h-full border-4 border-border bg-white dark:bg-[#FCD34D] shadow-[4px_4px_0_0_var(--border)] flex items-center justify-center overflow-hidden">
+                  {logoData?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logoData.url}
+                      alt={`${profileCompany} logo`}
+                      className="w-full h-full object-contain p-2"
+                    />
+                  ) : user?.imageUrl ? (
                     <Image
                       src={user.imageUrl}
                       alt="Profile"
@@ -494,23 +501,42 @@ export default function EmployerProfile() {
                       </button>
                     </div>
                   ) : (employerProfile as unknown as { logoStorageId?: string })?.logoStorageId ? (
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 p-3 border-2 border-border shadow-[4px_4px_0_0_var(--border)] bg-card">
+                      {/* Current logo preview so the user can confirm it's correct */}
+                      <div className="w-14 h-14 shrink-0 border-2 border-border bg-white flex items-center justify-center overflow-hidden">
+                        {logoData?.url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={logoData.url}
+                            alt="Current company logo"
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-bold block">Current logo</span>
+                        <span className="text-xs text-muted-foreground">
+                          This is what appears on your profile &amp; certificates
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => logoFileInputRef.current?.click()}
-                        className="flex-1 flex items-center gap-2 p-3 border-2 border-border shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all bg-card text-sm font-bold"
+                        title="Change logo"
+                        className="p-2 border-2 border-border text-foreground hover:bg-muted transition-colors"
                       >
                         <ImagePlus className="w-4 h-4" />
-                        Change Logo
                       </button>
                       <button
                         type="button"
                         onClick={handleDeleteLogo}
                         disabled={logoLoading}
-                        className="flex items-center gap-2 p-3 border-2 border-border shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-red-500 bg-card text-sm font-bold"
+                        title="Remove logo"
+                        className="p-2 border-2 border-border text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
                       >
-                        <Trash2 className="w-4 h-4" />
-                        Remove
+                        {logoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                       </button>
                     </div>
                   ) : (

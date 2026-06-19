@@ -62,6 +62,15 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
     authenticatedRole ?? currentUser?.user.role ?? metadataRole ?? "student";
   const isAuthenticated = Boolean(isLoaded && isSignedIn);
 
+  // Employers show their company logo as the avatar (falls back to Clerk image).
+  const employerLogo = useQuery(api.users.getEmployerLogoUrl);
+  const avatarImageUrl =
+    accountRole === "employer" && employerLogo?.url
+      ? employerLogo.url
+      : user?.hasImage
+        ? user.imageUrl
+        : null;
+
   useEffect(() => {
     const onHashChange = () => setActiveHash(window.location.hash);
     window.addEventListener("hashchange", onHashChange);
@@ -161,7 +170,8 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
                     <AccountAvatar
                       role={accountRole}
                       name={user?.firstName ?? user?.fullName}
-                      imageUrl={user?.hasImage ? user.imageUrl : null}
+                      imageUrl={avatarImageUrl}
+                      fit={accountRole === "employer" && employerLogo?.url ? "contain" : "cover"}
                     />
                   </button>
                 </DropdownMenuTrigger>
@@ -262,7 +272,8 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
                   <AccountAvatar
                     role={accountRole}
                     name={user?.firstName ?? user?.fullName}
-                    imageUrl={user?.hasImage ? user.imageUrl : null}
+                    imageUrl={avatarImageUrl}
+                    fit={accountRole === "employer" && employerLogo?.url ? "contain" : "cover"}
                   />
                   <div className="min-w-0">
                     <div className="truncate text-sm font-black uppercase tracking-widest text-black dark:text-white">

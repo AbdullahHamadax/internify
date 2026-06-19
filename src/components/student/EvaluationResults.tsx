@@ -16,10 +16,10 @@ import {
   Layers,
   RotateCcw,
   Award,
-  Loader2,
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
-import { generateCertificatePDF, type CertificateData } from "./CertificateTemplate";
+import { type CertificateData } from "./CertificateTemplate";
+import CertificatePreviewModal from "./CertificatePreviewModal";
 
 interface ScoreDimension {
   dimension: string;
@@ -54,9 +54,9 @@ interface EvaluationResultsProps {
 
 // Agent display metadata
 const AGENT_META: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
-  web: { label: "Web Development", icon: <Globe className="w-4 h-4" />, color: "#2563EB", bg: "#DBEAFE" },
+  web: { label: "Frontend Development", icon: <Globe className="w-4 h-4" />, color: "#2563EB", bg: "#DBEAFE" },
   ai_ml: { label: "AI / Machine Learning", icon: <Brain className="w-4 h-4" />, color: "#7C3AED", bg: "#EDE9FE" },
-  fullstack: { label: "Full Stack", icon: <Layers className="w-4 h-4" />, color: "#059669", bg: "#D1FAE5" },
+  fullstack: { label: "Backend / Full Stack", icon: <Layers className="w-4 h-4" />, color: "#059669", bg: "#D1FAE5" },
   se: { label: "Software Engineering", icon: <Code2 className="w-4 h-4" />, color: "#D97706", bg: "#FEF3C7" },
   cybersec: { label: "Cybersecurity", icon: <Shield className="w-4 h-4" />, color: "#DC2626", bg: "#FEE2E2" },
 };
@@ -196,7 +196,7 @@ export default function EvaluationResults({
   retryLoading,
   certificateData,
 }: EvaluationResultsProps) {
-  const [certLoading, setCertLoading] = React.useState(false);
+  const [showCertPreview, setShowCertPreview] = React.useState(false);
   const canRetry = onRetry && evaluation.overallScore < PASSING_SCORE;
   const canViewCertificate = evaluation.overallScore >= PASSING_SCORE && !!certificateData;
   const agentMeta = AGENT_META[evaluation.agentType] ?? AGENT_META.se;
@@ -383,25 +383,11 @@ export default function EvaluationResults({
               {canViewCertificate && (
                 <button
                   type="button"
-                  onClick={async () => {
-                    setCertLoading(true);
-                    try {
-                      await generateCertificatePDF(certificateData);
-                    } catch (err) {
-                      console.error("Failed to generate certificate:", err);
-                    } finally {
-                      setCertLoading(false);
-                    }
-                  }}
-                  disabled={certLoading}
-                  className="flex items-center gap-2 px-5 py-2.5 border-2 border-black dark:border-white font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] transition-all bg-[#AB47BC] text-white disabled:opacity-50"
+                  onClick={() => setShowCertPreview(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 border-2 border-black dark:border-white font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] transition-all bg-[#AB47BC] text-white"
                 >
-                  {certLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Award className="w-4 h-4" />
-                  )}
-                  {certLoading ? 'Generating...' : 'View Certificate'}
+                  <Award className="w-4 h-4" />
+                  View Certificate
                 </button>
               )}
               <button
@@ -415,6 +401,18 @@ export default function EvaluationResults({
           )}
         </div>
       </motion.div>
+
+      {/* Certificate preview (opened on demand; does not auto-download).
+          stopPropagation so modal clicks don't bubble to the eval overlay's close. */}
+      {certificateData && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <CertificatePreviewModal
+            open={showCertPreview}
+            certificateData={certificateData}
+            onClose={() => setShowCertPreview(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }

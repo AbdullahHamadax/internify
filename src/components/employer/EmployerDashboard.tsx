@@ -84,6 +84,11 @@ function EmployerNavbar({
       api.notifications.getUnreadCount,
       isConvexTokenReady ? {} : "skip",
     ) ?? 0;
+  const employerLogo = useQuery(
+    api.users.getEmployerLogoUrl,
+    isConvexTokenReady ? {} : "skip",
+  );
+  const avatarImageUrl = employerLogo?.url ?? (user?.hasImage ? user.imageUrl : null);
   const handleSignOut = useCallback(async () => {
     await signOut({ redirectUrl: "/login?role=employer" });
   }, [signOut]);
@@ -171,7 +176,8 @@ function EmployerNavbar({
               <AccountAvatar
                 role="employer"
                 name={user?.firstName ?? user?.fullName}
-                imageUrl={user?.hasImage ? user.imageUrl : null}
+                imageUrl={avatarImageUrl}
+                fit={employerLogo?.url ? "contain" : "cover"}
               />
             </button>
           </DropdownMenuTrigger>
