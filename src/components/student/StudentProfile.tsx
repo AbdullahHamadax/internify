@@ -5,6 +5,7 @@ import { Typography } from "@/components/ui/Typography";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import TaskContributionsGraph from "@/components/shared/TaskContributionsGraph";
+import StarRating from "@/components/shared/StarRating";
 import {
   Briefcase,
   MapPin,
@@ -17,7 +18,7 @@ import {
   Share2,
   CheckCircle2,
   Loader2,
-  Star,
+  Sparkles,
   Check,
   Zap,
   Trophy,
@@ -504,6 +505,11 @@ export default function StudentProfile() {
     api.users.updateStudentAvailabilityStatus,
   );
   const skillXpData = useQuery(api.users.getStudentSkillXp);
+  const ratingSummary = useQuery(api.ratings.getStudentRatingSummary, {});
+  // Per-application rating detail (employer stars, AI score, comment) keyed by applicationId.
+  const ratingByApplication = new Map(
+    (ratingSummary?.items ?? []).map((item) => [item.applicationId, item]),
+  );
 
   const studentProfile = currentUserData?.studentProfile;
   const dbUser = currentUserData?.user;
@@ -522,11 +528,8 @@ export default function StudentProfile() {
   const profileLinkedin = studentProfile?.linkedin || DEFAULT_PROFILE.linkedin;
   const profileSkills = studentProfile?.skills || DEFAULT_PROFILE.skills;
 
-  // Derive rating from completed tasks (mocked rating logic for now)
-  const completedCount =
-    applications?.filter((app) => app.status === "completed").length || 0;
-  const rating =
-    completedCount > 0 ? 4.5 + Math.min(completedCount * 0.1, 0.5) : 0; // Fake climbing rating
+  // Overall rating = blended AI + employer-star rating across completed tasks.
+  const rating = ratingSummary?.overall ?? 0;
 
   // Edit Modal State
   const [isEditing, setIsEditing] = useState(false);
@@ -1218,10 +1221,17 @@ export default function StudentProfile() {
                   {profileTitle}
                 </Typography>
 
-                {/* Rating Display */}
+                {/* Rating Display — blended AI + employer star rating */}
                 {rating > 0 && (
-                  <div className="flex items-center justify-center gap-1.5 mt-2">
-                    <Star className="w-4 h-4 fill-[#F59E0B] text-[#F59E0B]" />
+                  <div
+                    className="flex items-center justify-center gap-2 mt-2"
+                    title={
+                      ratingSummary && ratingSummary.employerRatingCount > 0
+                        ? `${ratingSummary.employerRatingCount} employer rating${ratingSummary.employerRatingCount > 1 ? "s" : ""}`
+                        : "Based on AI evaluations"
+                    }
+                  >
+                    <StarRating value={rating} size={16} />
                     <Typography variant="span" className="font-black text-sm">
                       {rating.toFixed(1)}
                     </Typography>
@@ -1600,6 +1610,48 @@ export default function StudentProfile() {
                               {new Date(app.completedAt).toLocaleDateString()}
                             </span>
                           </div>
+
+                          {/* Standalone rating for this task: employer stars + AI score */}
+                          {(() => {
+                            const r = ratingByApplication.get(app._id);
+                            if (!r) return null;
+                            return (
+                              <div className="flex flex-wrap items-center gap-3 mt-3">
+                                {r.stars != null ? (
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <StarRating value={r.stars} size={15} />
+                                    <span className="text-xs font-black text-foreground">
+                                      {r.stars.toFixed(1)}
+                                    </span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                      Employer
+                                    </span>
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                    Not yet rated by employer
+                                  </span>
+                                )}
+                                {r.aiScore != null && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 border border-blue-300 dark:border-blue-700">
+                                    <Sparkles className="w-3 h-3" />
+                                    AI {r.aiScore}/100
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
+
+                          {/* Employer's written feedback, if any */}
+                          {(() => {
+                            const r = ratingByApplication.get(app._id);
+                            if (!r?.comment) return null;
+                            return (
+                              <p className="mt-2 text-sm italic text-muted-foreground border-l-2 border-amber-400 pl-3">
+                                &ldquo;{r.comment}&rdquo;
+                              </p>
+                            );
+                          })()}
                         </div>
 
                         <div className="shrink-0 pt-2 sm:pt-0">

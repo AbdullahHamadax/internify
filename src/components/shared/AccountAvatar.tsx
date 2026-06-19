@@ -7,6 +7,8 @@ type AccountAvatarProps = {
   name?: string | null;
   imageUrl?: string | null;
   className?: string;
+  /** "cover" for photos, "contain" for logos (avoids cropping wide brand marks). */
+  fit?: "cover" | "contain";
 };
 
 export default function AccountAvatar({
@@ -14,6 +16,7 @@ export default function AccountAvatar({
   name,
   imageUrl,
   className = "",
+  fit = "cover",
 }: AccountAvatarProps) {
   const fallback = (name?.trim().charAt(0) || "U").toUpperCase();
   const backgroundColor = role === "employer" ? "#AB47BC" : "#2563EB";
@@ -34,7 +37,7 @@ export default function AccountAvatar({
           alt=""
           fill
           sizes="34px"
-          className="object-cover"
+          className={fit === "contain" ? "object-contain bg-white p-0.5" : "object-cover"}
         />
       ) : (
         <span className="relative z-10 text-[0.8125rem] leading-none">

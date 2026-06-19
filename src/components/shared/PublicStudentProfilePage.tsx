@@ -23,6 +23,7 @@ import {
   MapPin,
   Phone,
   Send,
+  Sparkles,
   Star,
   Trophy,
   X,
@@ -35,6 +36,7 @@ import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Typography } from "@/components/ui/Typography";
 import TaskContributionsGraph from "@/components/shared/TaskContributionsGraph";
+import StarRating from "@/components/shared/StarRating";
 import { useConvexTokenReady } from "@/lib/convexAuth";
 import {
   formatExternalLinkLabel,
@@ -593,6 +595,35 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                           {item.companyName}
                         </span>
                       </div>
+
+                      {/* Employer rating + AI score for this completed task */}
+                      {(item.stars != null || item.aiScore != null) && (
+                        <div className="mt-3 flex flex-wrap items-center gap-3">
+                          {item.stars != null && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <StarRating value={item.stars} size={15} />
+                              <span className="text-xs font-black text-foreground">
+                                {item.stars.toFixed(1)}
+                              </span>
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                Employer
+                              </span>
+                            </span>
+                          )}
+                          {item.aiScore != null && (
+                            <span className="inline-flex items-center gap-1 border border-blue-300 bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-blue-700 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                              <Sparkles className="h-3 w-3" />
+                              AI {item.aiScore}/100
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {item.comment && (
+                        <p className="mt-2 border-l-2 border-amber-400 pl-3 text-sm italic text-muted-foreground">
+                          &ldquo;{item.comment}&rdquo;
+                        </p>
+                      )}
 
                       <Typography variant="p" className="mt-4 text-sm leading-relaxed text-foreground">
                         {item.description}

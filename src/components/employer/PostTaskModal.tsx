@@ -58,6 +58,7 @@ const CATEGORIES = [
   "Database Administration",
   "DevOps",
   "Embedded Systems",
+  "Frontend Development",
   "Full Stack Development",
   "Game Development",
   "Machine Learning",
@@ -65,7 +66,6 @@ const CATEGORIES = [
   "Networking",
   "Software Engineering",
   "UI/UX Design",
-  "Web Development",
 ];
 
 const SKILL_LEVELS = [

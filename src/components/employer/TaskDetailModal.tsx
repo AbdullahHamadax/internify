@@ -2,10 +2,10 @@
 
 
 import { useState } from "react";
-import { X, CalendarDays, Users, Trash2, Tag, FileText, Download, User, Sparkles, Github, ExternalLink } from "lucide-react";
+import { X, CalendarDays, Users, Trash2, Tag, FileText, Download, User, Sparkles, Github, ExternalLink, Loader2, Check } from "lucide-react";
 
 import Image from "next/image";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Typography } from "@/components/ui/Typography";
@@ -14,6 +14,81 @@ import type { Task } from "./TaskManagement";
 import deviconData from "devicon/devicon.json";
 import { useProfileModal } from "@/components/shared/ProfileModalContext";
 import EvaluationResults, { type EvaluationData } from "@/components/student/EvaluationResults";
+import StarRating from "@/components/shared/StarRating";
+
+/**
+ * Per-submission employer rating control. Lets the task owner give 1–5 stars +
+ * optional written feedback for a completed submission. Upserts on save.
+ */
+function SubmissionRating({
+  applicationId,
+  existing,
+}: {
+  applicationId: Id<"applications">;
+  existing: { stars: number; comment?: string } | undefined;
+}) {
+  const rateSubmission = useMutation(api.ratings.rateSubmission);
+  const [stars, setStars] = useState(existing?.stars ?? 0);
+  const [comment, setComment] = useState(existing?.comment ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const dirty =
+    stars !== (existing?.stars ?? 0) || comment !== (existing?.comment ?? "");
+
+  const handleSave = async () => {
+    if (stars < 1) return;
+    setSaving(true);
+    setSaved(false);
+    try {
+      await rateSubmission({
+        applicationId,
+        stars,
+        comment: comment.trim() || undefined,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error("Failed to save rating:", err);
+      alert(err instanceof Error ? err.message : "Failed to save rating");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 p-3 border-2 border-dashed border-amber-400/60 bg-amber-50/50 dark:bg-amber-950/20">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+        <span className="text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">
+          {existing ? "Your Rating" : "Rate this submission"}
+        </span>
+        <StarRating value={stars} onChange={setStars} size={22} />
+      </div>
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Optional feedback for the student…"
+        rows={2}
+        className="w-full p-2 text-sm bg-card border-2 border-border resize-none focus-visible:outline-none focus-visible:shadow-[2px_2px_0_0_var(--border)]"
+      />
+      <div className="flex justify-end mt-2">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving || stars < 1 || !dirty}
+          className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white bg-amber-500 text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all disabled:opacity-50 disabled:pointer-events-none"
+        >
+          {saving ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : saved ? (
+            <Check className="w-3.5 h-3.5" />
+          ) : null}
+          {saving ? "Saving…" : saved ? "Saved" : existing ? "Update Rating" : "Submit Rating"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const ICON_MAPPINGS: Record<string, string> = {
   "Vue": "vuejs",
@@ -53,9 +128,19 @@ export default function TaskDetailModal({
     open && task ? { taskId: task.id as Id<"tasks"> } : "skip",
   );
 
+  const ratings = useQuery(
+    api.ratings.getRatingsByTask,
+    open && task ? { taskId: task.id as Id<"tasks"> } : "skip",
+  );
+
   // Build a map of studentId -> evaluation for quick lookup
   const evaluationMap = new Map(
     (evaluations ?? []).map((ev) => [ev.studentId, ev]),
+  );
+
+  // Build a map of applicationId -> employer rating
+  const ratingMap = new Map(
+    (ratings ?? []).map((r) => [r.applicationId, r]),
   );
 
   if (!open || !task) return null;
@@ -392,6 +477,18 @@ export default function TaskDetailModal({
                           <Sparkles className="w-3.5 h-3.5" />
                           View AI Report
                         </button>
+                      );
+                    })()}
+
+                    {/* Employer rating — only for submissions that passed (completed) */}
+                    {(() => {
+                      const ev = evaluationMap.get(sub.studentId);
+                      if (!ev || ev.overallScore < 60) return null;
+                      return (
+                        <SubmissionRating
+                          applicationId={sub.applicationId}
+                          existing={ratingMap.get(sub.applicationId)}
+                        />
                       );
                     })()}
                   </div>

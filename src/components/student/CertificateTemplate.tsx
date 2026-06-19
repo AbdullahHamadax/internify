@@ -229,7 +229,21 @@ function drawConfetti(doc: jsPDF, pageW: number, pageH: number) {
  *   6. Footer row        — Score medallion  |  Internify issuer signature
  *   7. Verification      — Certificate ID centered at the bottom
  */
-export async function generateCertificatePDF(data: CertificateData): Promise<void> {
+/**
+ * Builds the certificate filename from the task title and student name.
+ */
+function certificateFileName(data: CertificateData): string {
+  const safeTaskTitle = data.taskTitle.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30);
+  const safeName = data.studentName.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 20);
+  return `Internify_Certificate_${safeName}_${safeTaskTitle}.pdf`;
+}
+
+/**
+ * Builds the certificate PDF document (without saving). Returned so callers can
+ * either preview it (blob URL) or download it (save) — viewing should not force
+ * an automatic download.
+ */
+async function buildCertificatePDF(data: CertificateData): Promise<jsPDF> {
   const {
     certificateId,
     studentName,
@@ -441,8 +455,25 @@ export async function generateCertificatePDF(data: CertificateData): Promise<voi
   doc.setTextColor(INK[0], INK[1], INK[2]);
   drawTrackedCenter(doc, displayCertId, cx, certIdY + 9, 0.8);
 
-  // ── Download ──
-  const safeTaskTitle = taskTitle.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30);
-  const safeName = studentName.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 20);
-  doc.save(`Internify_Certificate_${safeName}_${safeTaskTitle}.pdf`);
+  return doc;
+}
+
+/**
+ * Builds and immediately downloads the certificate PDF.
+ */
+export async function generateCertificatePDF(data: CertificateData): Promise<void> {
+  const doc = await buildCertificatePDF(data);
+  doc.save(certificateFileName(data));
+}
+
+/**
+ * Builds the certificate and returns the raw PDF bytes. Used to render a visual
+ * preview (e.g. via pdf.js → canvas) without triggering a browser download —
+ * embedding a blob PDF in an <iframe> downloads it in many browsers.
+ */
+export async function getCertificatePdfBytes(
+  data: CertificateData,
+): Promise<ArrayBuffer> {
+  const doc = await buildCertificatePDF(data);
+  return doc.output("arraybuffer");
 }
