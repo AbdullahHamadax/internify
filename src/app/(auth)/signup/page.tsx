@@ -1,7 +1,7 @@
 // app/(auth)/signup/page.tsx
 "use client";
 
-import { Building2, GraduationCap, Upload, User } from "lucide-react";
+import { Building2, GraduationCap, Upload, User, ImagePlus, X as XIcon } from "lucide-react";
 import Link from "next/link";
 import Stepper, { Step } from "@/components/Stepper";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -73,6 +73,7 @@ type PendingSignupPayload =
       role: "employer";
       step1: Step1Data;
       profile: EmployerStep2Data;
+      logoFile: File | null;
     };
 
 const step1Schema = z.object({
@@ -155,6 +156,10 @@ export default function SignUpPage() {
   // CV file (student only, optional)
   const [cvFile, setCvFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Logo file (employer only, optional)
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const logoFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isEmployer = role === "employer";
 
@@ -408,6 +413,21 @@ export default function SignUpPage() {
         companyName: payload.profile.companyName,
         position: payload.profile.position,
         rankLevel: payload.profile.rankLevel,
+        ...(payload.logoFile
+          ? {
+              logoStorageId: await (async () => {
+                const uploadUrl = await generateUploadUrl();
+                const resp = await fetch(uploadUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": payload.logoFile!.type || "application/octet-stream" },
+                  body: payload.logoFile,
+                });
+                if (!resp.ok) throw new Error("Could not upload company logo.");
+                const body = await resp.json();
+                return body.storageId as Id<"_storage">;
+              })()
+            }
+          : {}),
       },
     });
   }
@@ -550,6 +570,7 @@ export default function SignUpPage() {
       role: "employer",
       step1: step1Data,
       profile: data,
+      logoFile,
     });
   }
 
@@ -1177,6 +1198,80 @@ export default function SignUpPage() {
                       <Typography variant="p" className="text-xs text-red-500">
                         {employerStep2Form.formState.errors.rankLevel.message}
                       </Typography>
+                    )}
+                  </div>
+
+                  {/* Company Logo Upload (Optional) */}
+                  <div className="space-y-2">
+                    <Label>Company Logo (Optional)</Label>
+
+                    <input
+                      ref={logoFileInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 2 * 1024 * 1024) {
+                            setSubmitError("Logo file must be under 2MB.");
+                            return;
+                          }
+                          setSubmitError(null);
+                          setLogoFile(file);
+                        }
+                      }}
+                    />
+
+                    {logoFile ? (
+                      <div className="flex items-center gap-3 p-3 rounded-none border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] bg-white dark:bg-black">
+                        <div className="w-12 h-12 border-2 border-black dark:border-white bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={URL.createObjectURL(logoFile)}
+                            alt="Logo preview"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-black uppercase tracking-widest text-xs truncate">
+                            {logoFile.name}
+                          </div>
+                          <div className="text-xs font-bold uppercase tracking-widest mt-0.5 opacity-70">
+                            {(logoFile.size / 1024).toFixed(1)} KB
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLogoFile(null);
+                            if (logoFileInputRef.current) logoFileInputRef.current.value = "";
+                          }}
+                          className="p-1.5 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all bg-red-500 text-white"
+                        >
+                          <XIcon className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => logoFileInputRef.current?.click()}
+                        className="w-full rounded-none border-4 border-dashed border-black dark:border-white p-4 text-left transition-all bg-white dark:bg-black text-black dark:text-white hover:bg-muted/50 focus:outline-none"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 border-2 border-black dark:border-white bg-[#AB47BC] text-white">
+                            <ImagePlus className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-black uppercase tracking-widest text-sm">
+                              Upload company logo
+                            </div>
+                            <div className="text-xs font-bold uppercase tracking-widest mt-1 opacity-70">
+                              PNG, JPG, or SVG — Max 2MB
+                            </div>
+                          </div>
+                        </div>
+                      </button>
                     )}
                   </div>
 

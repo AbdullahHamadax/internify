@@ -19,6 +19,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { Typography } from "@/components/ui/Typography";
 import { useLiveNow } from "@/lib/useLiveNow";
 import EvaluationResults, { type EvaluationData } from "./EvaluationResults";
+import type { CertificateData } from "./CertificateTemplate";
 
 interface SubmitTaskModalProps {
   open: boolean;
@@ -103,6 +104,27 @@ export default function SubmitTaskModal({
     hasSubmission && !isRetrying ? { applicationId: applicationId as Id<"applications"> } : "skip",
   );
 
+  // Query certificate data when we have an evaluation with a passing score
+  const certificateQuery = useQuery(
+    api.evaluations.getCertificateByEvaluation,
+    existingEvaluation && existingEvaluation.overallScore >= 60
+      ? { evaluationId: existingEvaluation._id }
+      : "skip",
+  );
+
+  // Build certificate data for the PDF generator
+  const certificateData: CertificateData | null = certificateQuery
+    ? {
+        certificateId: certificateQuery.certificateId ?? null,
+        studentName: certificateQuery.studentName,
+        taskTitle: certificateQuery.taskTitle,
+        employerName: certificateQuery.companyName,
+        finalScore: certificateQuery.finalScore,
+        completedAt: certificateQuery.completedAt,
+        employerLogoUrl: certificateQuery.companyLogoUrl ?? null,
+      }
+    : null;
+
   const isExpired = deadline <= now;
 
   if (!open) return null;
@@ -142,6 +164,7 @@ export default function SubmitTaskModal({
         }}
         onRetry={handleRetry}
         retryLoading={retryLoading}
+        certificateData={certificateData}
       />
     );
   }
@@ -182,6 +205,7 @@ export default function SubmitTaskModal({
         onClose={onClose}
         onRetry={handleRetry}
         retryLoading={retryLoading}
+        certificateData={certificateData}
       />
     );
   }
