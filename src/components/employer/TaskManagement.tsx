@@ -37,6 +37,7 @@ export interface Task {
     url: string;
   }[];
   acceptedBy?: { id: string; name: string }[];
+  customRubric?: string[];
 }
 
 interface TaskManagementProps {

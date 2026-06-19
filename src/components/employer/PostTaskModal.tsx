@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useMemo, type ChangeEvent } from "react";
-import { X, Plus, Save, Upload, Trash2, FileText, Loader2 } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback, useRef, type ChangeEvent } from "react";
+import { X, Plus, Save, Upload, Trash2, FileText, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +15,13 @@ import {
 } from "@/components/ui/select";
 import type { Task } from "./TaskManagement";
 import SkillPicker from "./SkillPicker";
+import AiSuggestedSkills from "./AiSuggestedSkills";
+import RubricBuilder, { type RubricDimension, nextId } from "./RubricBuilder";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Typography } from "@/components/ui/Typography";
+import { useAiSkillDetection } from "@/lib/useAiSkillDetection";
+import { useAiRubricSuggestion } from "@/lib/useAiRubricSuggestion";
 
 export interface PostTaskData {
   title: string;
@@ -33,6 +37,7 @@ export interface PostTaskData {
     name: string;
     type: string;
   }[];
+  customRubric?: string[];
 }
 
 /** Matches convex/tasks.ts — deadlines must be future and at least this far ahead. */
@@ -44,16 +49,23 @@ function toDatetimeLocalValue(d: Date) {
 }
 
 const CATEGORIES = [
-  "Web Development",
-  "Mobile Development",
-  "Data Science",
-  "Machine Learning",
-  "UI/UX Design",
-  "Marketing",
-  "Content Writing",
-  "Cybersecurity",
+  "AI/ML",
+  "Backend Development",
+  "Blockchain",
   "Cloud Computing",
+  "Cybersecurity",
+  "Data Science",
+  "Database Administration",
   "DevOps",
+  "Embedded Systems",
+  "Full Stack Development",
+  "Game Development",
+  "Machine Learning",
+  "Mobile Development",
+  "Networking",
+  "Software Engineering",
+  "UI/UX Design",
+  "Web Development",
 ];
 
 const SKILL_LEVELS = [
@@ -61,6 +73,76 @@ const SKILL_LEVELS = [
   { value: "intermediate", label: "Intermediate" },
   { value: "advanced", label: "Advanced" },
 ];
+
+// Default agent rubric dimensions per category (mirrors evaluate-submission route)
+const CATEGORY_AGENT_MAP: Record<string, string> = {
+  "Web Development": "web",
+  "Frontend Development": "web",
+  "UI/UX Design": "web",
+  "Backend Development": "fullstack",
+  "Full Stack Development": "fullstack",
+  "Mobile Development": "fullstack",
+  "Game Development": "fullstack",
+  "Blockchain": "fullstack",
+  "AI/ML": "ai_ml",
+  "Data Science": "ai_ml",
+  "Machine Learning": "ai_ml",
+  "Software Engineering": "se",
+  "DevOps": "se",
+  "Cloud Computing": "se",
+  "Database Administration": "se",
+  "Networking": "se",
+  "Embedded Systems": "se",
+  "Cybersecurity": "cybersec",
+};
+
+const DEFAULT_RUBRICS: Record<string, string[]> = {
+  web: [
+    "Semantic HTML & Structure",
+    "CSS Quality & Responsive Design",
+    "JavaScript / Framework Correctness",
+    "Accessibility (a11y)",
+    "User Experience & Visual Design",
+    "Code Organization & Best Practices",
+  ],
+  ai_ml: [
+    "Data Preprocessing & Cleaning",
+    "Model Choice & Justification",
+    "Evaluation Metrics & Validation",
+    "Data Leakage Prevention",
+    "Code Clarity & Documentation",
+    "Results Interpretation",
+  ],
+  fullstack: [
+    "API Design & RESTful Practices",
+    "Database Schema & Queries",
+    "Authentication & Authorization",
+    "Error Handling & Edge Cases",
+    "Separation of Concerns",
+    "Code Quality & Maintainability",
+  ],
+  se: [
+    "Code Structure & Architecture",
+    "Naming Conventions & Readability",
+    "Testing & Test Coverage",
+    "Design Patterns & SOLID Principles",
+    "Documentation & Comments",
+    "Error Handling & Robustness",
+  ],
+  cybersec: [
+    "OWASP Top 10 Compliance",
+    "Input Validation & Sanitization",
+    "Authentication & Session Management",
+    "Secrets Management",
+    "Threat Modeling Awareness",
+    "Secure Coding Practices",
+  ],
+};
+
+function getDefaultRubric(cat: string): string[] {
+  const agent = CATEGORY_AGENT_MAP[cat];
+  return agent ? DEFAULT_RUBRICS[agent] ?? DEFAULT_RUBRICS.se : DEFAULT_RUBRICS.se;
+}
 
 interface PostTaskModalProps {
   open: boolean;
@@ -82,6 +164,10 @@ export default function PostTaskModal({
   const [skills, setSkills] = useState<string[]>([]);
   const [deadline, setDeadline] = useState("");
   const [maxApplicants, setMaxApplicants] = useState("");
+  /* ── Rubric dimensions (rich model) ── */
+  const [rubricDimensions, setRubricDimensions] = useState<RubricDimension[]>([]);
+  const [discardedDefaults, setDiscardedDefaults] = useState<string[]>([]);
+  const prevCategoryRef = useRef<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imageStorageIds, setImageStorageIds] = useState<string[]>([]);
@@ -95,19 +181,107 @@ export default function PostTaskModal({
     }[]
   >([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  /* ── AI Skill Detection ── */
+  const handleAiAutoSelect = useCallback((newSkills: string[]) => {
+    setSkills(newSkills);
+  }, []);
+
+  const {
+    suggestedSkills,
+    isDetecting,
+    error: aiError,
+    triggerDetection,
+    clearResults: clearAiResults,
+    aiDetectedSet,
+  } = useAiSkillDetection(skills, handleAiAutoSelect);
+
+  /* ── AI Rubric Suggestion ── */
+  const {
+    suggestedDimensions: suggestedRubricDims,
+    isSuggesting: isRubricSuggesting,
+    error: rubricSuggestError,
+    descriptionTooShort: rubricDescTooShort,
+    triggerSuggestion: triggerRubricSuggestion,
+    clearSuggestions: clearRubricSuggestions,
+  } = useAiRubricSuggestion();
+
+  const handleDescriptionChange = useCallback(
+    (value: string) => {
+      setDescription(value);
+      triggerDetection(value);
+      // Trigger rubric dimension extraction — description is primary input
+      const existingLabels = rubricDimensions.map((d) => d.label);
+      triggerRubricSuggestion(value, category, existingLabels);
+    },
+    [triggerDetection, triggerRubricSuggestion, category, rubricDimensions],
+  );
+
+  const handleAddSuggestedSkill = useCallback(
+    (skill: string) => {
+      if (!skills.includes(skill)) {
+        setSkills((prev) => [...prev, skill]);
+      }
+    },
+    [skills],
+  );
   const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
+
+  /* ── Auto-populate rubric defaults on category change ── */
+  useEffect(() => {
+    if (!category || category === prevCategoryRef.current) return;
+    prevCategoryRef.current = category;
+
+    // Remove old defaults, keep manual + suggested
+    const nonDefaults = rubricDimensions.filter((d) => d.type !== "default");
+    const newDefaults: RubricDimension[] = getDefaultRubric(category).map((label) => ({
+      id: nextId("def"),
+      label,
+      type: "default" as const,
+      source: "ai" as const,
+    }));
+    setRubricDimensions([...newDefaults, ...nonDefaults]);
+    setDiscardedDefaults([]);
+
+    // Trigger rubric suggestions if we have a description
+    if (description.trim().length >= 20) {
+      const existingLabels = [...newDefaults, ...nonDefaults].map((d) => d.label);
+      triggerRubricSuggestion(description, category, existingLabels);
+    }
+  }, [category]);
 
   useEffect(() => {
     if (open) {
       if (initialData) {
         setTitle(initialData.title);
         setCategory(initialData.category);
+        prevCategoryRef.current = initialData.category;
         setSkillLevel(initialData.skillLevel.toLowerCase());
         setDescription(initialData.description || "");
         setSkills(initialData.skills || []);
         setImageStorageIds(initialData.imageStorageIds || []);
         setImageUrls(initialData.imageUrls || []);
         setAttachments(initialData.resolvedAttachments || []);
+
+        // Convert existing custom rubric labels back to RubricDimension objects
+        const defaultLabels = getDefaultRubric(initialData.category);
+        const defaultSet = new Set(defaultLabels.map((l) => l.toLowerCase()));
+        const defaultDims: RubricDimension[] = defaultLabels.map((label) => ({
+          id: nextId("def"),
+          label,
+          type: "default" as const,
+          source: "ai" as const,
+        }));
+        const customDims: RubricDimension[] = (initialData.customRubric || [])
+          .filter((l) => !defaultSet.has(l.toLowerCase()))
+          .map((label) => ({
+            id: nextId("man"),
+            label,
+            type: "manual" as const,
+            source: "manual" as const,
+          }));
+        setRubricDimensions([...defaultDims, ...customDims]);
+        setDiscardedDefaults([]);
 
         if (initialData.deadline) {
           const d = new Date(initialData.deadline);
@@ -154,6 +328,7 @@ export default function PostTaskModal({
   const resetForm = () => {
     setTitle("");
     setCategory("");
+    prevCategoryRef.current = "";
     setSkillLevel("");
     setDescription("");
     setSkills([]);
@@ -164,6 +339,10 @@ export default function PostTaskModal({
     setImageStorageIds([]);
     setImageUrls([]);
     setAttachments([]);
+    setRubricDimensions([]);
+    setDiscardedDefaults([]);
+    clearAiResults();
+    clearRubricSuggestions();
   };
 
   const validate = (): boolean => {
@@ -181,7 +360,9 @@ export default function PostTaskModal({
         const now = Date.now();
         if (ts <= now) {
           newErrors.deadline = "Deadline cannot be in the past.";
-        } else if (ts - now < MIN_TASK_DEADLINE_LEAD_MS) {
+        // Allow 1 minute tolerance since datetime-local has minute precision
+        // and Date.now() advances between picking and validating
+        } else if (ts - now < MIN_TASK_DEADLINE_LEAD_MS - 60_000) {
           newErrors.deadline =
             "Deadline must be at least 24 hours from now — shorter windows are not allowed.";
         }
@@ -270,6 +451,9 @@ export default function PostTaskModal({
           })),
           ...uploadedAttachments,
         ],
+        customRubric: rubricDimensions.length > 0
+          ? rubricDimensions.map((d) => d.label)
+          : undefined,
       });
 
       resetForm();
@@ -397,18 +581,52 @@ export default function PostTaskModal({
               className="emp-modal__textarea"
               placeholder="Describe the task requirements, deliverables, and what students will learn…"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => handleDescriptionChange(e.target.value)}
               aria-invalid={!!errors.description}
             />
             {errors.description && (
               <span className="emp-modal__error">{errors.description}</span>
             )}
+
+            {/* AI Suggested Skills — rendered directly below description */}
+            <AiSuggestedSkills
+              suggestedSkills={suggestedSkills}
+              isDetecting={isDetecting}
+              error={aiError}
+              selectedSkills={skills}
+              onAddSkill={handleAddSuggestedSkill}
+            />
           </div>
 
           {/* Skills picker */}
           <div className="emp-modal__field">
             <Label>Required Skills</Label>
-            <SkillPicker skills={skills} onChange={setSkills} />
+            <SkillPicker skills={skills} onChange={setSkills} aiDetectedSet={aiDetectedSet} />
+          </div>
+
+          {/* Evaluation Rubric (optional) */}
+          <div className="emp-modal__field">
+            <Label className="flex items-center gap-2">
+              <Sparkles className="size-4 text-[#3B82F6]" />
+              Evaluation Rubric (Optional)
+            </Label>
+            <p className="text-sm text-muted-foreground mb-2">
+              The AI will evaluate submissions against these dimensions.
+              Default dimensions are auto-populated from the category. You can add, remove, reorder, or accept AI suggestions.
+            </p>
+
+            <RubricBuilder
+              dimensions={rubricDimensions}
+              onDimensionsChange={setRubricDimensions}
+              defaultLabels={category ? getDefaultRubric(category) : []}
+              discardedDefaults={discardedDefaults}
+              onDiscardedDefaultsChange={setDiscardedDefaults}
+              suggestedDimensions={suggestedRubricDims}
+              isSuggesting={isRubricSuggesting}
+              suggestionError={rubricSuggestError}
+              descriptionTooShort={rubricDescTooShort}
+              agentLabel={category ? (CATEGORY_AGENT_MAP[category] ?? "se") : "se"}
+            />
           </div>
 
           {/* Deadline */}
