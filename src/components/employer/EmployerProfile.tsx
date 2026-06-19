@@ -13,8 +13,10 @@ import {
   Users,
   X,
   Loader2,
+  ImagePlus,
+  Trash2,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -61,6 +63,9 @@ export default function EmployerProfile() {
     (u) => u.userId === currentUserData?.user?._id,
   );
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
+  const saveEmployerLogo = useMutation(api.users.saveEmployerLogo);
+  const deleteEmployerLogo = useMutation(api.users.deleteEmployerLogo);
+  const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
   const employerStats = useQuery(api.tasks.getEmployerStats);
 
   const employerProfile = currentUserData?.employerProfile;
@@ -81,6 +86,12 @@ export default function EmployerProfile() {
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  // Logo state
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoLoading, setLogoLoading] = useState(false);
+  const logoFileInputRef = useRef<HTMLInputElement | null>(null);
+
   // Sync state when modal opens
   useEffect(() => {
     if (isEditing && employerProfile) {
@@ -89,13 +100,30 @@ export default function EmployerProfile() {
         position: employerProfile.position || "",
         rankLevel: (employerProfile.rankLevel as RankLevel) || "manager",
       });
+      setLogoFile(null);
     }
   }, [isEditing, employerProfile]);
+
+  // Get logo URL
+  const logoData = useQuery(api.users.getEmployerLogoUrl);
 
   const handleSaveProfile = async () => {
     if (!employerProfile) return;
     setIsSaving(true);
     try {
+      // Upload new logo if selected
+      if (logoFile) {
+        const uploadUrl = await generateUploadUrl();
+        const resp = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": logoFile.type || "application/octet-stream" },
+          body: logoFile,
+        });
+        if (!resp.ok) throw new Error("Could not upload logo.");
+        const body = await resp.json();
+        await saveEmployerLogo({ storageId: body.storageId });
+      }
+
       await upsertCurrentUser({
         role: "employer",
         employerProfile: {
@@ -105,11 +133,23 @@ export default function EmployerProfile() {
         },
       });
       setIsEditing(false);
+      setLogoFile(null);
     } catch (error) {
       console.error("Failed to save profile:", error);
       alert("Failed to save profile.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteLogo = async () => {
+    setLogoLoading(true);
+    try {
+      await deleteEmployerLogo();
+    } catch (error) {
+      console.error("Failed to delete logo:", error);
+    } finally {
+      setLogoLoading(false);
     }
   };
 
@@ -181,7 +221,12 @@ export default function EmployerProfile() {
 
                 <div className="flex flex-wrap gap-2 justify-center mt-3">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-black text-white dark:bg-white dark:text-black border-2 border-border text-xs font-black uppercase tracking-wider shadow-[2px_2px_0_0_var(--border)]">
-                    <Building2 className="w-3.5 h-3.5" />
+                    {logoData?.url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={logoData.url} alt="Logo" className="w-4 h-4 object-contain invert dark:invert-0" />
+                    ) : (
+                      <Building2 className="w-3.5 h-3.5" />
+                    )}
                     {profileCompany}
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#2563EB] text-white border-2 border-border text-xs font-black uppercase tracking-wider shadow-[2px_2px_0_0_var(--border)]">
@@ -399,6 +444,90 @@ export default function EmployerProfile() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                {/* Logo upload/change in edit modal */}
+                <div>
+                  <Typography
+                    variant="label"
+                    className="uppercase tracking-widest text-sm font-black mb-2 block"
+                  >
+                    Company Logo
+                  </Typography>
+
+                  <input
+                    ref={logoFileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && file.size <= 2 * 1024 * 1024) {
+                        setLogoFile(file);
+                      }
+                    }}
+                  />
+
+                  {logoFile ? (
+                    <div className="flex items-center gap-3 p-3 border-2 border-border shadow-[4px_4px_0_0_var(--border)]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={URL.createObjectURL(logoFile)}
+                        alt="New logo preview"
+                        className="w-12 h-12 object-contain border border-border"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-bold truncate block">{logoFile.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {(logoFile.size / 1024).toFixed(1)} KB — New logo (will be saved)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLogoFile(null);
+                          if (logoFileInputRef.current) logoFileInputRef.current.value = "";
+                        }}
+                        className="p-1.5 border-2 border-border text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (employerProfile as unknown as { logoStorageId?: string })?.logoStorageId ? (
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => logoFileInputRef.current?.click()}
+                        className="flex-1 flex items-center gap-2 p-3 border-2 border-border shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all bg-card text-sm font-bold"
+                      >
+                        <ImagePlus className="w-4 h-4" />
+                        Change Logo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDeleteLogo}
+                        disabled={logoLoading}
+                        className="flex items-center gap-2 p-3 border-2 border-border shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-red-500 bg-card text-sm font-bold"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => logoFileInputRef.current?.click()}
+                      className="w-full flex items-center gap-3 p-3 border-2 border-dashed border-border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="p-2 border-2 border-border bg-[#AB47BC] text-white">
+                        <ImagePlus className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-bold block">Upload Company Logo</span>
+                        <span className="text-xs text-muted-foreground">PNG, JPG, or SVG — Max 2MB</span>
+                      </div>
+                    </button>
+                  )}
                 </div>
               </div>
 

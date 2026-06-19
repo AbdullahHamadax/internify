@@ -139,6 +139,7 @@ export const upsertCurrentUser = mutation({
         companyName: v.string(),
         position: v.string(),
         rankLevel: rankLevelValidator,
+        logoStorageId: v.optional(v.id("_storage")),
       }),
     ),
   },
@@ -300,6 +301,9 @@ export const upsertCurrentUser = mutation({
           companyName: args.employerProfile.companyName,
           position: args.employerProfile.position,
           rankLevel: args.employerProfile.rankLevel,
+          ...(args.employerProfile.logoStorageId !== undefined
+            ? { logoStorageId: args.employerProfile.logoStorageId }
+            : {}),
           updatedAt: now,
         });
       } else {
@@ -309,6 +313,9 @@ export const upsertCurrentUser = mutation({
           companyName: args.employerProfile.companyName,
           position: args.employerProfile.position,
           rankLevel: args.employerProfile.rankLevel,
+          ...(args.employerProfile.logoStorageId !== undefined
+            ? { logoStorageId: args.employerProfile.logoStorageId }
+            : {}),
           updatedAt: now,
         });
       }
@@ -548,6 +555,7 @@ export const getPublicProfile = query({
             companyName: profile.companyName,
             position: profile.position,
             rankLevel: profile.rankLevel,
+            logoStorageId: profile.logoStorageId,
           }
         : null,
     };
@@ -797,5 +805,133 @@ export const deleteCvFromProfile = mutation({
       cvFileName: undefined,
       updatedAt: Date.now(),
     });
+  },
+});
+
+/**
+ * MUTATION: saveEmployerLogo
+ * Saves an uploaded company logo file reference to the employer profile.
+ * Deletes the previous logo from storage to prevent orphaned files.
+ */
+export const saveEmployerLogo = mutation({
+  args: {
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "employer") {
+      throw new Error("Only employers can upload logos.");
+    }
+
+    const profile = await ctx.db
+      .query("employerProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile) {
+      throw new Error("Employer profile not found. Complete signup first.");
+    }
+
+    // Delete previous logo file from storage to avoid orphans
+    if (profile.logoStorageId) {
+      try {
+        await ctx.storage.delete(profile.logoStorageId);
+      } catch {
+        // File may already be gone — safe to ignore
+      }
+    }
+
+    await ctx.db.patch(profile._id, {
+      logoStorageId: args.storageId,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * MUTATION: deleteEmployerLogo
+ * Removes the stored logo from both storage and the employer profile record.
+ */
+export const deleteEmployerLogo = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "employer") {
+      throw new Error("Only employers can manage logos.");
+    }
+
+    const profile = await ctx.db
+      .query("employerProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile) throw new Error("Employer profile not found.");
+
+    if (profile.logoStorageId) {
+      try {
+        await ctx.storage.delete(profile.logoStorageId);
+      } catch {
+        // Already gone
+      }
+    }
+
+    await ctx.db.patch(profile._id, {
+      logoStorageId: undefined,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * QUERY: getEmployerLogoUrl
+ * Returns the download URL for the current employer's logo.
+ */
+export const getEmployerLogoUrl = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "employer") return null;
+
+    const profile = await ctx.db
+      .query("employerProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile || !profile.logoStorageId) return null;
+
+    const url = await ctx.storage.getUrl(profile.logoStorageId);
+    if (!url) return null;
+
+    return {
+      url,
+      storageId: profile.logoStorageId,
+    };
   },
 });
