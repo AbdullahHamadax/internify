@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { motion, Variants } from "motion/react";
 import {
   X,
@@ -14,8 +15,11 @@ import {
   Globe,
   Layers,
   RotateCcw,
+  Award,
+  Loader2,
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
+import { generateCertificatePDF, type CertificateData } from "./CertificateTemplate";
 
 interface ScoreDimension {
   dimension: string;
@@ -44,6 +48,8 @@ interface EvaluationResultsProps {
   /** When provided and score < 60%, a "Try Again" button is shown */
   onRetry?: () => void;
   retryLoading?: boolean;
+  /** Certificate data for generating PDF — only present when score >= 60 */
+  certificateData?: CertificateData | null;
 }
 
 // Agent display metadata
@@ -188,8 +194,11 @@ export default function EvaluationResults({
   onClose,
   onRetry,
   retryLoading,
+  certificateData,
 }: EvaluationResultsProps) {
+  const [certLoading, setCertLoading] = React.useState(false);
   const canRetry = onRetry && evaluation.overallScore < PASSING_SCORE;
+  const canViewCertificate = evaluation.overallScore >= PASSING_SCORE && !!certificateData;
   const agentMeta = AGENT_META[evaluation.agentType] ?? AGENT_META.se;
   const scoreColor = getScoreColor(evaluation.overallScore);
 
@@ -370,7 +379,31 @@ export default function EvaluationResults({
               </button>
             </>
           ) : (
-            <div className="ml-auto">
+            <div className="flex items-center gap-3 ml-auto">
+              {canViewCertificate && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setCertLoading(true);
+                    try {
+                      await generateCertificatePDF(certificateData);
+                    } catch (err) {
+                      console.error("Failed to generate certificate:", err);
+                    } finally {
+                      setCertLoading(false);
+                    }
+                  }}
+                  disabled={certLoading}
+                  className="flex items-center gap-2 px-5 py-2.5 border-2 border-black dark:border-white font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] transition-all bg-[#AB47BC] text-white disabled:opacity-50"
+                >
+                  {certLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Award className="w-4 h-4" />
+                  )}
+                  {certLoading ? 'Generating...' : 'View Certificate'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onClose}

@@ -121,6 +121,7 @@ export default defineSchema({
     companyName: v.string(), // Example: "Tech Corp"
     position: v.string(), // Example: "Hiring Manager"
     rankLevel: rankLevelValidator, // Must be one of the ranks like "mid" or "manager"
+    logoStorageId: v.optional(v.id("_storage")), // Company logo file reference
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
 
@@ -249,6 +250,31 @@ export default defineSchema({
     .index("by_studentId", ["studentId"])
     .index("by_taskId", ["taskId"])
     .index("by_applicationId", ["applicationId"]),
+
+  /**
+   * CERTIFICATES TABLE
+   * Generated when a student scores >= 60 on a task evaluation.
+   * Stores a snapshot of certificate data at generation time.
+   */
+  certificates: defineTable({
+    evaluationId: v.id("evaluations"),
+    studentId: v.id("users"),
+    taskId: v.id("tasks"),
+    // Public, human-readable verification ID, e.g. "INF-2026-7K4QX9".
+    // Optional for backward-compat with certificates created before this field
+    // existed; always populated on new inserts.
+    certificateId: v.optional(v.string()),
+    studentName: v.string(),
+    taskTitle: v.string(),
+    companyName: v.string(), // The employer that posted the task (e.g. "Mossa")
+    companyLogoStorageId: v.optional(v.id("_storage")),
+    finalScore: v.number(),
+    completedAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_evaluationId", ["evaluationId"])
+    .index("by_studentId", ["studentId"])
+    .index("by_certificateId", ["certificateId"]),
 
   /**
    * CONVERSATIONS TABLE
