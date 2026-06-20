@@ -1,6 +1,8 @@
 "use client";
 
 import { SkillIcon } from "@/lib/skillIcon";
+import { getEmployerHiringMeta } from "@/lib/hiringStatus";
+import AIFormattedDescription from "@/components/shared/AIFormattedDescription";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
@@ -80,6 +82,27 @@ export type StudentExploreProps = {
   focusTaskId?: string | null;
   onFocusTaskConsumed?: () => void;
 };
+
+/** Small badge showing an employer's current hiring posture. */
+function HiringBadge({
+  status,
+  className = "",
+}: {
+  status: string | null | undefined;
+  className?: string;
+}) {
+  const meta = getEmployerHiringMeta(status);
+  return (
+    <span
+      className={`inline-flex items-center gap-1 border-2 border-black dark:border-white px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${meta.badgeClassName} ${className}`}
+    >
+      <span
+        className={`size-1.5 border border-black dark:border-white ${meta.dotClassName}`}
+      />
+      {meta.label}
+    </span>
+  );
+}
 
 export default function StudentExplore({
   focusTaskId = null,
@@ -536,16 +559,19 @@ export default function StudentExplore({
                     >
                       {task.title}
                     </Typography>
-                    <Typography
-                      variant="span"
-                      className="font-medium mt-1 inline-block cursor-pointer hover:underline decoration-2 underline-offset-2 hover:text-[#2563EB] transition-colors"
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        if (task.employerId) openProfile(task.employerId);
-                      }}
-                    >
-                      {task.companyName}
-                    </Typography>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <Typography
+                        variant="span"
+                        className="font-medium inline-block cursor-pointer hover:underline decoration-2 underline-offset-2 hover:text-[#2563EB] transition-colors"
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          if (task.employerId) openProfile(task.employerId);
+                        }}
+                      >
+                        {task.companyName}
+                      </Typography>
+                      <HiringBadge status={task.companyHiringStatus} />
+                    </div>
                   </div>
 
                   <div className="flex flex-row sm:flex-col items-center sm:items-end gap-4 sm:gap-2 shrink-0">
@@ -637,10 +663,11 @@ export default function StudentExplore({
                   </Typography>
 
                   {/* Company row */}
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
                     <span className="text-sm font-bold text-white/90">
                       {selectedTask.companyName}
                     </span>
+                    <HiringBadge status={selectedTask.companyHiringStatus} />
                     {selectedTask.employerId && (
                       <button
                         onClick={() => openProfile(selectedTask.employerId)}
@@ -676,17 +703,16 @@ export default function StudentExplore({
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                {/* Details */}
+                {/* Details — AI-formatted with structured sections */}
                 <section>
                   <Typography variant="h4" className="mb-3">
                     About the Task
                   </Typography>
-                  <Typography
-                    variant="p"
-                    className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed text-foreground/80"
-                  >
-                    {selectedTask.description}
-                  </Typography>
+                  <AIFormattedDescription
+                    taskId={selectedTask._id}
+                    description={selectedTask.description}
+                    enableAiFormat={selectedTask.enableAiFormat ?? false}
+                  />
                 </section>
 
                 <section>

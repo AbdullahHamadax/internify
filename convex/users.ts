@@ -5,6 +5,7 @@ import {
   academicStatusValidator,
   rankLevelValidator,
   studentAvailabilityStatusValidator,
+  employerHiringStatusValidator,
 } from "./schema";
 import { assertValidUserNameFields } from "./nameLimits";
 
@@ -140,6 +141,7 @@ export const upsertCurrentUser = mutation({
         position: v.string(),
         rankLevel: rankLevelValidator,
         logoStorageId: v.optional(v.id("_storage")),
+        hiringStatus: v.optional(employerHiringStatusValidator),
       }),
     ),
   },
@@ -304,6 +306,9 @@ export const upsertCurrentUser = mutation({
           ...(args.employerProfile.logoStorageId !== undefined
             ? { logoStorageId: args.employerProfile.logoStorageId }
             : {}),
+          ...(args.employerProfile.hiringStatus !== undefined
+            ? { hiringStatus: args.employerProfile.hiringStatus }
+            : {}),
           updatedAt: now,
         });
       } else {
@@ -315,6 +320,9 @@ export const upsertCurrentUser = mutation({
           rankLevel: args.employerProfile.rankLevel,
           ...(args.employerProfile.logoStorageId !== undefined
             ? { logoStorageId: args.employerProfile.logoStorageId }
+            : {}),
+          ...(args.employerProfile.hiringStatus !== undefined
+            ? { hiringStatus: args.employerProfile.hiringStatus }
             : {}),
           updatedAt: now,
         });
@@ -365,6 +373,51 @@ export const updateStudentAvailabilityStatus = mutation({
     });
 
     return args.availabilityStatus;
+  },
+});
+
+/**
+ * MUTATION: updateEmployerHiringStatus
+ * Lets the current employer update their live hiring posture (the badge on
+ * their profile). Lightweight counterpart to upsertCurrentUser for quick
+ * inline edits.
+ */
+export const updateEmployerHiringStatus = mutation({
+  args: {
+    hiringStatus: employerHiringStatusValidator,
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "employer") {
+      throw new Error("Only employers can update hiring status.");
+    }
+
+    const profile = await ctx.db
+      .query("employerProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile) {
+      throw new Error("Employer profile not found.");
+    }
+
+    await ctx.db.patch(profile._id, {
+      hiringStatus: args.hiringStatus,
+      updatedAt: Date.now(),
+    });
+
+    return args.hiringStatus;
   },
 });
 
@@ -643,6 +696,7 @@ export const getPublicProfile = query({
             position: profile.position,
             rankLevel: profile.rankLevel,
             logoStorageId: profile.logoStorageId,
+            hiringStatus: profile.hiringStatus ?? null,
           }
         : null,
     };

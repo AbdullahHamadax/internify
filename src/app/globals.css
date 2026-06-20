@@ -293,3 +293,33 @@ input[type="reset"] {
   background-size: 22px 22px;
   z-index: 1;
 }
+
+/*
+ * Host for the floating-shapes backdrop (talent search, explore, messages) so
+ * those content-heavy views don't read as a flat white void. Establishes a
+ * stacking context so the decorative <ViewBackdrop /> layer can sit behind the
+ * content (negative z-index) and clips shapes to the panel. Dashboards opt out.
+ */
+.view-decor-host {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Gentle drift for the backdrop shapes. Base rotation is carried in --r so it
+   survives the animation. */
+@keyframes view-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--r, 0deg));
+  }
+  50% {
+    transform: translateY(-8px) rotate(calc(var(--r, 0deg) + 3deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-float-shape {
+    animation: none !important;
+  }
+}

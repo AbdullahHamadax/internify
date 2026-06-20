@@ -1763,6 +1763,33 @@ export default function StudentProfile() {
                     variant="label"
                     className="uppercase tracking-widest text-sm font-black mb-2 block"
                   >
+                    Availability
+                  </Typography>
+                  <select
+                    value={availabilityStatus}
+                    onChange={(e) =>
+                      handleAvailabilityStatusChange(e.target.value)
+                    }
+                    disabled={!studentProfile || isAvailabilitySaving}
+                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] font-bold"
+                  >
+                    {STUDENT_AVAILABILITY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1.5 text-xs text-muted-foreground font-bold">
+                    Updates instantly — also editable from the badge on your
+                    profile.
+                  </p>
+                </div>
+
+                <div>
+                  <Typography
+                    variant="label"
+                    className="uppercase tracking-widest text-sm font-black mb-2 block"
+                  >
                     Professional Title
                   </Typography>
                   <input

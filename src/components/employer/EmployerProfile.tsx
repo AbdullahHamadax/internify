@@ -21,6 +21,18 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import CountUp from "@/components/CountUp";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
+import {
+  EMPLOYER_HIRING_OPTIONS,
+  getEmployerHiringMeta,
+  normalizeEmployerHiringStatus,
+  type EmployerHiringStatus,
+} from "@/lib/hiringStatus";
 
 // Type inference from Convex validation
 type RankLevel =
@@ -63,6 +75,9 @@ export default function EmployerProfile() {
     (u) => u.userId === currentUserData?.user?._id,
   );
   const upsertCurrentUser = useMutation(api.users.upsertCurrentUser);
+  const updateEmployerHiringStatus = useMutation(
+    api.users.updateEmployerHiringStatus,
+  );
   const saveEmployerLogo = useMutation(api.users.saveEmployerLogo);
   const deleteEmployerLogo = useMutation(api.users.deleteEmployerLogo);
   const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
@@ -76,6 +91,38 @@ export default function EmployerProfile() {
     employerProfile?.companyName || DEFAULT_PROFILE.companyName;
   const profilePosition = employerProfile?.position || DEFAULT_PROFILE.position;
   const profileRank = employerProfile?.rankLevel || DEFAULT_PROFILE.rankLevel;
+
+  // Inline (quick-edit) hiring status — optimistic so the badge updates instantly.
+  const [optimisticHiringStatus, setOptimisticHiringStatus] =
+    useState<EmployerHiringStatus | null>(null);
+  const [isHiringSaving, setIsHiringSaving] = useState(false);
+  const hiringStatus =
+    optimisticHiringStatus ??
+    normalizeEmployerHiringStatus(employerProfile?.hiringStatus);
+  const hiringMeta = getEmployerHiringMeta(hiringStatus);
+
+  useEffect(() => {
+    setOptimisticHiringStatus(null);
+  }, [employerProfile?.hiringStatus]);
+
+  const handleHiringStatusChange = async (nextValue: string) => {
+    if (!employerProfile) return;
+    const nextStatus = normalizeEmployerHiringStatus(nextValue);
+    if (nextStatus === hiringStatus) return;
+
+    const previousStatus = hiringStatus;
+    setOptimisticHiringStatus(nextStatus);
+    setIsHiringSaving(true);
+    try {
+      await updateEmployerHiringStatus({ hiringStatus: nextStatus });
+    } catch (error) {
+      console.error("Failed to update hiring status:", error);
+      setOptimisticHiringStatus(previousStatus);
+      alert("Failed to update hiring status.");
+    } finally {
+      setIsHiringSaving(false);
+    }
+  };
 
   // Edit Modal State
   const [isEditing, setIsEditing] = useState(false);
@@ -174,9 +221,42 @@ export default function EmployerProfile() {
         <motion.div variants={itemVariants} className="lg:col-span-5 space-y-6">
           {/* Main Profile Card */}
           <div className="bg-card border-4 border-border shadow-[8px_8px_0_0_var(--border)] p-6 relative">
-            <div className="absolute -top-4 -right-4 bg-[#EA4335] text-white border-4 border-black dark:border-white px-3 py-1 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] z-10 -rotate-3 hover:-rotate-6 transition-transform">
-              Hiring
-            </div>
+            <Select
+              value={hiringStatus}
+              onValueChange={handleHiringStatusChange}
+              disabled={!employerProfile || isHiringSaving}
+            >
+              <SelectTrigger
+                aria-label="Employer hiring status"
+                className={`absolute -top-4 -right-4 z-10 h-auto min-h-0 w-auto min-w-[11.5rem] cursor-pointer gap-1.5 rounded-none border-4 border-black px-3 py-1 text-xs font-black uppercase tracking-widest shadow-[4px_4px_0_0_#000] transition-all disabled:opacity-80 dark:border-white dark:shadow-[4px_4px_0_0_#fff] [&_svg]:!opacity-100 ${hiringMeta.badgeClassName}`}
+              >
+                <span
+                  className={`size-2.5 border-2 border-black dark:border-white ${hiringMeta.dotClassName}`}
+                />
+                <span className="min-w-0 truncate">{hiringMeta.label}</span>
+                {isHiringSaving && (
+                  <Loader2 className="size-3 animate-spin opacity-90" />
+                )}
+              </SelectTrigger>
+              <SelectContent
+                align="end"
+                position="popper"
+                className="z-[9999] rounded-none border-4 border-black bg-card p-1 shadow-[6px_6px_0_0_#000] dark:border-white dark:shadow-[6px_6px_0_0_#fff]"
+              >
+                {EMPLOYER_HIRING_OPTIONS.map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    className={`cursor-pointer rounded-none border-2 border-transparent py-2 pr-8 pl-2 text-xs font-black uppercase tracking-widest data-[state=checked]:border-black dark:data-[state=checked]:border-white [&_svg]:!opacity-100 ${option.itemClassName}`}
+                  >
+                    <span
+                      className={`size-2.5 border-2 border-black dark:border-white ${option.dotClassName}`}
+                    />
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <div className="flex flex-col items-center text-center space-y-4 pt-4">
               {/* Brutalist Avatar */}
@@ -451,6 +531,31 @@ export default function EmployerProfile() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <Typography
+                    variant="label"
+                    className="uppercase tracking-widest text-sm font-black mb-2 block"
+                  >
+                    Hiring Status
+                  </Typography>
+                  <select
+                    value={hiringStatus}
+                    onChange={(e) => handleHiringStatusChange(e.target.value)}
+                    disabled={isHiringSaving}
+                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] font-bold"
+                  >
+                    {EMPLOYER_HIRING_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1.5 text-xs text-muted-foreground font-bold">
+                    Updates instantly — also editable from the badge on your
+                    profile.
+                  </p>
                 </div>
 
                 {/* Logo upload/change in edit modal */}

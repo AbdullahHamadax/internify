@@ -36,6 +36,7 @@ import {
   getStudentAvailabilityMeta,
   normalizeStudentAvailabilityStatus,
 } from "@/lib/availability";
+import { getEmployerHiringMeta } from "@/lib/hiringStatus";
 
 interface ProfileViewModalProps {
   userId: Id<"users">;
@@ -458,6 +459,20 @@ export default function ProfileViewModal({
                       {ep.rankLevel}
                     </span>
                   )}
+                  {ep &&
+                    (() => {
+                      const hm = getEmployerHiringMeta(ep.hiringStatus);
+                      return (
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-border text-xs font-black uppercase tracking-wider shadow-[2px_2px_0_0_var(--border)] ${hm.badgeClassName}`}
+                        >
+                          <span
+                            className={`size-2 border border-black dark:border-white ${hm.dotClassName}`}
+                          />
+                          {hm.label}
+                        </span>
+                      );
+                    })()}
                 </div>
 
                 {/* Contact */}

@@ -222,6 +222,7 @@ export const createTask = mutation({
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
     customRubric: v.optional(v.array(v.string())),
+    enableAiFormat: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -268,6 +269,7 @@ export const createTask = mutation({
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
       customRubric: args.customRubric,
+      enableAiFormat: args.enableAiFormat,
       status: "pending",
       createdAt: now,
       updatedAt: now,
@@ -412,6 +414,8 @@ export const browseTasks = query({
           applicantCount: task.applicantCount,
           createdAt: task.createdAt,
           companyName: employerProfile?.companyName ?? "Unknown Company",
+          companyHiringStatus: employerProfile?.hiringStatus ?? null,
+          enableAiFormat: task.enableAiFormat ?? false,
           resolvedAttachments,
         };
       }),
@@ -784,6 +788,7 @@ export const updateTask = mutation({
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
     customRubric: v.optional(v.array(v.string())),
+    enableAiFormat: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -852,6 +857,7 @@ export const updateTask = mutation({
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
       customRubric: args.customRubric,
+      enableAiFormat: args.enableAiFormat,
       updatedAt: Date.now(),
     });
   },
