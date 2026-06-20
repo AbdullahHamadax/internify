@@ -11,6 +11,7 @@ import {
   Megaphone,
   Clock,
   Check,
+  Star,
 } from "lucide-react";
 
 import { api } from "../../../convex/_generated/api";
@@ -25,7 +26,8 @@ type NotificationType =
   | "new_message"
   | "task_completed"
   | "new_task_posted"
-  | "deadline_approaching";
+  | "deadline_approaching"
+  | "submission_rated";
 
 const ICON_MAP: Record<
   NotificationType,
@@ -37,6 +39,7 @@ const ICON_MAP: Record<
   task_completed: { icon: CheckCircle, className: "notif-icon--completed" },
   new_task_posted: { icon: Megaphone, className: "notif-icon--new-task" },
   deadline_approaching: { icon: Clock, className: "notif-icon--deadline" },
+  submission_rated: { icon: Star, className: "notif-icon--rated" },
 };
 
 const ACTION_MAP: Record<
@@ -55,6 +58,7 @@ const ACTION_MAP: Record<
     label: "View Task",
     className: "notif-action--red",
   },
+  submission_rated: { label: "View Rating", className: "notif-action--purple" },
 };
 
 function timeAgo(timestamp: number): string {
@@ -120,6 +124,9 @@ export default function Notifications({
 
     if (type === "new_message" && onNavigate) {
       onNavigate("messages");
+    } else if (type === "submission_rated" && onNavigate) {
+      // The student's rating + employer feedback live on their profile.
+      onNavigate("profile");
     } else if (type === "task_accepted" && notif.relatedUserId) {
       openProfile(notif.relatedUserId as Id<"users">);
     } else if (type === "task_submitted" && onNavigate) {

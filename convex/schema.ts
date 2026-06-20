@@ -337,6 +337,7 @@ export default defineSchema({
       v.literal("task_completed"),
       v.literal("new_task_posted"),
       v.literal("deadline_approaching"),
+      v.literal("submission_rated"),
     ),
     title: v.string(),
     message: v.string(),

@@ -217,13 +217,28 @@ export default function PostTaskModal({
     [triggerDetection, triggerRubricSuggestion, category, rubricDimensions],
   );
 
+  /* Skills the user accepted from the green AI-suggested chips. Tracked
+   * separately so they keep the "AI" badge even after later detection runs
+   * rebuild aiDetectedSet. */
+  const [acceptedAiSuggestions, setAcceptedAiSuggestions] = useState<Set<string>>(
+    new Set(),
+  );
+
   const handleAddSuggestedSkill = useCallback(
     (skill: string) => {
       if (!skills.includes(skill)) {
         setSkills((prev) => [...prev, skill]);
       }
+      setAcceptedAiSuggestions((prev) => new Set(prev).add(skill));
     },
     [skills],
+  );
+
+  /* Any skill that originated from AI — auto-detected or an accepted
+   * suggestion — gets the badge, so the meaning is consistent. */
+  const aiBadgeSet = useMemo(
+    () => new Set<string>([...aiDetectedSet, ...acceptedAiSuggestions]),
+    [aiDetectedSet, acceptedAiSuggestions],
   );
   const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
 
@@ -341,6 +356,7 @@ export default function PostTaskModal({
     setAttachments([]);
     setRubricDimensions([]);
     setDiscardedDefaults([]);
+    setAcceptedAiSuggestions(new Set());
     clearAiResults();
     clearRubricSuggestions();
   };
@@ -482,8 +498,8 @@ export default function PostTaskModal({
     "cursor-pointer focus:bg-black focus:text-white dark:focus:bg-white dark:focus:text-black rounded-none font-bold tracking-wide";
 
   return (
-    <div className="emp-modal-overlay" onClick={onClose}>
-      <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="emp-modal-overlay">
+      <div className="emp-modal">
         <div className="emp-modal__header">
           <Typography variant="h2" className="emp-modal__header-title">
             {initialData ? "Edit Task" : "Post a New Task"}
@@ -601,7 +617,7 @@ export default function PostTaskModal({
           {/* Skills picker */}
           <div className="emp-modal__field">
             <Label>Required Skills</Label>
-            <SkillPicker skills={skills} onChange={setSkills} aiDetectedSet={aiDetectedSet} />
+            <SkillPicker skills={skills} onChange={setSkills} aiDetectedSet={aiBadgeSet} />
           </div>
 
           {/* Evaluation Rubric (optional) */}

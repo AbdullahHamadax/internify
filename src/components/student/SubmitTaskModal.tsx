@@ -95,6 +95,14 @@ export default function SubmitTaskModal({
     hasSubmission && !isRetrying ? { applicationId: applicationId as Id<"applications"> } : "skip",
   );
 
+  // Employer's human rating for this submission (shown in the report once rated)
+  const employerRatingQuery = useQuery(
+    api.ratings.getRatingByApplication,
+    hasSubmission && !isRetrying
+      ? { applicationId: applicationId as Id<"applications"> }
+      : "skip",
+  );
+
   // Query certificate data when we have an evaluation with a passing score
   const certificateQuery = useQuery(
     api.evaluations.getCertificateByEvaluation,
@@ -197,6 +205,7 @@ export default function SubmitTaskModal({
         onRetry={handleRetry}
         retryLoading={retryLoading}
         certificateData={certificateData}
+        employerRating={employerRatingQuery ?? null}
       />
     );
   }
