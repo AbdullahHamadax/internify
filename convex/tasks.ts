@@ -573,9 +573,30 @@ export const getEmployerStats = query({
 
     const completedTasks = tasks.filter((t) => t.status === "completed").length;
 
-    // Placeholder values — wire these up once the submissions feature is built
-    const totalSubmissions = 0;
-    const avgQualityScore = 0;
+    // Real submission + quality numbers across all of this employer's tasks.
+    // Total submissions = every submission received; avg quality = mean of the
+    // AI evaluation overall scores (0–100).
+    let totalSubmissions = 0;
+    let scoreSum = 0;
+    let scoreCount = 0;
+    for (const task of tasks) {
+      const submissions = await ctx.db
+        .query("submissions")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+      totalSubmissions += submissions.length;
+
+      const evaluations = await ctx.db
+        .query("evaluations")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+      for (const evaluation of evaluations) {
+        scoreSum += evaluation.overallScore;
+        scoreCount += 1;
+      }
+    }
+    const avgQualityScore =
+      scoreCount > 0 ? Math.round(scoreSum / scoreCount) : 0;
 
     return {
       activeTasks,
