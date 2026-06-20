@@ -359,6 +359,9 @@ export default function EmployerDashboard() {
   const createTask = useMutation(api.tasks.createTask);
   const deleteTask = useMutation(api.tasks.deleteTask);
   const updateTask = useMutation(api.tasks.updateTask);
+  const getOrCreateConversation = useMutation(
+    api.messages.getOrCreateConversation,
+  );
   const routeTab = searchParams.get("tab");
   const normalizedRouteTab =
     routeTab &&
@@ -376,6 +379,12 @@ export default function EmployerDashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  // Conversation to open when navigating to Messages from within the dashboard
+  // (e.g. the Talent Spotlight "Invite" button). Kept in state rather than the
+  // URL to avoid fighting the tab<->URL sync effects.
+  const [pendingConversationId, setPendingConversationId] = useState<
+    string | null
+  >(null);
 
   const [now] = useState(() => Date.now());
 
@@ -430,6 +439,23 @@ export default function EmployerDashboard() {
       setActiveNav(id);
     },
     [tasks],
+  );
+
+  // Start (or reuse) a conversation with a student and open Messages on it.
+  const handleMessageStudent = useCallback(
+    async (studentUserId: string) => {
+      const conversationId = await getOrCreateConversation({
+        otherUserId: studentUserId as Id<"users">,
+      });
+      setPendingConversationId(conversationId as string);
+      setActiveNav("messages");
+      // Reset scroll — the user had scrolled down to the spotlight, and
+      // Messages should open from the top, not mid-page.
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "auto" });
+      }
+    },
+    [getOrCreateConversation],
   );
 
   const handleViewTask = useCallback((task: Task) => {
@@ -545,7 +571,7 @@ export default function EmployerDashboard() {
         {activeNav === "messages" && (
           <Messages
             role="employer"
-            initialConversationId={initialConversationId}
+            initialConversationId={pendingConversationId ?? initialConversationId}
           />
         )}
         {activeNav === "profile" && <EmployerProfile />}
@@ -569,7 +595,7 @@ export default function EmployerDashboard() {
                   <span className="inline-flex items-center justify-center font-black text-black bg-white px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] -rotate-2 text-xl md:text-2xl">
                     {stats.totalSubmissions} submissions
                   </span>{" "}
-                  this month.{" "}
+                  so far.{" "}
                   <span className="inline-flex items-center justify-center font-black text-black bg-[#FCD34D] px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] rotate-2 text-xl md:text-2xl">
                     {stats.activeTasks}
                   </span>{" "}
@@ -596,7 +622,11 @@ export default function EmployerDashboard() {
             </div>
 
             {/* Showcase */}
-            <TopStudentsShowcase />
+            <TopStudentsShowcase
+              tasks={tasks}
+              onNavigate={handleNavigate}
+              onInvite={handleMessageStudent}
+            />
           </>
         )}
       </main>
