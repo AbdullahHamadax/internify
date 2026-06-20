@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as certificates from "../certificates.js";
 import type * as evaluations from "../evaluations.js";
 import type * as messages from "../messages.js";
 import type * as nameLimits from "../nameLimits.js";
@@ -27,6 +28,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  certificates: typeof certificates;
   evaluations: typeof evaluations;
   messages: typeof messages;
   nameLimits: typeof nameLimits;

@@ -24,15 +24,11 @@ import type { CertificateData } from "./CertificateTemplate";
 interface SubmitTaskModalProps {
   open: boolean;
   applicationId: string;
-  taskId: string;
   taskTitle: string;
-  taskDescription: string;
   taskCategory: string;
-  taskSkills: string[];
   companyName: string;
   deadline: number;
   hasSubmission: boolean;
-  customRubric?: string[];
   onClose: () => void;
   onSubmitted: () => void;
 }
@@ -66,15 +62,11 @@ function getFileIcon(name: string) {
 export default function SubmitTaskModal({
   open,
   applicationId,
-  taskId,
   taskTitle,
-  taskDescription,
   taskCategory,
-  taskSkills,
   companyName,
   deadline,
   hasSubmission,
-  customRubric,
   onClose,
   onSubmitted,
 }: SubmitTaskModalProps) {
@@ -94,7 +86,6 @@ export default function SubmitTaskModal({
 
   const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
   const submitTask = useMutation(api.tasks.submitTask);
-  const storeEvaluation = useMutation(api.evaluations.storeEvaluation);
   const updateEvaluationStatus = useMutation(api.evaluations.updateEvaluationStatus);
   const deleteForRetry = useMutation(api.evaluations.deleteSubmissionForRetry);
 
@@ -252,7 +243,6 @@ export default function SubmitTaskModal({
     try {
       // ── Step 1: Upload files to Convex storage (if file mode) ──
       const uploadedFiles: { storageId: Id<"_storage">; name: string; type: string }[] = [];
-      const fileUrls: { storageId: string; name: string; type: string }[] = [];
 
       if (mode === "file_upload") {
         for (const pf of pendingFiles) {
@@ -292,27 +282,16 @@ export default function SubmitTaskModal({
         status: "evaluating",
       });
 
-      // ── Step 4: Build file info for the API route ──
-      // Pass storageIds directly — the API route resolves real Convex URLs server-side
-      if (mode === "file_upload" && uploadedFiles.length > 0) {
-        for (const file of uploadedFiles) {
-          fileUrls.push({ storageId: file.storageId as string, name: file.name, type: file.type });
-        }
-      }
-
-      // ── Step 5: Call evaluation API ──
+      // ── Step 4: Trigger server-side evaluation ──
+      // We send only IDs. The server reads the task + stored submission itself,
+      // computes the score, and persists it — the browser never handles or sends
+      // a score, so it can't be forged.
       const evalResponse = await fetch("/api/evaluate-submission", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          taskDescription,
-          taskCategory,
-          taskSkills,
-          files: fileUrls,
-          githubUrl: mode === "github_url" ? githubUrl.trim() : undefined,
-          plainText: mode === "plain_text" ? plainText.trim() : undefined,
-          submissionType: mode,
-          customRubric,
+          applicationId,
+          submissionId,
         }),
       });
 
@@ -321,28 +300,9 @@ export default function SubmitTaskModal({
         throw new Error(err.error || "Failed to evaluate submission");
       }
 
-      const { evaluation, rawResponse } = await evalResponse.json();
+      const { evaluation } = await evalResponse.json();
 
-      // ── Step 6: Store evaluation in Convex ──
-      await storeEvaluation({
-        submissionId: submissionId as Id<"submissions">,
-        applicationId: applicationId as Id<"applications">,
-        taskId: taskId as Id<"tasks">,
-        agentType: evaluation.agentType ?? "se",
-        overallScore: evaluation.overallScore ?? 0,
-        verdict: evaluation.verdict ?? "Needs Improvement",
-        scores: (evaluation.scores ?? []).map((s: { dimension?: string; score?: number; comment?: string }) => ({
-          dimension: s.dimension ?? "Unknown",
-          score: typeof s.score === "number" ? s.score : 0,
-          comment: s.comment ?? "",
-        })),
-        strengths: Array.isArray(evaluation.strengths) ? evaluation.strengths : [],
-        improvements: Array.isArray(evaluation.improvements) ? evaluation.improvements : [],
-        summary: evaluation.summary ?? "",
-        rawResponse: rawResponse,
-      });
-
-      // ── Step 7: Show results ──
+      // ── Step 5: Show results (already persisted server-side) ──
       setEvaluationResult(evaluation);
       setEvaluating(false);
       setIsRetrying(false);

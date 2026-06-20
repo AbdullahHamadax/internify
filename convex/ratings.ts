@@ -132,17 +132,19 @@ export const getRatingsByTask = query({
 export const getStudentRatingSummary = query({
   args: { studentId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
-    let studentId: Id<"users"> | null = args.studentId ?? null;
-    if (!studentId) {
-      const user = await getCurrentUser(ctx);
-      if (!user) return null;
-      studentId = user._id;
-    }
+    // Auth-gate: the caller must be signed in, on EVERY path — including when a
+    // studentId is supplied. Otherwise anyone could read another student's
+    // ratings and the employer's private written comments about them.
+    const viewer = await getCurrentUser(ctx);
+    if (!viewer) return null;
+
+    // Default to the viewer's own ratings when no student is specified.
+    const studentId: Id<"users"> = args.studentId ?? viewer._id;
 
     // All completed applications for the student.
     const applications = await ctx.db
       .query("applications")
-      .withIndex("by_studentId", (q) => q.eq("studentId", studentId!))
+      .withIndex("by_studentId", (q) => q.eq("studentId", studentId))
       .collect();
     const completed = applications.filter((a) => a.status === "completed");
 

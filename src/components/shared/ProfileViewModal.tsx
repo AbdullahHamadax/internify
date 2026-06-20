@@ -17,6 +17,8 @@ import {
   Linkedin,
   Building2,
   Award,
+  BadgeCheck,
+  ExternalLink,
   GraduationCap,
   Zap,
   Loader2,
@@ -67,6 +69,9 @@ export default function ProfileViewModal({
   onClose,
 }: ProfileViewModalProps) {
   const profile = useQuery(api.users.getPublicProfile, { userId });
+  const certificates = useQuery(api.certificates.getCertificatesByStudent, {
+    studentId: userId,
+  });
   const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
   const isOnline = globalPresence?.some((u) => u.userId === profile?.userId);
 
@@ -288,6 +293,60 @@ export default function ProfileViewModal({
                           </span>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Certificates (condensed) */}
+                {certificates && certificates.length > 0 && (
+                  <div>
+                    <Typography
+                      variant="h4"
+                      className="flex items-center gap-2 mb-3"
+                    >
+                      <span className="p-0.5 bg-[#E9D5FF] border-2 border-border text-black shadow-[2px_2px_0_0_var(--border)]">
+                        <Award className="w-4 h-4" />
+                      </span>
+                      Certificates
+                    </Typography>
+                    <div className="space-y-2">
+                      {certificates.map((cert) => (
+                        <div
+                          key={cert.certificateId}
+                          className="flex items-center gap-3 bg-card border-2 border-border p-2.5 shadow-[2px_2px_0_0_var(--border)]"
+                        >
+                          {cert.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={cert.logoUrl}
+                              alt={cert.companyName}
+                              className="w-8 h-8 shrink-0 border border-border bg-white object-contain"
+                            />
+                          ) : (
+                            <span className="flex w-8 h-8 shrink-0 items-center justify-center border border-border bg-muted">
+                              <Building2 className="w-4 h-4 text-muted-foreground" />
+                            </span>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-black uppercase tracking-wider">
+                              {cert.taskTitle}
+                            </p>
+                            <p className="truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                              {cert.companyName} · {cert.finalScore}/100
+                            </p>
+                          </div>
+                          <a
+                            href={`/verify/${encodeURIComponent(cert.certificateId)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex shrink-0 items-center gap-1 border-2 border-black dark:border-white bg-[#AB47BC] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+                          >
+                            <BadgeCheck className="w-3 h-3" />
+                            Verify
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
