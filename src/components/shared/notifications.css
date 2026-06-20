@@ -241,6 +241,11 @@
   color: #fff;
 }
 
+.notif-icon--rated {
+  background: #eab308;
+  color: #000;
+}
+
 .notif-icon--clickable {
   cursor: pointer;
   transition: transform 0.1s ease;

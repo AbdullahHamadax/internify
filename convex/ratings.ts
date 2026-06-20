@@ -80,25 +80,48 @@ export const rateSubmission = mutation({
       )
       .unique();
 
+    let ratingId: Id<"ratings">;
     if (existing) {
       await ctx.db.patch(existing._id, {
         stars: args.stars,
         comment,
         updatedAt: now,
       });
-      return existing._id;
+      ratingId = existing._id;
+    } else {
+      ratingId = await ctx.db.insert("ratings", {
+        applicationId: args.applicationId,
+        taskId: application.taskId,
+        studentId: application.studentId,
+        employerId: user._id,
+        stars: args.stars,
+        comment,
+        createdAt: now,
+        updatedAt: now,
+      });
     }
 
-    return await ctx.db.insert("ratings", {
-      applicationId: args.applicationId,
-      taskId: application.taskId,
-      studentId: application.studentId,
-      employerId: user._id,
-      stars: args.stars,
-      comment,
+    // Notify the student that their submission was rated. Mirrors the
+    // employer-facing display name (company name) used elsewhere.
+    const employerProfile = await ctx.db
+      .query("employerProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+    const companyName = employerProfile?.companyName ?? "Your employer";
+    const commentSuffix = comment ? ` — “${comment}”` : "";
+    await ctx.db.insert("notifications", {
+      userId: application.studentId,
+      type: "submission_rated",
+      title: existing ? "Rating Updated" : "Submission Rated",
+      message: `${companyName} rated your "${task.title}" submission ${args.stars}/5 stars${commentSuffix}`,
+      relatedTaskId: application.taskId,
+      relatedUserId: user._id,
+      relatedUserName: companyName,
+      isRead: false,
       createdAt: now,
-      updatedAt: now,
     });
+
+    return ratingId;
   },
 });
 
@@ -120,6 +143,39 @@ export const getRatingsByTask = query({
       .query("ratings")
       .withIndex("by_taskId", (q) => q.eq("taskId", args.taskId))
       .collect();
+  },
+});
+
+/**
+ * QUERY: getRatingByApplication
+ * Returns the employer's rating ({ stars, comment }) for a single application,
+ * or null if not yet rated. Readable by the student who owns the application
+ * (so they can see it in their evaluation report) and the employer who posted
+ * the task. Returns null for anyone else.
+ */
+export const getRatingByApplication = query({
+  args: { applicationId: v.id("applications") },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return null;
+
+    const application = await ctx.db.get(args.applicationId);
+    if (!application) return null;
+
+    const task = await ctx.db.get(application.taskId);
+    const isStudent = application.studentId === user._id;
+    const isEmployer = task?.employerId === user._id;
+    if (!isStudent && !isEmployer) return null;
+
+    const rating = await ctx.db
+      .query("ratings")
+      .withIndex("by_applicationId", (q) =>
+        q.eq("applicationId", args.applicationId),
+      )
+      .unique();
+    if (!rating) return null;
+
+    return { stars: rating.stars, comment: rating.comment ?? null };
   },
 });
 

@@ -916,6 +916,23 @@ export const acceptTask = mutation({
 
     await ctx.db.patch(args.taskId, updates);
 
+    // Auto-mark the student's "new task posted" notification(s) for this task
+    // as read — accepting the task means they've acted on it.
+    const unreadForStudent = await ctx.db
+      .query("notifications")
+      .withIndex("by_userId_isRead", (q) =>
+        q.eq("userId", user._id).eq("isRead", false),
+      )
+      .collect();
+    await Promise.all(
+      unreadForStudent
+        .filter(
+          (n) =>
+            n.type === "new_task_posted" && n.relatedTaskId === args.taskId,
+        )
+        .map((n) => ctx.db.patch(n._id, { isRead: true })),
+    );
+
     // Notify the employer that a student accepted their task
     const studentName =
       [user.firstName, user.lastName].filter(Boolean).join(" ") || "A student";

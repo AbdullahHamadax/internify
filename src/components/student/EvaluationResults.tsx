@@ -16,6 +16,7 @@ import {
   Layers,
   RotateCcw,
   Award,
+  Star,
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
 import { type CertificateData } from "./CertificateTemplate";
@@ -50,6 +51,8 @@ interface EvaluationResultsProps {
   retryLoading?: boolean;
   /** Certificate data for generating PDF — only present when score >= 60 */
   certificateData?: CertificateData | null;
+  /** Employer's human rating, shown only once the employer has rated. */
+  employerRating?: { stars: number; comment: string | null } | null;
 }
 
 // Agent display metadata
@@ -195,6 +198,7 @@ export default function EvaluationResults({
   onRetry,
   retryLoading,
   certificateData,
+  employerRating,
 }: EvaluationResultsProps) {
   const [showCertPreview, setShowCertPreview] = React.useState(false);
   const canRetry = onRetry && evaluation.overallScore < PASSING_SCORE;
@@ -282,6 +286,46 @@ export default function EvaluationResults({
                 </Typography>
               </div>
             </motion.div>
+
+            {/* ── Employer Rating (only once the employer has rated) ── */}
+            {employerRating && (
+              <motion.div variants={itemVariants}>
+                <Typography variant="h3" className="flex items-center gap-2 mb-4">
+                  <Star className="w-5 h-5 text-yellow-500" fill="currentColor" />
+                  Employer Rating
+                </Typography>
+
+                <div className="p-4 border-4 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] bg-yellow-50 dark:bg-yellow-950/20">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <div className="flex">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <Star
+                          key={n}
+                          className="w-5 h-5 text-yellow-500"
+                          fill={n <= Math.round(employerRating.stars) ? "currentColor" : "none"}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-black">
+                      {employerRating.stars.toFixed(1)} / 5
+                    </span>
+                    <span className="ml-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      {companyName}
+                    </span>
+                  </div>
+
+                  {employerRating.comment ? (
+                    <Typography variant="p" className="text-sm italic leading-relaxed">
+                      &ldquo;{employerRating.comment}&rdquo;
+                    </Typography>
+                  ) : (
+                    <Typography variant="p" color="muted" className="text-xs">
+                      No written feedback provided.
+                    </Typography>
+                  )}
+                </div>
+              </motion.div>
+            )}
 
             {/* ── Rubric Breakdown ── */}
             <motion.div variants={itemVariants}>

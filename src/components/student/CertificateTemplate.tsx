@@ -442,7 +442,9 @@ async function buildCertificatePDF(data: CertificateData): Promise<jsPDF> {
   drawTrackedCenter(doc, "ISSUING PLATFORM", signX, footerCY + 10, 1);
 
   // ── 7. Verification: label above the rule, ID below — centered ──
-  const certIdY = pageH - 24;
+  // Anchored high enough that the last line (verify URL) clears the inner
+  // frame (bottom edge at pageH - 12); otherwise it overlaps the borders.
+  const certIdY = pageH - 31;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
@@ -464,7 +466,7 @@ async function buildCertificatePDF(data: CertificateData): Promise<jsPDF> {
     doc,
     "VERIFY AT INTERNIFY-ONE.VERCEL.APP/VERIFY",
     cx,
-    certIdY + 14,
+    certIdY + 13,
     0.8,
   );
 
