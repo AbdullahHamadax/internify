@@ -51,7 +51,6 @@ export const skillLevelValidator = v.union(
  * This captures the student's hiring availability preference.
  */
 export const studentAvailabilityStatusValidator = v.union(
-  v.literal("available_now"),
   v.literal("open_to_offers"),
   v.literal("busy"),
   v.literal("unavailable"),
