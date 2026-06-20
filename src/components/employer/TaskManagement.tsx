@@ -39,6 +39,7 @@ export interface Task {
   }[];
   acceptedBy?: { id: string; name: string }[];
   customRubric?: string[];
+  enableAiFormat?: boolean;
 }
 
 interface TaskManagementProps {

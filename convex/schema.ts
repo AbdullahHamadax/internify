@@ -56,6 +56,17 @@ export const studentAvailabilityStatusValidator = v.union(
   v.literal("unavailable"),
 );
 
+/**
+ * EMPLOYER HIRING STATUS VALIDATOR
+ * The employer's current hiring posture, shown as an editable badge on their
+ * profile and surfaced to students browsing that employer's tasks.
+ */
+export const employerHiringStatusValidator = v.union(
+  v.literal("hiring"),
+  v.literal("selective"),
+  v.literal("not_hiring"),
+);
+
 export default defineSchema({
   /**
    * USERS TABLE
@@ -121,6 +132,7 @@ export default defineSchema({
     position: v.string(), // Example: "Hiring Manager"
     rankLevel: rankLevelValidator, // Must be one of the ranks like "mid" or "manager"
     logoStorageId: v.optional(v.id("_storage")), // Company logo file reference
+    hiringStatus: v.optional(employerHiringStatusValidator), // "hiring" | "selective" | "not_hiring"
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
 
@@ -157,6 +169,7 @@ export default defineSchema({
     updatedAt: v.number(),
     xpPerSkill: v.optional(v.number()), // XP awarded per required skill on completion
     customRubric: v.optional(v.array(v.string())), // Employer-defined evaluation rubric dimensions
+    enableAiFormat: v.optional(v.boolean()), // Whether to AI-format description for students
   })
     .index("by_employerId", ["employerId"])
     .index("by_status", ["status"]),

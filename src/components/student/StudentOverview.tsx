@@ -98,6 +98,8 @@ export default function StudentOverview({
   );
 
   const applications = useQuery(api.tasks.getStudentApplications);
+  const me = useQuery(api.users.currentUser);
+  const hasSkills = (me?.studentProfile?.skills?.length ?? 0) > 0;
   const recommendations = useQuery(
     api.recommendations.getRecommendedTasks,
     isConvexTokenReady ? {} : "skip",
@@ -323,7 +325,9 @@ export default function StudentOverview({
             ) : topRecs.length === 0 ? (
               <div className="p-6 text-center bg-zinc-100 dark:bg-zinc-900 border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
                 <Typography variant="p" color="muted" className="text-sm">
-                  Add skills to your profile to get personalized task recommendations.
+                  {hasSkills
+                    ? "No tasks match your skills right now — check back soon as new tasks get posted."
+                    : "Add skills to your profile to get personalized task recommendations."}
                 </Typography>
               </div>
             ) : (

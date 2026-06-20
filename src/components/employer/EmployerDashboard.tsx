@@ -44,6 +44,7 @@ import TaskDetailModal from "./TaskDetailModal";
 import TalentSearch from "./talent-search/TalentSearch";
 import Messages from "@/components/shared/Messages";
 import Notifications from "@/components/shared/Notifications";
+
 import EmployerProfile from "./EmployerProfile";
 import HomeButton from "@/components/shared/HomeButton";
 import AccountAvatar from "@/components/shared/AccountAvatar";
@@ -412,6 +413,7 @@ export default function EmployerDashboard() {
         resolvedAttachments: t.resolvedAttachments,
         acceptedBy: t.acceptedBy,
         customRubric: t.customRubric,
+        enableAiFormat: t.enableAiFormat,
       })) || [],
     [employerTasks, now],
   );
@@ -513,6 +515,7 @@ export default function EmployerDashboard() {
                 }[]
               | undefined,
             customRubric: taskData.customRubric,
+            enableAiFormat: taskData.enableAiFormat,
           });
           setEditingTask(null);
         } else {
@@ -535,6 +538,7 @@ export default function EmployerDashboard() {
                 }[]
               | undefined,
             customRubric: taskData.customRubric,
+            enableAiFormat: taskData.enableAiFormat,
           });
         }
         setModalOpen(false);
