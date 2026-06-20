@@ -322,7 +322,7 @@ export default function RubricBuilder({
           type="button"
           onClick={addManualDimension}
           disabled={!newDimInput.trim()}
-          className="rounded-none border-2 border-border bg-foreground text-card shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shrink-0"
+          className="h-12 w-12 p-0 rounded-none border-2 border-border bg-foreground text-card shadow-[4px_4px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shrink-0"
         >
           <Plus className="size-4" />
         </Button>
