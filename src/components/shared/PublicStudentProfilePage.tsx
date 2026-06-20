@@ -6,11 +6,14 @@ import { useEffect, useState } from "react";
 import { AuthLoading, Authenticated, Unauthenticated, useMutation, useQuery } from "convex/react";
 import {
   ArrowLeft,
+  Award,
+  BadgeCheck,
   Briefcase,
   Building2,
   CalendarDays,
   CheckCircle2,
   Download,
+  ExternalLink,
   Eye,
   FileCheck,
   FileText,
@@ -273,6 +276,10 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
   const profile = useQuery(
     api.users.getPublicStudentProfileDetail,
     isConvexTokenReady ? { userId: userId as Id<"users"> } : "skip",
+  );
+  const certificates = useQuery(
+    api.certificates.getCertificatesByStudent,
+    isConvexTokenReady ? { studentId: userId as Id<"users"> } : "skip",
   );
   const getOrCreateConversation = useMutation(
     api.messages.getOrCreateConversation,
@@ -653,6 +660,76 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                 )}
               </div>
             </div>
+
+            {/* Earned certificates — shown to employers in context, each links
+                out to the public verification page. */}
+            {certificates && certificates.length > 0 && (
+              <div className="border-4 border-black bg-card p-6 shadow-[8px_8px_0_0_#000] dark:border-white dark:shadow-[8px_8px_0_0_#fff]">
+                <Typography variant="h3" className="mb-4 flex items-center gap-3 uppercase">
+                  <span className="border-2 border-black bg-[#E9D5FF] p-1 text-black shadow-[2px_2px_0_0_#000] dark:border-white dark:shadow-[2px_2px_0_0_#fff]">
+                    <Award className="h-5 w-5" />
+                  </span>
+                  Certificates
+                </Typography>
+
+                <div className="space-y-4">
+                  {certificates.map((cert) => (
+                    <article
+                      key={cert.certificateId}
+                      className="border-4 border-border bg-card p-5 shadow-[4px_4px_0_0_var(--border)]"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                          {cert.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={cert.logoUrl}
+                              alt={cert.companyName}
+                              className="h-10 w-10 shrink-0 border-2 border-border bg-white object-contain"
+                            />
+                          ) : (
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-border bg-muted">
+                              <Building2 className="h-5 w-5 text-muted-foreground" />
+                            </span>
+                          )}
+                          <div className="min-w-0">
+                            <Typography variant="h4" className="break-words">
+                              {cert.taskTitle}
+                            </Typography>
+                            <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                              {cert.companyName}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="shrink-0 border-2 border-border bg-[#047857] px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                          {cert.finalScore}/100
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {new Date(cert.completedAt).toLocaleDateString()}
+                          <span className="ml-2 font-black tracking-widest text-foreground">
+                            {cert.certificateId}
+                          </span>
+                        </span>
+                        <a
+                          href={`/verify/${encodeURIComponent(cert.certificateId)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 border-2 border-black bg-[#AB47BC] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none dark:border-white dark:shadow-[2px_2px_0_0_#fff]"
+                        >
+                          <BadgeCheck className="h-3.5 w-3.5" />
+                          Verify
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
 
           <aside className="space-y-6">

@@ -431,15 +431,11 @@ export default function StudentOverview({
         <SubmitTaskModal
           open={!!selectedApp}
           applicationId={selectedApp._id}
-          taskId={selectedApp.taskId}
           taskTitle={selectedApp.task.title}
-          taskDescription={selectedApp.task.description}
           taskCategory={selectedApp.task.category}
-          taskSkills={selectedApp.task.skills}
           companyName={selectedApp.task.companyName}
           deadline={selectedApp.task.deadline}
           hasSubmission={selectedApp.hasSubmission}
-          customRubric={selectedApp.task.customRubric}
           onClose={() => setSelectedApp(null)}
           onSubmitted={() => setSelectedApp(null)}
         />

@@ -362,43 +362,58 @@ async function extractFromZip(url: string): Promise<string> {
 
 // ── Main Route Handler ──
 
-interface FileInfo {
-  storageId: string;
-  name: string;
-  type: string;
-}
-
 export async function POST(req: NextRequest) {
   try {
+    const secret = process.env.EVAL_SERVER_SECRET;
+    if (!secret) {
+      console.error("EVAL_SERVER_SECRET is not set on the web server.");
+      return NextResponse.json(
+        { error: "Evaluation is not configured on the server." },
+        { status: 500 },
+      );
+    }
+
     const body = await req.json();
+    const { applicationId, submissionId } = body as {
+      applicationId?: string;
+      submissionId?: string;
+    };
+
+    if (!applicationId || !submissionId) {
+      return NextResponse.json(
+        { error: "applicationId and submissionId are required" },
+        { status: 400 },
+      );
+    }
+
+    // ── Load authoritative task + submission context from Convex ──
+    // The student supplies neither the task parameters nor which content to
+    // grade — both come from the database, keyed by the submission they saved.
+    let context;
+    try {
+      context = await convex.query(api.evaluations.getEvaluationContext, {
+        secret,
+        applicationId: applicationId as Id<"applications">,
+        submissionId: submissionId as Id<"submissions">,
+      });
+    } catch (err) {
+      console.error("Failed to load evaluation context:", err);
+      return NextResponse.json(
+        { error: "Could not load the submission to evaluate." },
+        { status: 400 },
+      );
+    }
+
     const {
       taskDescription,
       taskCategory,
       taskSkills,
-      files,
+      customRubric,
+      submissionType,
       githubUrl,
       plainText,
-      submissionType,
-      customRubric,
-      authToken,
-    } = body as {
-      taskDescription: string;
-      taskCategory: string;
-      taskSkills: string[];
-      files?: FileInfo[];
-      githubUrl?: string;
-      plainText?: string;
-      submissionType: string;
-      customRubric?: string[];
-      authToken?: string;
-    };
-
-    if (!taskDescription || !taskCategory) {
-      return NextResponse.json(
-        { error: "Task description and category are required" },
-        { status: 400 },
-      );
-    }
+      files,
+    } = context;
 
     // ── Step 1: Extract Content ──
     let extractedContent = "";
@@ -408,22 +423,8 @@ export async function POST(req: NextRequest) {
     } else if (submissionType === "plain_text" && plainText) {
       extractedContent = plainText.trim();
     } else if (files && files.length > 0) {
-      // Resolve real Convex storage URLs server-side
-      const storageIds = files.map((f) => f.storageId as Id<"_storage">);
-
-      let resolvedUrls: { storageId: string; url: string | null }[] = [];
-      try {
-        resolvedUrls = await convex.query(api.tasks.getFileUrls, { storageIds });
-      } catch (err) {
-        console.error("Failed to resolve file URLs via Convex:", err);
-        return NextResponse.json(
-          { error: "Failed to access uploaded files. Please try again." },
-          { status: 500 },
-        );
-      }
-
-      // Build a map of storageId -> url for quick lookup
-      const urlMap = new Map(resolvedUrls.map((r) => [r.storageId, r.url]));
+      // URLs were already resolved server-side in getEvaluationContext.
+      const urlMap = new Map(files.map((f) => [f.storageId, f.url]));
 
       // Process uploaded files
       const fileParts: string[] = [];
@@ -530,10 +531,43 @@ export async function POST(req: NextRequest) {
     // Ensure agentType is set
     evaluation.agentType = agentType;
 
-    return NextResponse.json({
-      evaluation,
-      rawResponse: rawReply,
-    });
+    // ── Persist the evaluation server-side via a secret-gated mutation the
+    // browser cannot call, so the score can't be forged by the student. ──
+    const normalizedScores = Array.isArray(evaluation.scores)
+      ? evaluation.scores.map(
+          (s: { dimension?: string; score?: number; comment?: string }) => ({
+            dimension: s.dimension ?? "Unknown",
+            score: typeof s.score === "number" ? s.score : 0,
+            comment: s.comment ?? "",
+          }),
+        )
+      : [];
+
+    try {
+      await convex.mutation(api.evaluations.storeServerEvaluation, {
+        secret,
+        submissionId: submissionId as Id<"submissions">,
+        applicationId: applicationId as Id<"applications">,
+        agentType,
+        overallScore: evaluation.overallScore ?? 0,
+        verdict: evaluation.verdict ?? "Needs Improvement",
+        scores: normalizedScores,
+        strengths: Array.isArray(evaluation.strengths) ? evaluation.strengths : [],
+        improvements: Array.isArray(evaluation.improvements)
+          ? evaluation.improvements
+          : [],
+        summary: evaluation.summary ?? "",
+        rawResponse: rawReply,
+      });
+    } catch (err) {
+      console.error("Failed to persist evaluation:", err);
+      return NextResponse.json(
+        { error: "Failed to save the evaluation. Please try again." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ evaluation });
   } catch (error) {
     console.error("Submission Evaluation API Error:", error);
     return NextResponse.json(

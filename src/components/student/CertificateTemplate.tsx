@@ -455,6 +455,19 @@ async function buildCertificatePDF(data: CertificateData): Promise<jsPDF> {
   doc.setTextColor(INK[0], INK[1], INK[2]);
   drawTrackedCenter(doc, displayCertId, cx, certIdY + 9, 0.8);
 
+  // Where to verify this ID. Keeps the certificate self-describing: anyone
+  // holding it knows exactly where to confirm authenticity.
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
+  doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  drawTrackedCenter(
+    doc,
+    "VERIFY AT INTERNIFY-ONE.VERCEL.APP/VERIFY",
+    cx,
+    certIdY + 14,
+    0.8,
+  );
+
   return doc;
 }
 

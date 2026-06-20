@@ -1303,6 +1303,10 @@ export const getTaskSubmissions = query({
 export const getFileUrls = query({
   args: { storageIds: v.array(v.id("_storage")) },
   handler: async (ctx, args) => {
+    // Auth-gate: never hand out storage URLs to an unauthenticated caller.
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
     const results = await Promise.all(
       args.storageIds.map(async (id) => {
         const url = await ctx.storage.getUrl(id);
