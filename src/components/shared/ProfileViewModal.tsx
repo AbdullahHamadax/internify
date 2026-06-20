@@ -303,7 +303,10 @@ export default function ProfileViewModal({
                             </span>
                           )}
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-black uppercase tracking-wider">
+                            <p
+                              className="line-clamp-2 break-words text-xs font-black uppercase tracking-wider"
+                              title={cert.taskTitle}
+                            >
                               {cert.taskTitle}
                             </p>
                             <p className="truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -395,7 +398,7 @@ export default function ProfileViewModal({
                   <Link
                     href={`/students/${userId}`}
                     onClick={onClose}
-                    className="inline-flex items-center gap-2 border-4 border-black dark:border-white bg-[#2563EB] px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff]"
+                    className="flex w-full items-center justify-center gap-2 border-4 border-black dark:border-white bg-[#2563EB] px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff]"
                   >
                     View Full Profile
                     <ArrowUpRight className="w-4 h-4" />

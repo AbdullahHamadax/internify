@@ -40,6 +40,15 @@ const STATUS_FILTERS = STUDENT_AVAILABILITY_OPTIONS;
 
 export default function TalentSearch() {
   const students = useQuery(api.users.getStudentsForEmployer);
+  // Live online presence — surfaced as a dot on each card, mirroring the
+  // indicator already shown inside the mini profile view.
+  const onlinePresence = useQuery(api.presence.listRoom, {
+    roomId: "global:online",
+  });
+  const onlineUserIds = useMemo(
+    () => new Set((onlinePresence ?? []).map((u) => u.userId)),
+    [onlinePresence],
+  );
   const talentData = useMemo(
     () =>
       students
@@ -358,6 +367,7 @@ export default function TalentSearch() {
               const linkedinUrl = getLinkedinProfileLink(talent.linkedin);
               const statusMeta = getStudentAvailabilityMeta(talent.status);
               const isUnavailable = talent.status === "unavailable";
+              const isOnline = onlineUserIds.has(talent.id);
 
               return (
                 <div
@@ -379,7 +389,7 @@ export default function TalentSearch() {
                   {/* Card Header & Avatar */}
                   <div className="flex gap-4 items-start mb-5">
                     <div
-                      className="size-14 bg-[#AB47BC] text-white border-4 border-black dark:border-white flex items-center justify-center font-black text-xl uppercase shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] shrink-0 cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-[#AB47BC] transition-all"
+                      className="relative size-14 bg-[#AB47BC] text-white border-4 border-black dark:border-white flex items-center justify-center font-black text-xl uppercase shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] shrink-0 cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-[#AB47BC] transition-all"
                       onClick={(e) => {
                         e.stopPropagation();
                         openProfile(talent.id);
@@ -387,6 +397,10 @@ export default function TalentSearch() {
                       title={`View ${talent.name}'s profile`}
                     >
                       {talent.avatar}
+                      <span
+                        className={`absolute -bottom-1.5 -right-1.5 size-4 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] z-10 ${isOnline ? "bg-green-500" : "bg-gray-400"}`}
+                        title={isOnline ? "Online" : "Offline"}
+                      />
                     </div>
                     <div className="pt-1">
                       <Typography

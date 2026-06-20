@@ -8,7 +8,7 @@ import {
 } from "./schema";
 import { assertValidUserNameFields } from "./nameLimits";
 
-const DEFAULT_STUDENT_AVAILABILITY_STATUS = "available_now" as const;
+const DEFAULT_STUDENT_AVAILABILITY_STATUS = "open_to_offers" as const;
 
 /**
  * QUERY: currentUser
