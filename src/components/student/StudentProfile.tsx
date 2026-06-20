@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import TaskContributionsGraph from "@/components/shared/TaskContributionsGraph";
 import StarRating from "@/components/shared/StarRating";
+import FormattedTaskDescription from "@/components/shared/FormattedTaskDescription";
 import {
   Briefcase,
   MapPin,
@@ -1680,12 +1681,10 @@ export default function StudentProfile() {
                               {/* Description */}
                               {app.task.description && (
                                 <div>
-                                  <Typography variant="h4" className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                                  <Typography variant="h4" className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
                                     Description
                                   </Typography>
-                                  <Typography variant="p" className="text-sm text-foreground leading-relaxed">
-                                    {app.task.description}
-                                  </Typography>
+                                  <FormattedTaskDescription text={app.task.description} />
                                 </div>
                               )}
 
