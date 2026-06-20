@@ -25,7 +25,7 @@ import {
   Star,
   ArrowUpRight,
 } from "lucide-react";
-import deviconData from "devicon/devicon.json";
+import { SkillIcon } from "@/lib/skillIcon";
 import {
   formatExternalLinkLabel,
   getGithubProfileLink,
@@ -36,28 +36,6 @@ import {
   getStudentAvailabilityMeta,
   normalizeStudentAvailabilityStatus,
 } from "@/lib/availability";
-
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
 
 interface ProfileViewModalProps {
   userId: Id<"users">;
@@ -266,7 +244,6 @@ export default function ProfileViewModal({
                     </Typography>
                     <div className="flex flex-wrap gap-2">
                       {sp.skills.map((skill) => {
-                        const devicon = getDeviconClass(skill);
                         const xpEntry = sp.skillXp?.find((e: { skill: string; xp: number }) => e.skill === skill);
                         const xp = xpEntry?.xp ?? 0;
                         const level = xp >= 1500 ? "Advanced" : xp >= 1000 ? "Intermediate" : "Beginner";
@@ -282,9 +259,7 @@ export default function ProfileViewModal({
                             className="flex flex-col items-start gap-1 py-1.5 px-3 bg-card border-2 border-border shadow-[2px_2px_0_0_var(--border)]"
                           >
                             <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider">
-                              {devicon && (
-                                <i className={`${devicon} text-sm`} />
-                              )}
+                              <SkillIcon skill={skill} className="text-sm" />
                               {skill}
                             </span>
                             <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${levelStyle}`}>

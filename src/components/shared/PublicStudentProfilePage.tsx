@@ -32,7 +32,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import deviconData from "devicon/devicon.json";
+import { SkillIcon } from "@/lib/skillIcon";
 import { useRouter } from "next/navigation";
 
 import { api } from "../../../convex/_generated/api";
@@ -53,29 +53,6 @@ import {
   normalizeStudentAvailabilityStatus,
 } from "@/lib/availability";
 
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
 
 type RenderedPdfPage = {
   src: string;
@@ -641,14 +618,12 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                       {item.skills.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                           {item.skills.map((skill) => {
-                            const devicon = getDeviconClass(skill);
-
                             return (
                               <span
                                 key={`${item.applicationId}-${skill}`}
                                 className="inline-flex items-center gap-1.5 border-2 border-black bg-[#2563EB] px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-[2px_2px_0_0_#000] dark:border-white dark:shadow-[2px_2px_0_0_#fff]"
                               >
-                                {devicon && <i className={`${devicon} text-xs`} />}
+                                <SkillIcon skill={skill} className="text-xs" />
                                 {skill}
                               </span>
                             );
@@ -866,7 +841,6 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                 </Typography>
                 <div className="flex flex-wrap gap-2">
                   {studentProfile.skills.map((skill) => {
-                    const devicon = getDeviconClass(skill);
                     const xpEntry = studentProfile.skillXp?.find((e: { skill: string; xp: number }) => e.skill === skill);
                     const xp = xpEntry?.xp ?? 0;
                     const level = xp >= 1500 ? "Advanced" : xp >= 1000 ? "Intermediate" : "Beginner";
@@ -883,7 +857,7 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                         className="flex flex-col items-start gap-1 border-2 border-border bg-card px-3 py-1.5 shadow-[2px_2px_0_0_var(--border)]"
                       >
                         <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider">
-                          {devicon && <i className={`${devicon} text-sm`} />}
+                          <SkillIcon skill={skill} className="text-sm" />
                           {skill}
                         </span>
                         <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${levelStyle}`}>

@@ -1,28 +1,6 @@
 "use client";
 
-import deviconData from "devicon/devicon.json";
-
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
+import { SkillIcon } from "@/lib/skillIcon";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
@@ -599,15 +577,12 @@ export default function StudentExplore({
                 <div className="flex flex-wrap items-center justify-between gap-4 border-t-4 border-black dark:border-white pt-6 mt-auto">
                   <div className="flex flex-wrap gap-2">
                     {task.skills.slice(0, 3).map((tag: string) => {
-                      const devicon = getDeviconClass(tag);
                       return (
                         <span
                           key={tag}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#2563EB] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB] transition-colors"
                         >
-                          {devicon && (
-                            <i className={`${devicon} text-[14px]`} />
-                          )}
+                          <SkillIcon skill={tag} className="text-[14px]" />
                           {tag}
                         </span>
                       );
@@ -720,15 +695,12 @@ export default function StudentExplore({
                   </Typography>
                   <div className="flex flex-wrap gap-2">
                     {selectedTask.skills.map((tag: string) => {
-                      const devicon = getDeviconClass(tag);
                       return (
                         <span
                           key={tag}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#2563EB] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB] transition-colors"
                         >
-                          {devicon && (
-                            <i className={`${devicon} text-[14px]`} />
-                          )}
+                          <SkillIcon skill={tag} className="text-[14px]" />
                           {tag}
                         </span>
                       );

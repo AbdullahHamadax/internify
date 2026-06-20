@@ -2,7 +2,7 @@
 
 
 import { useState } from "react";
-import { X, CalendarDays, Users, Trash2, Tag, FileText, Download, User, Sparkles, Github, ExternalLink, Loader2, Check } from "lucide-react";
+import { X, CalendarDays, Users, Trash2, FileText, Download, User, Sparkles, Github, ExternalLink, Loader2, Check } from "lucide-react";
 
 import Image from "next/image";
 import { useQuery, useMutation } from "convex/react";
@@ -11,7 +11,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/button";
 import type { Task } from "./TaskManagement";
-import deviconData from "devicon/devicon.json";
+import { SkillIcon } from "@/lib/skillIcon";
 import { useProfileModal } from "@/components/shared/ProfileModalContext";
 import EvaluationResults, { type EvaluationData } from "@/components/student/EvaluationResults";
 import StarRating from "@/components/shared/StarRating";
@@ -89,14 +89,6 @@ function SubmissionRating({
     </div>
   );
 }
-
-const ICON_MAPPINGS: Record<string, string> = {
-  "Vue": "vuejs",
-  "HTML": "html5",
-  "CSS": "css3",
-  "Express": "express",
-  "TensorFlow": "tensorFlow",
-};
 
 interface TaskDetailModalProps {
   task: Task | null;
@@ -224,40 +216,15 @@ export default function TaskDetailModal({
                 Required Skills
               </Typography>
               <div className="flex flex-wrap gap-2">
-                {task.skills.map((skill) => {
-                  const mappedKey = ICON_MAPPINGS[skill];
-                  let deviconName = mappedKey;
-                  let hasIcon = !!mappedKey;
-
-                  if (!hasIcon) {
-                    deviconName = skill.toLowerCase().replace(/[^a-z0-9]/g, "");
-                    hasIcon = (
-                      deviconData as Array<{ name: string; altnames: string[] }>
-                    ).some(
-                      (icon) =>
-                        icon.name === deviconName ||
-                        icon.altnames.includes(deviconName!),
-                    );
-                  }
-
-                  return (
-                    <span
-                      key={skill}
-                      className="emp-tag flex items-center pr-2 pl-2.5"
-                    >
-                      {hasIcon ? (
-                        <i
-                          className={`devicon-${deviconName}-plain colored text-sm mr-1.5 opacity-90`}
-                        ></i>
-                      ) : (
-                        <div className="mr-1.5 flex items-center justify-center opacity-70">
-                          <Tag className="w-3.5 h-3.5" />
-                        </div>
-                      )}
-                      {skill}
-                    </span>
-                  );
-                })}
+                {task.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="emp-tag flex items-center pr-2 pl-2.5"
+                  >
+                    <SkillIcon skill={skill} className="text-sm mr-1.5 opacity-90" />
+                    {skill}
+                  </span>
+                ))}
               </div>
             </div>
           )}

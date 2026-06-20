@@ -15,7 +15,7 @@ import {
   Star,
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
-import deviconData from "devicon/devicon.json";
+import { SkillIcon } from "@/lib/skillIcon";
 import { useProfileModal } from "@/components/shared/ProfileModalContext";
 import { SKILL_CATALOG } from "@/lib/skillCatalog";
 import {
@@ -35,25 +35,6 @@ import {
   type StudentAvailabilityStatus,
 } from "@/lib/availability";
 
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skill: string): string | null {
-  if (ICON_MAPPINGS[skill]) {
-    return `devicon-${ICON_MAPPINGS[skill]}-plain colored`;
-  }
-  const normalized = skill.toLowerCase().replace(/[^a-z0-9]/g, "");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const match = (deviconData as any[]).find(
-    (icon) => icon.name === normalized || icon.altnames?.includes(normalized),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
 
 const STATUS_FILTERS = STUDENT_AVAILABILITY_OPTIONS;
 
@@ -501,15 +482,12 @@ export default function TalentSearch() {
                     {/* Skill Tags */}
                     <div className="flex flex-wrap gap-2">
                       {talent.skills.slice(0, 4).map((skill) => {
-                        const iconClass = getDeviconClass(skill);
                         return (
                           <span
                             key={skill}
                             className="inline-flex items-center gap-1.5 px-2 py-1 border-2 border-black dark:border-white bg-[#2563EB] text-white text-[10px] font-black uppercase tracking-widest shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
                           >
-                            {iconClass && (
-                              <i className={`${iconClass} text-xs`}></i>
-                            )}
+                            <SkillIcon skill={skill} className="text-xs" />
                             {skill}
                           </span>
                         );
