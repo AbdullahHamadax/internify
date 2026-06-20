@@ -37,6 +37,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { Typography } from "@/components/ui/Typography";
 import TaskContributionsGraph from "@/components/shared/TaskContributionsGraph";
 import StarRating from "@/components/shared/StarRating";
+import FormattedTaskDescription from "@/components/shared/FormattedTaskDescription";
 import { useConvexTokenReady } from "@/lib/convexAuth";
 import {
   formatExternalLinkLabel,
@@ -625,9 +626,10 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                         </p>
                       )}
 
-                      <Typography variant="p" className="mt-4 text-sm leading-relaxed text-foreground">
-                        {item.description}
-                      </Typography>
+                      <FormattedTaskDescription
+                        text={item.description}
+                        className="mt-4 space-y-2.5"
+                      />
 
                       {item.skills.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">

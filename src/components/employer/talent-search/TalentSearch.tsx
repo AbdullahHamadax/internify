@@ -18,7 +18,11 @@ import { Typography } from "@/components/ui/Typography";
 import deviconData from "devicon/devicon.json";
 import { useProfileModal } from "@/components/shared/ProfileModalContext";
 import { SKILL_CATALOG } from "@/lib/skillCatalog";
-import { entityMatchesSkillFilter, skillMatchKey } from "@/lib/skillMatching";
+import {
+  entityMatchesSkillFilter,
+  skillMatchKey,
+  skillsMatch,
+} from "@/lib/skillMatching";
 import {
   getGithubProfileLink,
   getLinkedinProfileLink,
@@ -59,7 +63,6 @@ export default function TalentSearch() {
     () =>
       students
         ? students.map((s) => {
-            const mathSeed = s.user.createdAt || 1;
             function capitalize(str: string) {
               if (!str) return "";
               return str.charAt(0).toUpperCase() + str.slice(1);
@@ -86,10 +89,11 @@ export default function TalentSearch() {
                 (
                   (s.user.firstName?.[0] || "") + (s.user.lastName?.[0] || "")
                 ).toUpperCase() || "ST",
-              matchScore: 80 + (mathSeed % 20),
-              rating: Number((4.0 + (mathSeed % 10) / 10).toFixed(1)),
-              tasksDone: mathSeed % 15,
-              avgScore: 85 + (mathSeed % 15),
+              // Real, server-computed performance stats.
+              rating: s.stats.rating, // blended 0–5
+              tasksDone: s.stats.completedTasks,
+              avgScore: s.stats.avgScore, // average AI score 0–100
+              ratedTaskCount: s.stats.ratedTaskCount,
               github: s.profile?.github,
               linkedin: s.profile?.linkedin,
             };
@@ -169,11 +173,34 @@ export default function TalentSearch() {
 
       return matchesSearch && matchesSkills && matchesStatus;
     })
-    .sort(
-      (a, b) =>
+    // Real match score: when the employer has selected skills, this is the
+    // share of those skills the student actually has. With no skills selected
+    // there's nothing to match against, so the badge is hidden (null).
+    .map((talent) => {
+      const matchScore =
+        selectedSkills.length === 0
+          ? null
+          : Math.round(
+              (selectedSkills.filter((sel) =>
+                talent.skills.some((s) => skillsMatch(s, sel)),
+              ).length /
+                selectedSkills.length) *
+                100,
+            );
+      return { ...talent, matchScore };
+    })
+    .sort((a, b) => {
+      // Available first, then by match score (when filtering by skills),
+      // then by overall rating.
+      const statusDelta =
         STUDENT_AVAILABILITY_SORT_RANK[a.status] -
-        STUDENT_AVAILABILITY_SORT_RANK[b.status],
-    );
+        STUDENT_AVAILABILITY_SORT_RANK[b.status];
+      if (statusDelta !== 0) return statusDelta;
+      if (a.matchScore != null && b.matchScore != null) {
+        if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+      }
+      return b.rating - a.rating;
+    });
 
   return (
     <div className="flex flex-col xl:flex-row gap-8 h-full animate-in fade-in duration-500">
@@ -360,10 +387,13 @@ export default function TalentSearch() {
                       : "hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[12px_12px_0_0_#000] dark:hover:shadow-[12px_12px_0_0_#fff]"
                   }`}
                 >
-                  {/* Match Badge (Absolute Top Right) */}
-                  <div className="absolute -top-4 -right-4 bg-[#AB47BC] text-white border-4 border-black dark:border-white px-3 py-1 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] z-10 rotate-3 group-hover:rotate-6 transition-transform">
-                    {talent.matchScore}% Match
-                  </div>
+                  {/* Match Badge (Absolute Top Right) — only when the employer
+                      is filtering by skills, so the % reflects a real match. */}
+                  {talent.matchScore != null && (
+                    <div className="absolute -top-4 -right-4 bg-[#AB47BC] text-white border-4 border-black dark:border-white px-3 py-1 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] z-10 rotate-3 group-hover:rotate-6 transition-transform">
+                      {talent.matchScore}% Match
+                    </div>
+                  )}
 
                   {/* Card Header & Avatar */}
                   <div className="flex gap-4 items-start mb-5">
@@ -432,12 +462,15 @@ export default function TalentSearch() {
                     &quot;{talent.bio}&quot;
                   </Typography>
 
-                  {/* Stats Row */}
+                  {/* Stats Row — real data. Rating/Score show "—" until the
+                      student has at least one scored or rated completed task. */}
                   <div className="flex items-center justify-between border-y-4 border-black dark:border-white py-3 mb-5 text-sm font-black uppercase tracking-widest">
                     <div className="flex flex-col items-center">
                       <span className="flex items-center gap-1 text-xl text-black dark:text-white">
                         <Star className="size-5 fill-amber-500" />
-                        {talent.rating}
+                        {talent.ratedTaskCount > 0
+                          ? talent.rating.toFixed(1)
+                          : "—"}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
                         Rating
@@ -455,7 +488,7 @@ export default function TalentSearch() {
                     <div className="w-1 h-8 bg-black dark:bg-white opacity-20"></div>
                     <div className="flex flex-col items-center">
                       <span className="flex items-center gap-1 text-xl text-green-600 dark:text-green-500">
-                        {talent.avgScore}%
+                        {talent.avgScore > 0 ? `${talent.avgScore}%` : "—"}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
                         Score

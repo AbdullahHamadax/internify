@@ -455,7 +455,10 @@ export const getStudentsForEmployer = query({
       .filter((q) => q.eq(q.field("role"), "student"))
       .collect();
 
-    // 3. For each student, get their profile
+    // 3. For each student, get their profile + real performance stats
+    //    derived from completed tasks, AI evaluations, and employer ratings.
+    //    Blended rating mirrors ratings.getStudentRatingSummary (employer
+    //    stars weighted 60/40 with AI score; AI alone when unrated).
     const studentsWithProfiles = await Promise.all(
       students.map(async (student) => {
         const profile = await ctx.db
@@ -463,9 +466,67 @@ export const getStudentsForEmployer = query({
           .withIndex("by_userId", (q) => q.eq("userId", student._id))
           .unique();
 
+        const applications = await ctx.db
+          .query("applications")
+          .withIndex("by_studentId", (q) => q.eq("studentId", student._id))
+          .collect();
+        const completedApps = applications.filter(
+          (app) => app.status === "completed",
+        );
+
+        let blendedSum = 0;
+        let blendedCount = 0;
+        let aiScoreSum = 0;
+        let aiScoreCount = 0;
+
+        for (const app of completedApps) {
+          const evaluation = await ctx.db
+            .query("evaluations")
+            .withIndex("by_applicationId", (q) =>
+              q.eq("applicationId", app._id),
+            )
+            .unique();
+          const ratingRecord = await ctx.db
+            .query("ratings")
+            .withIndex("by_applicationId", (q) =>
+              q.eq("applicationId", app._id),
+            )
+            .unique();
+
+          const aiScore = evaluation?.overallScore ?? null;
+          const stars = ratingRecord?.stars ?? null;
+          if (aiScore == null && stars == null) continue;
+
+          if (aiScore != null) {
+            aiScoreSum += aiScore;
+            aiScoreCount += 1;
+          }
+
+          const aiStars = Math.max(
+            0,
+            Math.min(5, (aiScore ?? stars! * 20) / 20),
+          );
+          blendedSum +=
+            stars != null ? stars * 0.6 + aiStars * 0.4 : aiStars;
+          blendedCount += 1;
+        }
+
+        const rating =
+          blendedCount > 0
+            ? Math.round((blendedSum / blendedCount) * 10) / 10
+            : 0;
+        const avgScore =
+          aiScoreCount > 0 ? Math.round(aiScoreSum / aiScoreCount) : 0;
+
         return {
           user: student,
           profile: profile || null,
+          stats: {
+            completedTasks: completedApps.length,
+            rating, // blended 0–5, one decimal
+            avgScore, // average AI score 0–100
+            ratedTaskCount: blendedCount, // tasks with an AI score or rating
+          },
         };
       })
     );
