@@ -40,7 +40,7 @@ import {
 import { EGYPTIAN_UNIVERSITIES, EGYPTIAN_CITIES } from "@/lib/egyptianData";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import deviconData from "devicon/devicon.json";
+import { SkillIcon } from "@/lib/skillIcon";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -234,7 +234,6 @@ function SkillBadgeWithTooltip({
   const badgeRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
 
-  const devicon = getDeviconClass(skill);
   const xpEntry = skillXpData?.find((e) => e.skill === skill);
   const xp = xpEntry?.xp ?? 0;
   const level = getSkillLevel(xp);
@@ -250,7 +249,7 @@ function SkillBadgeWithTooltip({
       className="relative flex flex-col items-start gap-1 py-2 px-4 bg-card border-4 border-black shadow-[4px_4px_0_0_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] transition-all cursor-default"
     >
       <div className="flex items-center gap-2">
-        {devicon && <i className={`${devicon} text-lg`} />}
+        <SkillIcon skill={skill} className="text-lg" />
         <span className="uppercase tracking-wide text-sm font-black text-foreground">
           {skill}
         </span>
@@ -274,28 +273,6 @@ function SkillBadgeWithTooltip({
       />
     </div>
   );
-}
-
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
 }
 
 // Default fallback for profile when fields aren't filled yet
@@ -2016,15 +1993,12 @@ export default function StudentProfile() {
                   {/* Selected Skills Tags */}
                   <div className="flex flex-wrap gap-2 mb-3">
                     {formData.skills.map((skill) => {
-                      const iconClass = getDeviconClass(skill);
                       return (
                         <span
                           key={skill}
                           className="flex items-center gap-2 py-1 px-3 bg-[#FDE68A] text-black border-2 border-black shadow-[2px_2px_0_0_#000] text-xs font-bold uppercase tracking-wider"
                         >
-                          {iconClass && (
-                            <i className={`${iconClass} text-sm`} />
-                          )}
+                          <SkillIcon skill={skill} className="text-sm" />
                           {skill}
                           <button
                             onClick={() => removeSkill(skill)}
@@ -2069,7 +2043,6 @@ export default function StudentProfile() {
                         ? filteredCatalog.map((skill) => {
                             const isSelected = formData.skills.includes(skill);
                             if (isSelected) return null;
-                            const iconClass = getDeviconClass(skill);
                             return (
                               <button
                                 key={skill}
@@ -2082,7 +2055,7 @@ export default function StudentProfile() {
                                 }}
                                 className="flex items-center gap-1.5 px-2.5 py-1.5 bg-background border-2 border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
                               >
-                                {iconClass && <i className={iconClass} />}
+                                <SkillIcon skill={skill} />
                                 <span className="text-xs font-bold">
                                   {skill}
                                 </span>

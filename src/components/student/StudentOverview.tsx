@@ -2,29 +2,7 @@
 
 import { useState } from "react";
 
-import deviconData from "devicon/devicon.json";
-
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
+import { SkillIcon } from "@/lib/skillIcon";
 
 import { useUser } from "@clerk/nextjs";
 import { motion, Variants } from "framer-motion";
@@ -390,7 +368,6 @@ export default function StudentOverview({
 
                   <div className="flex flex-wrap gap-2">
                     {rec.skills.slice(0, 3).map((skill) => {
-                      const devicon = getDeviconClass(skill);
                       const isMatched = rec.matchedSkills.includes(skill);
                       return (
                         <span
@@ -400,7 +377,7 @@ export default function StudentOverview({
                               : "bg-white dark:bg-black text-foreground/60"
                             }`}
                         >
-                          {devicon && <i className={`${devicon} text-[14px]`} />}
+                          <SkillIcon skill={skill} className="text-[14px]" />
                           {skill}
                         </span>
                       );
