@@ -18,6 +18,7 @@ import {
   Users,
   Download,
   Image as ImageIcon,
+  Sparkles,
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
 import { motion, Variants, AnimatePresence } from "framer-motion";
@@ -119,6 +120,12 @@ export default function StudentExplore({
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
   const [showAcceptSuccess, setShowAcceptSuccess] = useState(false);
+  // Student's own AI-format toggle for the detail view. Defaults to whatever
+  // the employer chose for the task, but the student can flip it either way.
+  const [aiFormatOn, setAiFormatOn] = useState(false);
+  useEffect(() => {
+    if (selectedTask) setAiFormatOn(selectedTask.enableAiFormat ?? false);
+  }, [selectedTask?._id, selectedTask?.enableAiFormat]);
 
   const openTaskDetail = useCallback(
     (task: NonNullable<typeof selectedTask>) => {
@@ -705,13 +712,28 @@ export default function StudentExplore({
               <div className="flex-1 overflow-y-auto p-6 space-y-8">
                 {/* Details — AI-formatted with structured sections */}
                 <section>
-                  <Typography variant="h4" className="mb-3">
-                    About the Task
-                  </Typography>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <Typography variant="h4" className="mb-0">
+                      About the Task
+                    </Typography>
+                    <button
+                      type="button"
+                      onClick={() => setAiFormatOn((v) => !v)}
+                      title="Reorganize this description into clean sections with AI"
+                      className={`inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border-2 transition-all ${
+                        aiFormatOn
+                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 shadow-[2px_2px_0_0_#f59e0b]"
+                          : "border-border bg-card text-muted-foreground shadow-[2px_2px_0_0_var(--border)] hover:border-amber-500 hover:text-amber-700 dark:hover:text-amber-400"
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      {aiFormatOn ? "AI Format: On" : "Format with AI"}
+                    </button>
+                  </div>
                   <AIFormattedDescription
                     taskId={selectedTask._id}
                     description={selectedTask.description}
-                    enableAiFormat={selectedTask.enableAiFormat ?? false}
+                    enableAiFormat={aiFormatOn}
                   />
                 </section>
 
