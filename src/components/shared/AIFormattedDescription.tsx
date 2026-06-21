@@ -41,17 +41,17 @@ export default function AIFormattedDescription({
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchFormatted = useCallback(async () => {
-    // Already cached
-    if (formatCache.has(taskId)) {
-      setAiResult(formatCache.get(taskId)!);
+    // Sync to whatever is cached for THIS task — this also clears any stale
+    // result left over from a previously-viewed task (the drawer reuses this
+    // component instance across tasks).
+    const cached = formatCache.get(taskId);
+    setAiResult(cached ?? null);
+
+    // Nothing to fetch: already cached, AI not enabled, or too short to bother.
+    if (cached || !enableAiFormat || description.trim().length < 80) {
+      setLoading(false);
       return;
     }
-
-    // AI format not enabled by employer
-    if (!enableAiFormat) return;
-
-    // Too short to bother
-    if (description.trim().length < 80) return;
 
     setLoading(true);
     const controller = new AbortController();
@@ -86,7 +86,13 @@ export default function AIFormattedDescription({
   }, [fetchFormatted]);
 
   // ── Render AI-structured version ──
-  if (aiResult && (aiResult.summary || aiResult.requirements || aiResult.deliverables)) {
+  // Gate on `enableAiFormat` so toggling off reverts to the regex view even
+  // though the AI result stays cached for an instant re-enable.
+  if (
+    enableAiFormat &&
+    aiResult &&
+    (aiResult.summary || aiResult.requirements || aiResult.deliverables)
+  ) {
     return (
       <div className={className ?? "space-y-5"}>
         {/* AI badge */}
