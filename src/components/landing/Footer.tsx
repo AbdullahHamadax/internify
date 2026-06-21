@@ -10,7 +10,6 @@ const footerColumns = [
       { label: "Browse Tasks", href: "#" },
       { label: "How it Works", href: "#how-it-works" },
       { label: "Verify Certificate", href: "/verify" },
-      { label: "Pricing", href: "#" },
     ],
   },
   {

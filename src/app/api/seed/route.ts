@@ -24,7 +24,7 @@ export async function GET() {
       "To protect credential integrity, Internify uses strict anti-cheat mechanisms during task submission and evaluation.",
 
       // --- FOR STUDENTS: PORTFOLIOS & CERTIFICATES ---
-      "Upon successful completion of a task, students receive verifiable, company-branded certificates. These certificates include a tamper-proof digital signature to prevent unauthorized alterations.",
+      "Upon successful completion of a task, students receive verifiable, company-branded certificates. Each certificate carries a unique verification ID that anyone can check on the Internify verification page to confirm it is authentic.",
       "Students can use Internify to automatically generate dynamic CVs and personalized mini-portfolios. These portfolios are built directly from their successfully completed tasks and verified skills.",
 
       // --- FOR EMPLOYERS: POSTING TASKS & BRANDING ---

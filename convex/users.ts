@@ -495,10 +495,19 @@ export const syncCurrentUserNames = mutation({
 export const getStudentsForEmployer = query({
   args: {},
   handler: async (ctx) => {
-    // 1. Ensure the user is authenticated
+    // 1. Only authenticated employers may browse the student directory.
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Unauthorized");
+    }
+    const viewer = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+    if (!viewer || viewer.role !== "employer") {
+      throw new Error("Unauthorized: only employers can browse students");
     }
 
     // 2. Fetch all student users
@@ -572,7 +581,15 @@ export const getStudentsForEmployer = query({
           aiScoreCount > 0 ? Math.round(aiScoreSum / aiScoreCount) : 0;
 
         return {
-          user: student,
+          // Only expose what the talent UI needs + contact email for employers.
+          // Never return the raw user doc — it carries auth identifiers
+          // (tokenIdentifier, clerkUserId) that must not reach the browser.
+          user: {
+            _id: student._id,
+            firstName: student.firstName,
+            lastName: student.lastName,
+            email: student.email,
+          },
           profile: profile || null,
           stats: {
             completedTasks: completedApps.length,

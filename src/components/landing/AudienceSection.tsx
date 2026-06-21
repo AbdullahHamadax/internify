@@ -8,7 +8,7 @@ import { Typography } from "@/components/ui/Typography";
 const studentBullets = [
   "Work on real tasks from top companies",
   "Get instant AI feedback on your submissions",
-  "Earn tamper-proof verified certificates",
+  "Earn verifiable, company-branded certificates",
   "Auto-generate your CV and portfolio",
 ];
 

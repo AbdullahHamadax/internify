@@ -259,7 +259,7 @@ const values = [
   {
     icon: ShieldCheck,
     title: "Verified Credentials",
-    desc: "Certificates earned on Internify are tamper-proof and company-branded. Employers trust them because they represent proven ability.",
+    desc: "Certificates earned on Internify are independently verifiable and company-branded. Employers trust them because they represent proven ability.",
     accent: "bg-emerald-500",
     color: "#10B981",
   },
@@ -545,7 +545,7 @@ function AboutContent({
                         paddingBottom: 2,
                       }}
                     >
-                      verified, tamper-proof certificates
+                      verified, independently verifiable certificates
                     </strong>{" "}
                     branded by the employer, turning every completed challenge
                     into a concrete portfolio piece.
