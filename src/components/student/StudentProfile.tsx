@@ -469,6 +469,42 @@ function UploadedCvPdfRenderer({
   );
 }
 
+/**
+ * Renders every page of a PDF (given as bytes) to PNG data URLs via pdf.js.
+ * We preview the generated CV as images rather than embedding the blob in an
+ * <iframe> — many browsers (notably Firefox) download a blob-URL PDF in an
+ * iframe instead of showing it inline, which both hides the preview and
+ * triggers an unwanted automatic download.
+ */
+async function renderPdfToImages(data: ArrayBuffer): Promise<string[]> {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(data) }).promise;
+  const outputScale =
+    typeof window !== "undefined" ? Math.max(window.devicePixelRatio || 1, 1) : 1;
+  const targetWidth = 1000;
+  const images: string[] = [];
+
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const base = page.getViewport({ scale: 1 });
+    const viewport = page.getViewport({
+      scale: (targetWidth / base.width) * outputScale,
+    });
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) continue;
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    await page.render({ canvas, viewport }).promise;
+    page.cleanup();
+    images.push(canvas.toDataURL("image/png"));
+  }
+
+  return images;
+}
+
 export default function StudentProfile() {
   const { user } = useUser();
   const searchParams = useSearchParams();
@@ -540,6 +576,7 @@ export default function StudentProfile() {
   const [isGeneratingCv, setIsGeneratingCv] = useState(false);
   const [cvError, setCvError] = useState<string | null>(null);
   const [cvPdfBlobUrl, setCvPdfBlobUrl] = useState<string | null>(null);
+  const [cvPreviewPages, setCvPreviewPages] = useState<string[]>([]);
   const [cvPdfFileName, setCvPdfFileName] = useState<string>("CV.pdf");
   const [cvBlockedFields, setCvBlockedFields] = useState<string[]>([]);
 
@@ -875,6 +912,17 @@ export default function StudentProfile() {
       const blobUrl = URL.createObjectURL(pdfBlob);
       const safeName = (user.fullName ?? "Student").replace(/\s+/g, "_");
 
+      // Render pages to images for an inline preview (showing the blob in an
+      // <iframe> makes some browsers auto-download it instead). If rendering
+      // fails, the preview falls back to a message and Download still works.
+      let pages: string[] = [];
+      try {
+        pages = await renderPdfToImages(doc.output("arraybuffer"));
+      } catch (previewErr) {
+        console.error("CV preview render failed:", previewErr);
+      }
+
+      setCvPreviewPages(pages);
       setCvPdfBlobUrl(blobUrl);
       setCvPdfFileName(`${safeName}_CV.pdf`);
       setCvStep("preview");
@@ -2311,13 +2359,27 @@ export default function StudentProfile() {
               {/* STEP 2: PDF Preview */}
               {cvStep === "preview" && cvPdfBlobUrl && (
                 <>
-                  <div className="flex-1 overflow-hidden p-4">
-                    <iframe
-                      src={cvPdfBlobUrl}
-                      title="CV Preview"
-                      className="w-full h-full border-4 border-border shadow-[4px_4px_0_0_var(--border)] bg-white"
-                      style={{ minHeight: "500px" }}
-                    />
+                  <div className="flex-1 overflow-auto p-4 bg-muted">
+                    {cvPreviewPages.length > 0 ? (
+                      <div className="flex flex-col items-center gap-4">
+                        {cvPreviewPages.map((src, i) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={i}
+                            src={src}
+                            alt={`CV page ${i + 1}`}
+                            className="w-full max-w-[800px] border-4 border-border shadow-[4px_4px_0_0_var(--border)] bg-white"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        className="flex h-full items-center justify-center text-center text-sm font-bold text-muted-foreground"
+                        style={{ minHeight: "300px" }}
+                      >
+                        Preview unavailable — use Download to view your CV.
+                      </div>
+                    )}
                   </div>
 
                   {/* Footer */}
@@ -2325,6 +2387,7 @@ export default function StudentProfile() {
                     <button
                       onClick={() => {
                         setCvStep("select");
+                        setCvPreviewPages([]);
                         if (cvPdfBlobUrl) {
                           URL.revokeObjectURL(cvPdfBlobUrl);
                           setCvPdfBlobUrl(null);
