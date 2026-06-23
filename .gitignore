@@ -52,3 +52,8 @@ convex/_generated
 
 AGENTS.md
 CLAUDE.md
+
+# impeccable design skill + agent harness tooling (not part of the app)
+.impeccable/
+.opencode/
+.claude/skills/

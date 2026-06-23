@@ -12,8 +12,8 @@
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  --primary: #ab47bc;
-  --ring: #ab47bc;
+  --primary: var(--role-employer);
+  --ring: var(--role-employer);
 }
 
 /* ── Top Navbar ── */
@@ -22,6 +22,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 2rem;
   padding: 0 2.5rem;
   height: 4rem;
   border-bottom: 4px solid var(--border);
@@ -43,6 +44,8 @@
 .emp-navbar__left {
   display: flex;
   align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .emp-navbar__brand {
@@ -71,7 +74,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ab47bc;
+  background: var(--role-employer);
   color: white;
   box-shadow: 2px 2px 0 0 var(--foreground);
 }
@@ -88,12 +91,11 @@
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1151.98px) {
   .emp-navbar__nav {
     display: none;
   }
@@ -125,7 +127,7 @@
 
 .emp-navbar__link--active {
   color: white !important;
-  background: #ab47bc !important;
+  background: var(--role-employer) !important;
   border-color: black !important;
   box-shadow: 4px 4px 0 0 black !important;
   transform: translate(-2px, -2px);
@@ -140,7 +142,10 @@
 .emp-navbar__right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.5rem;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .emp-navbar__icon-btn {
@@ -186,7 +191,7 @@
   font-size: 0.8125rem;
   font-weight: 900;
   color: white;
-  background: #ab47bc;
+  background: var(--role-employer);
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.1s ease;
@@ -198,15 +203,152 @@
   box-shadow: none;
 }
 
+/* ── Compact (hamburger) menu items ── */
+
+.emp-menu-utility {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.emp-menu-divider {
+  border-top: 2px solid var(--border);
+  margin: 0 0 0.75rem;
+}
+
+.emp-navbar__mobile-menu .emp-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.8125rem 0.875rem;
+  border: 2px solid var(--foreground);
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: 3px 3px 0 0 var(--foreground);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s,
+    color 0.12s;
+  animation: emp-menu-item 0.28s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.emp-navbar__mobile-menu .emp-menu-link + .emp-menu-link {
+  margin-top: 0.5rem;
+}
+
+.emp-navbar__mobile-menu .emp-menu-link:hover,
+.emp-navbar__mobile-menu .emp-menu-link:focus-visible {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+  outline: none;
+}
+
+.emp-navbar__mobile-menu .emp-menu-link--active {
+  background: var(--role-employer);
+  color: #fff;
+  border-color: var(--foreground);
+}
+
+.emp-navbar__mobile-menu .emp-menu-link--danger {
+  color: hsl(0 72% 51%);
+  margin-top: 0.75rem;
+}
+
+.emp-navbar__mobile-menu .emp-menu-link--danger:hover {
+  background: hsl(0 72% 51%);
+  color: #fff;
+}
+
+.emp-menu-link__icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
+/* Staggered entrance for the menu blocks. */
+.emp-navbar__mobile-menu .emp-menu-link:nth-of-type(1) { animation-delay: 0.03s; }
+.emp-navbar__mobile-menu .emp-menu-link:nth-of-type(2) { animation-delay: 0.06s; }
+.emp-navbar__mobile-menu .emp-menu-link:nth-of-type(3) { animation-delay: 0.09s; }
+.emp-navbar__mobile-menu .emp-menu-link:nth-of-type(4) { animation-delay: 0.12s; }
+.emp-navbar__mobile-menu .emp-menu-link:nth-of-type(5) { animation-delay: 0.15s; }
+
+@keyframes emp-menu-item {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* ── Mobile Menu ── */
 
 .emp-mobile-toggle {
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1151.98px) {
   .emp-mobile-toggle {
     display: flex;
+  }
+
+  .emp-navbar__mobile-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: var(--card);
+    border-top: 2px solid var(--border);
+    border-bottom: 4px solid var(--foreground);
+    padding: 1rem;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* Hard offset shadow — on-system (No-Blur Rule), matches the landing nav. */
+    box-shadow: 0 8px 0 0 var(--foreground);
+    transform-origin: top center;
+    animation: emp-menu-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* Compact menu reveal: slide down + fade. Transform/opacity only. */
+@keyframes emp-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emp-navbar__mobile-menu,
+  .emp-navbar__mobile-menu .emp-menu-link {
+    animation: none;
+  }
+}
+
+/* Guard: the compact menu must never render in the desktop layout, even if its
+   open state lingers across a resize past the breakpoint. */
+@media (min-width: 1152px) {
+  .emp-navbar__mobile-menu {
+    display: none;
   }
 }
 
@@ -236,7 +378,7 @@
   padding: 1.25rem 2rem;
   margin-bottom: 2rem;
   border-radius: 0;
-  background: #ab47bc;
+  background: var(--role-employer);
   border: 4px solid var(--border);
   position: relative;
   overflow: hidden;
@@ -245,7 +387,7 @@
 }
 
 .dark .emp-hero {
-  background: #8e24aa;
+  background: var(--role-employer-deep);
   border-color: white;
   box-shadow: 8px 8px 0 0 white;
 }
@@ -380,10 +522,10 @@
   background: linear-gradient(90deg, hsl(38 92% 50%), hsl(25 95% 55%));
 }
 .emp-stat-card--emerald::before {
-  background: linear-gradient(90deg, hsl(160 84% 39%), hsl(140 70% 42%));
+  background: linear-gradient(90deg, var(--dash-emerald), hsl(140 70% 42%));
 }
 .emp-stat-card--violet::before {
-  background: linear-gradient(90deg, #ab47bc, #ba68c8);
+  background: linear-gradient(90deg, var(--role-employer), #ba68c8);
 }
 
 .emp-stat-card__info {
@@ -443,7 +585,7 @@
   color: black;
 }
 .emp-stat-card__icon--violet {
-  background: #ab47bc;
+  background: var(--role-employer);
   color: white;
 }
 .dark .emp-stat-card__icon--violet {
@@ -589,7 +731,7 @@
   color: black;
 }
 .emp-cat-tag--mobile {
-  background: #ab47bc;
+  background: var(--role-employer);
   color: white;
 }
 .dark .emp-cat-tag--mobile {
@@ -621,7 +763,7 @@
   color: black;
 }
 .emp-cat-tag--writing {
-  background: hsl(160 84% 39%);
+  background: var(--dash-emerald);
   color: white;
 }
 .dark .emp-cat-tag--writing {
@@ -672,6 +814,21 @@
   box-shadow: none;
 }
 
+/* Stack the row on phones so the title takes the full width instead of being
+   crushed into a tall sliver by the badge + button on the right. */
+@media (max-width: 640px) {
+  .emp-task-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.875rem;
+  }
+
+  .emp-task-row__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 .emp-task-empty {
   text-align: center;
   padding: 3rem 1rem;
@@ -719,11 +876,11 @@
 }
 
 .emp-badge--completed {
-  background: hsl(160 84% 39%);
+  background: var(--dash-emerald);
   color: white;
 }
 .dark .emp-badge--completed {
-  background: hsl(160 84% 55%);
+  background: var(--dash-emerald-bright);
   color: black;
 }
 
@@ -762,7 +919,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ab47bc;
+  background: var(--role-employer);
   color: white;
   box-shadow: 2px 2px 0 0 var(--border);
 }
@@ -799,16 +956,26 @@
 }
 
 .emp-metric__bar {
-  height: 0.4375rem;
+  height: 0.75rem;
   background: var(--muted);
-  border-radius: 9999px;
+  border-radius: 0;
+  border: 2px solid var(--foreground);
   overflow: hidden;
 }
 
 .emp-metric__fill {
   height: 100%;
-  border-radius: 9999px;
-  transition: width 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+  width: 100%;
+  border-radius: 0;
+  transform-origin: left center;
+  transform: scaleX(var(--fill, 0));
+  transition: transform 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emp-metric__fill {
+    transition: none;
+  }
 }
 
 .emp-metric__fill--red {
@@ -818,10 +985,10 @@
   background: hsl(221 83% 53%);
 }
 .emp-metric__fill--green {
-  background: hsl(160 84% 39%);
+  background: var(--dash-emerald);
 }
 .emp-metric__fill--violet {
-  background: linear-gradient(90deg, hsl(263 70% 50%), hsl(290 84% 60%));
+  background: linear-gradient(90deg, var(--dash-violet), hsl(290 84% 60%));
 }
 
 /* ── Top Students ── */
@@ -851,7 +1018,7 @@
 }
 
 .emp-student-avatar--purple {
-  background: hsl(263 70% 50%);
+  background: var(--dash-violet);
 }
 .emp-student-avatar--indigo {
   background: hsl(239 84% 55%);
@@ -883,7 +1050,7 @@
 }
 
 .emp-student-score strong {
-  color: hsl(160 84% 39%);
+  color: var(--dash-emerald);
   font-weight: 700;
 }
 
@@ -895,7 +1062,7 @@
 .emp-find-more__link {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: hsl(263 70% 50%);
+  color: var(--dash-violet);
   cursor: pointer;
   background: none;
   border: none;
@@ -904,7 +1071,7 @@
 }
 
 .dark .emp-find-more__link {
-  color: hsl(290 70% 70%);
+  color: var(--dash-violet-bright);
 }
 
 .emp-find-more__link:hover {
@@ -934,7 +1101,7 @@
 
 .emp-search-bar:focus {
   outline: none;
-  border-color: hsl(263 70% 50%);
+  border-color: var(--dash-violet);
   box-shadow: 0 0 0 3px hsl(263 70% 50% / 0.12);
 }
 
@@ -1045,11 +1212,11 @@
 .emp-modal__textarea:focus {
   outline: none;
   border-color: var(--border);
-  box-shadow: 4px 4px 0 0 hsl(263 70% 50%);
+  box-shadow: 4px 4px 0 0 var(--dash-violet);
 }
 
 .dark .emp-modal__textarea:focus {
-  box-shadow: 4px 4px 0 0 hsl(290 70% 70%);
+  box-shadow: 4px 4px 0 0 var(--dash-violet-bright);
 }
 
 .emp-modal__error {
@@ -1089,7 +1256,7 @@
 }
 
 .emp-tags:focus-within {
-  border-color: hsl(263 70% 50%);
+  border-color: var(--dash-violet);
   box-shadow: 0 0 0 3px hsl(263 70% 50% / 0.12);
 }
 
@@ -1100,7 +1267,7 @@
   padding: 0.1875rem 0.5rem;
   border-radius: 0;
   border: 2px solid var(--border);
-  background: hsl(263 70% 50%);
+  background: var(--dash-violet);
   color: white;
   font-size: 0.75rem;
   font-weight: 800;
@@ -1164,10 +1331,10 @@
 
 .emp-skill-picker:focus-within {
   border-color: var(--border);
-  box-shadow: 4px 4px 0 0 hsl(263 70% 50%);
+  box-shadow: 4px 4px 0 0 var(--dash-violet);
 }
 .dark .emp-skill-picker:focus-within {
-  box-shadow: 4px 4px 0 0 hsl(290 70% 70%);
+  box-shadow: 4px 4px 0 0 var(--dash-violet-bright);
 }
 
 .emp-skill-picker__selected {
@@ -1250,7 +1417,7 @@
 }
 
 .emp-skill-option--selected {
-  background: hsl(263 70% 50%);
+  background: var(--dash-violet);
   color: white;
   border-color: var(--border);
   box-shadow: 2px 2px 0 0 var(--border);
@@ -1288,7 +1455,7 @@
 }
 
 .emp-skill-option--custom:hover {
-  background: hsl(263 70% 50%);
+  background: var(--dash-violet);
   color: white;
   border-style: solid;
 }
@@ -1350,12 +1517,12 @@
 .ai-suggestions__icon {
   width: 0.875rem;
   height: 0.875rem;
-  color: hsl(263 70% 50%);
+  color: var(--dash-violet);
   animation: ai-sparkle 2s ease-in-out infinite;
 }
 
 .dark .ai-suggestions__icon {
-  color: hsl(290 70% 70%);
+  color: var(--dash-violet-bright);
 }
 
 @keyframes ai-sparkle {
@@ -1370,13 +1537,13 @@
 .ai-suggestions__spinner {
   width: 0.875rem;
   height: 0.875rem;
-  color: hsl(263 70% 50%);
+  color: var(--dash-violet);
   animation: spin 1s linear infinite;
   margin-left: auto;
 }
 
 .dark .ai-suggestions__spinner {
-  color: hsl(290 70% 70%);
+  color: var(--dash-violet-bright);
 }
 
 @keyframes spin {
@@ -1453,9 +1620,9 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border: 2px solid hsl(263 70% 50%);
+  border: 2px solid var(--dash-violet);
   background: hsl(263 70% 50% / 0.08);
-  color: hsl(263 70% 50%);
+  color: var(--dash-violet);
   cursor: pointer;
   transition: all 0.12s ease;
   white-space: nowrap;
@@ -1464,9 +1631,9 @@
 }
 
 .dark .ai-suggestion-chip {
-  border-color: hsl(290 70% 70%);
+  border-color: var(--dash-violet-bright);
   background: hsl(290 70% 70% / 0.1);
-  color: hsl(290 70% 70%);
+  color: var(--dash-violet-bright);
   box-shadow: 2px 2px 0 0 hsl(290 70% 70% / 0.3);
 }
 
@@ -1506,18 +1673,18 @@
 
 /* Already added state */
 .ai-suggestion-chip--added {
-  border-color: hsl(160 84% 39%);
+  border-color: var(--dash-emerald);
   background: hsl(160 84% 39% / 0.1);
-  color: hsl(160 84% 39%);
+  color: var(--dash-emerald);
   box-shadow: 2px 2px 0 0 hsl(160 84% 39% / 0.3);
   cursor: default;
   opacity: 0.7;
 }
 
 .dark .ai-suggestion-chip--added {
-  border-color: hsl(160 84% 55%);
+  border-color: var(--dash-emerald-bright);
   background: hsl(160 84% 55% / 0.1);
-  color: hsl(160 84% 55%);
+  color: var(--dash-emerald-bright);
   box-shadow: 2px 2px 0 0 hsl(160 84% 55% / 0.3);
 }
 
@@ -1563,13 +1730,13 @@
 /* ── Skill Picker Drop Target Highlight ── */
 
 .emp-skill-picker--drop-active {
-  border-color: hsl(263 70% 50%) !important;
-  box-shadow: 0 0 0 3px hsl(263 70% 50% / 0.2), 4px 4px 0 0 hsl(263 70% 50%) !important;
+  border-color: var(--dash-violet) !important;
+  box-shadow: 0 0 0 3px hsl(263 70% 50% / 0.2), 4px 4px 0 0 var(--dash-violet) !important;
 }
 
 .dark .emp-skill-picker--drop-active {
-  border-color: hsl(290 70% 70%) !important;
-  box-shadow: 0 0 0 3px hsl(290 70% 70% / 0.2), 4px 4px 0 0 hsl(290 70% 70%) !important;
+  border-color: var(--dash-violet-bright) !important;
+  box-shadow: 0 0 0 3px hsl(290 70% 70% / 0.2), 4px 4px 0 0 var(--dash-violet-bright) !important;
 }
 
 /* ── Rubric Builder ── */
@@ -1733,9 +1900,9 @@
 
 /* ── Dimension Type Colors ── */
 
-/* Default (blue accent) */
+/* Default (blue accent) — full colored border, not a side-stripe */
 .rubric-dim--default {
-  border-left: 4px solid #3B82F6;
+  border-color: #3B82F6;
   background: hsl(217 91% 60% / 0.04);
 }
 
@@ -1745,7 +1912,7 @@
 
 .dark .rubric-dim--default {
   background: hsl(217 91% 60% / 0.06);
-  border-left-color: hsl(217 91% 70%);
+  border-color: hsl(217 91% 70%);
 }
 
 .dark .rubric-dim--default:hover {
@@ -1754,7 +1921,7 @@
 
 /* Suggested (purple accent) */
 .rubric-dim--suggested {
-  border-left: 4px solid #8B5CF6;
+  border-color: #8B5CF6;
   background: hsl(263 70% 50% / 0.04);
 }
 
@@ -1764,16 +1931,16 @@
 
 .dark .rubric-dim--suggested {
   background: hsl(263 70% 60% / 0.06);
-  border-left-color: hsl(263 70% 70%);
+  border-color: hsl(263 70% 70%);
 }
 
 .dark .rubric-dim--suggested:hover {
   background: hsl(263 70% 60% / 0.14);
 }
 
-/* Manual (neutral) */
+/* Manual (neutral) — keeps the default neutral border */
 .rubric-dim--manual {
-  border-left: 4px solid var(--border);
+  border-color: var(--border);
 }
 
 .rubric-dim--manual:hover {
@@ -1961,18 +2128,18 @@
 
 /* Added state */
 .rubric-suggestion-chip--added {
-  border-color: hsl(160 84% 39%);
+  border-color: var(--dash-emerald);
   background: hsl(160 84% 39% / 0.08);
-  color: hsl(160 84% 39%);
+  color: var(--dash-emerald);
   box-shadow: 2px 2px 0 0 hsl(160 84% 39% / 0.25);
   cursor: default;
   opacity: 0.6;
 }
 
 .dark .rubric-suggestion-chip--added {
-  border-color: hsl(160 84% 55%);
+  border-color: var(--dash-emerald-bright);
   background: hsl(160 84% 55% / 0.08);
-  color: hsl(160 84% 55%);
+  color: var(--dash-emerald-bright);
   box-shadow: 2px 2px 0 0 hsl(160 84% 55% / 0.25);
 }
 

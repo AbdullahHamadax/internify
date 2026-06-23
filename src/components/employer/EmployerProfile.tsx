@@ -139,6 +139,16 @@ export default function EmployerProfile() {
   const [logoLoading, setLogoLoading] = useState(false);
   const logoFileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Close the edit modal on Escape.
+  useEffect(() => {
+    if (!isEditing) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsEditing(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isEditing]);
+
   // Sync state when modal opens
   useEffect(() => {
     if (isEditing && employerProfile) {
@@ -356,7 +366,7 @@ export default function EmployerProfile() {
           {/* Impact Overview Stats */}
           <div className="space-y-4">
             <Typography variant="h3" className="flex items-center gap-3">
-              <span className="p-1 bg-[#AB47BC] border-2 border-black text-white rotate-3 shadow-[2px_2px_0_0_#000]">
+              <span className="p-1 bg-[var(--role-employer)] border-2 border-black text-white rotate-3 shadow-[2px_2px_0_0_#000]">
                 <ClipboardList className="size-8" />
               </span>
               Your Impact
@@ -386,7 +396,7 @@ export default function EmployerProfile() {
 
               <div className="bg-card border-4 border-border p-6 shadow-[4px_4px_0_0_var(--border)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-default">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-[#AB47BC] text-white border-2 border-border shadow-[2px_2px_0_0_var(--border)]">
+                  <div className="p-2 bg-[var(--role-employer)] text-white border-2 border-border shadow-[2px_2px_0_0_var(--border)]">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <Typography
@@ -442,13 +452,18 @@ export default function EmployerProfile() {
       {/* EDIT PROFILE MODAL */}
       <AnimatePresence>
         {isEditing && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Edit employer profile"
+          >
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsEditing(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/70"
             />
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -486,7 +501,7 @@ export default function EmployerProfile() {
                       setFormData({ ...formData, companyName: e.target.value })
                     }
                     placeholder="e.g. Acme Corp"
-                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
+                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_var(--dash-violet)] dark:focus-visible:shadow-[4px_4px_0_0_var(--dash-violet-bright)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
                   />
                 </div>
 
@@ -504,7 +519,7 @@ export default function EmployerProfile() {
                       setFormData({ ...formData, position: e.target.value })
                     }
                     placeholder="e.g. Senior Recruiter"
-                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
+                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_var(--dash-violet)] dark:focus-visible:shadow-[4px_4px_0_0_var(--dash-violet-bright)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px]"
                   />
                 </div>
 
@@ -523,7 +538,7 @@ export default function EmployerProfile() {
                         rankLevel: e.target.value as RankLevel,
                       })
                     }
-                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] font-bold"
+                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_var(--dash-violet)] dark:focus-visible:shadow-[4px_4px_0_0_var(--dash-violet-bright)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] font-bold"
                   >
                     {rankOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -544,7 +559,7 @@ export default function EmployerProfile() {
                     value={hiringStatus}
                     onChange={(e) => handleHiringStatusChange(e.target.value)}
                     disabled={isHiringSaving}
-                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] font-bold"
+                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_var(--dash-violet)] dark:focus-visible:shadow-[4px_4px_0_0_var(--dash-violet-bright)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] font-bold"
                   >
                     {EMPLOYER_HIRING_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -650,7 +665,7 @@ export default function EmployerProfile() {
                       onClick={() => logoFileInputRef.current?.click()}
                       className="w-full flex items-center gap-3 p-3 border-2 border-dashed border-border hover:bg-muted/50 transition-colors"
                     >
-                      <div className="p-2 border-2 border-border bg-[#AB47BC] text-white">
+                      <div className="p-2 border-2 border-border bg-[var(--role-employer)] text-white">
                         <ImagePlus className="w-4 h-4" />
                       </div>
                       <div>

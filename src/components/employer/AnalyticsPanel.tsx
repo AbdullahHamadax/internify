@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { BarChart3, Inbox } from "lucide-react";
 import type { Task } from "./TaskManagement";
 import { Typography } from "@/components/ui/Typography";
@@ -85,7 +85,7 @@ export default function AnalyticsPanel({ tasks }: AnalyticsPanelProps) {
               <div className="emp-metric__bar">
                 <div
                   className={`emp-metric__fill ${m.barColor}`}
-                  style={{ width: `${m.value}%` }}
+                  style={{ "--fill": m.value / 100 } as CSSProperties}
                 />
               </div>
             </div>
@@ -111,11 +111,12 @@ export default function AnalyticsPanel({ tasks }: AnalyticsPanelProps) {
               <div className="emp-metric__bar">
                 <div
                   className="emp-metric__fill"
-                  style={{
-                    width: `${(count / maxCategoryCount) * 100}%`,
-                    backgroundColor: "hsl(263 70% 50%)",
-                    border: "2px solid var(--border)",
-                  }}
+                  style={
+                    {
+                      "--fill": count / maxCategoryCount,
+                      backgroundColor: "hsl(263 70% 50%)",
+                    } as CSSProperties
+                  }
                 />
               </div>
             </div>
