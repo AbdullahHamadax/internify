@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   Search,
-  SlidersHorizontal,
   Users,
   Clock,
   CalendarDays,
@@ -310,16 +309,10 @@ export default function TaskManagement({
             type="button"
             className="emp-icon-btn"
             onClick={() => setSearchOpen(!searchOpen)}
-            aria-label="Search tasks"
+            aria-label={searchOpen ? "Close search" : "Search tasks"}
+            aria-expanded={searchOpen}
           >
             <Search className="size-4" />
-          </button>
-          <button
-            type="button"
-            className="emp-icon-btn"
-            aria-label="Filter tasks"
-          >
-            <SlidersHorizontal className="size-4" />
           </button>
         </div>
       </div>

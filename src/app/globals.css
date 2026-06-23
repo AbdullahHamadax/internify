@@ -53,6 +53,17 @@ h6 {
   --brutal-shadow-sm: 2px 2px 0 0 #000;
   --brutal-shadow-md: 4px 4px 0 0 #000;
   --brutal-shadow-lg: 8px 8px 0 0 #000;
+
+  /* ── Dashboard extended palette (documented in DESIGN.md) ──
+     Named once here instead of being hard-coded across the dashboard CSS.
+     The *-bright variants are the lifted values used in dark mode. */
+  --role-student: #2563eb;
+  --role-employer: #ab47bc;
+  --role-employer-deep: #8e24aa;
+  --dash-violet: hsl(263 70% 50%);
+  --dash-violet-bright: hsl(290 70% 70%);
+  --dash-emerald: hsl(160 84% 39%);
+  --dash-emerald-bright: hsl(160 84% 55%);
 }
 
 .dark {
@@ -321,5 +332,76 @@ input[type="reset"] {
 @media (prefers-reduced-motion: reduce) {
   .view-float-shape {
     animation: none !important;
+  }
+}
+
+/*
+ * About-page narrative cards. On-system neobrutalist chrome: square corners,
+ * 2px black/white border (set via utilities), and a hard *colored* offset
+ * shadow per section (red Problem / mint Solution / accent Values) so the
+ * chromatic storytelling survives while obeying the No-Blur Rule. Base tilt is
+ * carried in --tilt; on hover the card straightens and presses into its own
+ * shadow (Press-to-Flatten), the offset matched by --press.
+ */
+.about-card {
+  --tilt: 0deg;
+  --press: 6px;
+  transform: rotate(var(--tilt));
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.about-card:hover {
+  transform: rotate(0deg) translate(var(--press), var(--press));
+  box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-card {
+    transition: none;
+  }
+  .about-card:hover {
+    transform: rotate(var(--tilt));
+  }
+}
+
+/* ── Landing navbar compact menu — matches the dashboard hamburger menus ── */
+@keyframes nav-menu-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nav-menu-item {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.nav-menu-drop {
+  transform-origin: top center;
+  animation: nav-menu-drop 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-menu-item {
+  animation: nav-menu-item 0.28s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-menu-drop,
+  .nav-menu-item {
+    animation: none;
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import {
@@ -61,6 +61,7 @@ function StudentNavbar({
   const { signOut } = useClerk();
   const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
   const isConvexTokenReady = useConvexTokenReady();
   const unreadCount =
     useQuery(
@@ -71,8 +72,39 @@ function StudentNavbar({
     await signOut({ redirectUrl: "/login?role=student" });
   }, [signOut]);
 
+  // Close the compact menu once the viewport grows back to the desktop layout,
+  // otherwise the open menu's leftover items strand on-screen after resize.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1152px)");
+    const handle = (e: MediaQueryListEvent) => {
+      if (e.matches) setMobileOpen(false);
+    };
+    if (mq.matches) setMobileOpen(false);
+    mq.addEventListener("change", handle);
+    return () => mq.removeEventListener("change", handle);
+  }, []);
+
+  // Dismiss the compact menu on outside click or Escape.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileOpen]);
+
   return (
-    <nav className="stu-navbar">
+    <nav className="stu-navbar" ref={navRef}>
       <div className="stu-navbar__left">
         {/* Brand */}
         <div className="stu-navbar__brand" aria-hidden="true">
@@ -100,8 +132,8 @@ function StudentNavbar({
       </div>
 
       <div className="stu-navbar__right">
-        {/* Hidden on mobile, shown on md screens */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* Hidden on mobile, shown on wide screens (matches nav collapse at 1152px) */}
+        <div className="hidden min-[1152px]:flex items-center gap-2">
           <HomeButton href="/" />
           <ThemeToggle />
 
@@ -149,6 +181,7 @@ function StudentNavbar({
                 role="student"
                 name={user?.firstName ?? user?.fullName}
                 imageUrl={user?.hasImage ? user.imageUrl : null}
+                interactive
               />
             </button>
           </DropdownMenuTrigger>
@@ -192,7 +225,9 @@ function StudentNavbar({
           type="button"
           className="stu-navbar__icon-btn stu-mobile-toggle"
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileOpen}
+          aria-controls="stu-mobile-menu"
         >
           {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
         </button>
@@ -200,27 +235,19 @@ function StudentNavbar({
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <div className="stu-navbar__mobile-menu">
-          {/* Mobile Actions: Theme & Notifications */}
-          <div className="flex items-center justify-between mb-2 pb-3 border-b border-border md:hidden">
-            <span className="text-sm font-medium text-muted-foreground">
-              Appearance
-            </span>
+        <div className="stu-navbar__mobile-menu" id="stu-mobile-menu">
+          {/* Utility strip: Home + theme + notifications */}
+          <div className="stu-menu-utility">
+            <HomeButton href="/" className="flex-1 justify-center" />
             <ThemeToggle />
-          </div>
-
-          <div className="mb-2 pb-3 border-b border-border md:hidden">
-            <HomeButton href="/" className="w-full justify-center" />
-          </div>
-
-          <div className="flex items-center justify-between mb-2 pb-3 border-b border-border md:hidden">
-            <span className="text-sm font-medium text-muted-foreground">
-              Notifications
-            </span>
             <button
               type="button"
               className="stu-navbar__icon-btn"
-              aria-label="Notifications"
+              aria-label={
+                unreadCount > 0
+                  ? `Notifications, ${unreadCount} unread`
+                  : "Notifications"
+              }
               onClick={() => {
                 onNavigate("notifications");
                 setMobileOpen(false);
@@ -252,35 +279,37 @@ function StudentNavbar({
             </button>
           </div>
 
-          {NAV_LINKS.map((link) => (
-            <button
-              key={link.id}
-              type="button"
-              className={`stu-navbar__link${
-                activeNav === link.id ? " stu-navbar__link--active" : ""
-              }`}
-              style={{ display: "block", width: "100%", textAlign: "left" }}
-              onClick={() => {
-                onNavigate(link.id);
-                setMobileOpen(false);
-              }}
-            >
-              {link.label}
-            </button>
-          ))}
+          <div className="stu-menu-divider" />
+
+          {/* Primary nav as brutalist blocks */}
+          {NAV_LINKS.map((link) => {
+            const Icon = link.icon;
+            return (
+              <button
+                key={link.id}
+                type="button"
+                className={`stu-menu-link${
+                  activeNav === link.id ? " stu-menu-link--active" : ""
+                }`}
+                aria-current={activeNav === link.id ? "page" : undefined}
+                onClick={() => {
+                  onNavigate(link.id);
+                  setMobileOpen(false);
+                }}
+              >
+                <Icon className="stu-menu-link__icon" />
+                {link.label}
+              </button>
+            );
+          })}
+
           <button
             type="button"
-            className="stu-navbar__link"
-            style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
-              color: "hsl(0 72% 51%)",
-              marginTop: "0.5rem",
-            }}
+            className="stu-menu-link stu-menu-link--danger"
             onClick={() => void handleSignOut()}
           >
-            Logout
+            <LogOut className="stu-menu-link__icon" />
+            Log Out
           </button>
         </div>
       )}
