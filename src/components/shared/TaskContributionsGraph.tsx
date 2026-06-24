@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, memo } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "convex/react";
 
@@ -106,6 +106,57 @@ function formatTooltipText(date: Date, count: number) {
   return `${count} task${count === 1 ? "" : "s"} completed on ${formattedDate}`;
 }
 
+type ContributionDay = {
+  date: Date;
+  key: string;
+  count: number;
+  isFuture: boolean;
+};
+type ContributionWeek = { days: ContributionDay[] };
+
+/**
+ * The cell grid is memoized and kept out of the parent's render path so that
+ * hovering (which updates tooltip state on the parent) never re-renders all
+ * ~364 cells. With stable `onEnter`/`onLeave` callbacks, hover stays smooth.
+ */
+const ContributionGrid = memo(function ContributionGrid({
+  weeks,
+  onEnter,
+  onLeave,
+}: {
+  weeks: ContributionWeek[];
+  onEnter: (target: HTMLButtonElement, date: Date, count: number) => void;
+  onLeave: () => void;
+}) {
+  return (
+    <div className="flex min-w-0 flex-1 gap-[3px]">
+      {weeks.map((week, weekIndex) => (
+        <div
+          key={`week-${weekIndex}`}
+          className="flex min-w-0 flex-1 flex-col gap-[3px]"
+        >
+          {week.days.map((day) => (
+            <button
+              key={day.key}
+              type="button"
+              aria-label={formatTooltipText(day.date, day.count)}
+              onMouseEnter={(event) =>
+                onEnter(event.currentTarget, day.date, day.count)
+              }
+              onMouseLeave={onLeave}
+              onFocus={(event) =>
+                onEnter(event.currentTarget, day.date, day.count)
+              }
+              onBlur={onLeave}
+              className={`aspect-square w-full border border-black/10 transition-transform hover:scale-125 focus:outline-none focus:ring-2 focus:ring-[#047857] dark:border-white/10 ${getContributionClass(day.count, day.isFuture)}`}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+});
+
 export default function TaskContributionsGraph({
   studentId,
   className = "",
@@ -200,27 +251,28 @@ export default function TaskContributionsGraph({
   const isLoading = !studentId || contributionData === undefined;
   const total = contributionData?.total ?? 0;
 
-  const showTooltip = (
-    target: HTMLButtonElement,
-    date: Date,
-    count: number,
-  ) => {
-    const rect = target.getBoundingClientRect();
-    const tooltipWidth = 240;
-    const left = clamp(
-      rect.left + rect.width / 2,
-      tooltipWidth / 2 + 12,
-      window.innerWidth - tooltipWidth / 2 - 12,
-    );
-    const showBelow = rect.top < 54;
+  const showTooltip = useCallback(
+    (target: HTMLButtonElement, date: Date, count: number) => {
+      const rect = target.getBoundingClientRect();
+      const tooltipWidth = 240;
+      const left = clamp(
+        rect.left + rect.width / 2,
+        tooltipWidth / 2 + 12,
+        window.innerWidth - tooltipWidth / 2 - 12,
+      );
+      const showBelow = rect.top < 54;
 
-    setTooltip({
-      text: formatTooltipText(date, count),
-      left,
-      top: showBelow ? rect.bottom + 10 : rect.top - 10,
-      placement: showBelow ? "bottom" : "top",
-    });
-  };
+      setTooltip({
+        text: formatTooltipText(date, count),
+        left,
+        top: showBelow ? rect.bottom + 10 : rect.top - 10,
+        placement: showBelow ? "bottom" : "top",
+      });
+    },
+    [],
+  );
+
+  const hideTooltip = useCallback(() => setTooltip(null), []);
 
   return (
     <section
@@ -276,31 +328,11 @@ export default function TaskContributionsGraph({
               ))}
             </div>
 
-            <div className="flex min-w-0 flex-1 gap-[3px]">
-              {graph.weeks.map((week, weekIndex) => (
-                <div
-                  key={`week-${weekIndex}`}
-                  className="flex min-w-0 flex-1 flex-col gap-[3px]"
-                >
-                  {week.days.map((day) => (
-                    <button
-                      key={day.key}
-                      type="button"
-                      aria-label={formatTooltipText(day.date, day.count)}
-                      onMouseEnter={(event) =>
-                        showTooltip(event.currentTarget, day.date, day.count)
-                      }
-                      onMouseLeave={() => setTooltip(null)}
-                      onFocus={(event) =>
-                        showTooltip(event.currentTarget, day.date, day.count)
-                      }
-                      onBlur={() => setTooltip(null)}
-                      className={`aspect-square w-full border border-black/10 transition-transform hover:scale-125 focus:outline-none focus:ring-2 focus:ring-[#047857] dark:border-white/10 ${getContributionClass(day.count, day.isFuture)}`}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
+            <ContributionGrid
+              weeks={graph.weeks}
+              onEnter={showTooltip}
+              onLeave={hideTooltip}
+            />
           </div>
 
           {/* Legend */}

@@ -21,6 +21,8 @@ import Messages from "@/components/shared/Messages";
 import Notifications from "@/components/shared/Notifications";
 
 import HomeButton from "@/components/shared/HomeButton";
+import SkillXpWatcher from "./SkillXpWatcher";
+import CertificateWatcher from "./CertificateWatcher";
 import AccountAvatar from "@/components/shared/AccountAvatar";
 import { api } from "../../../convex/_generated/api";
 
@@ -373,6 +375,8 @@ export default function StudentDashboard() {
 
   return (
     <div className="stu-dashboard">
+      <SkillXpWatcher />
+      <CertificateWatcher />
       <StudentNavbar activeNav={activeNav} onNavigate={handleNavigate} />
 
       <main className="stu-main">

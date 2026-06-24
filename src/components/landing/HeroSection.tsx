@@ -32,8 +32,8 @@ export default function HeroSection() {
             <AnimateIn delay={0.1}>
               <Typography
                 variant="p"
-                color="muted"
-                className="mt-6 text-lg leading-relaxed"
+                color="default"
+                className="mt-6 max-w-prose text-lg font-medium leading-relaxed text-foreground/85"
               >
                 Internify connects students with real employer challenges.
                 Complete tasks, earn verified certificates, and land your first
