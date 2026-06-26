@@ -7,7 +7,6 @@ import { useQuery, useMutation } from "convex/react";
 import {
   Plus,
   Bell,
-  GraduationCap,
   LayoutDashboard,
   FileEdit,
   Search,
@@ -19,6 +18,7 @@ import {
   Settings,
   House,
 } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
@@ -130,11 +130,8 @@ function EmployerNavbar({
     <nav className="emp-navbar" ref={navRef}>
       <div className="emp-navbar__left">
         {/* Brand */}
-        <div className="emp-navbar__brand" aria-hidden="true">
-          <div className="emp-navbar__brand-icon">
-            <GraduationCap className="size-4.5 text-white" />
-          </div>
-          <span className="emp-navbar__brand-text">Internify</span>
+        <div className="emp-navbar__brand">
+          <Logo />
         </div>
       </div>
 

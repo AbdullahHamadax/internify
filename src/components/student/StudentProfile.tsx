@@ -36,7 +36,10 @@ import {
   Save,
   Trash2,
   FileCheck,
+  Award,
 } from "lucide-react";
+import CertificatePreviewModal from "./CertificatePreviewModal";
+import { type CertificateData } from "./CertificateTemplate";
 import { EGYPTIAN_UNIVERSITIES, EGYPTIAN_CITIES } from "@/lib/egyptianData";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -527,6 +530,18 @@ export default function StudentProfile() {
 
   const studentProfile = currentUserData?.studentProfile;
   const dbUser = currentUserData?.user;
+
+  // Earned certificates for this student, keyed by the task they were earned for
+  // (a completed task with a passing score mints exactly one certificate).
+  const certificates = useQuery(
+    api.certificates.getCertificatesByStudent,
+    dbUser?._id ? { studentId: dbUser._id } : "skip",
+  );
+  const certByTaskId = new Map(
+    (certificates ?? []).map((c) => [c.taskId, c]),
+  );
+  // Certificate currently shown in the preview/download modal, if any.
+  const [certPreview, setCertPreview] = useState<CertificateData | null>(null);
 
   // Profile Data Resolution
   const profileTitle = studentProfile?.title || DEFAULT_PROFILE.title;
@@ -1680,12 +1695,35 @@ export default function StudentProfile() {
                           })()}
                         </div>
 
-                        <div className="shrink-0 pt-2 sm:pt-0">
+                        <div className="shrink-0 pt-2 sm:pt-0 flex flex-col sm:items-end gap-2">
+                          {(() => {
+                            const cert = certByTaskId.get(app.taskId);
+                            if (!cert) return null;
+                            return (
+                              <button
+                                onClick={() =>
+                                  setCertPreview({
+                                    certificateId: cert.certificateId,
+                                    studentName: cert.studentName,
+                                    taskTitle: cert.taskTitle,
+                                    employerName: cert.companyName,
+                                    finalScore: cert.finalScore,
+                                    completedAt: cert.completedAt,
+                                    employerLogoUrl: cert.logoUrl,
+                                  })
+                                }
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-[#AB47BC] text-white border-2 border-border font-black uppercase tracking-widest text-xs shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                              >
+                                <Award className="w-4 h-4" />
+                                Certificate
+                              </button>
+                            );
+                          })()}
                           <button
                             onClick={() =>
                               setExpandedTaskId(isExpanded ? null : app._id)
                             }
-                            className="px-4 py-2 bg-transparent text-foreground border-2 border-border font-black uppercase tracking-widest text-xs hover:bg-foreground hover:text-background transition-colors"
+                            className="w-full sm:w-auto px-4 py-2 bg-transparent text-foreground border-2 border-border font-black uppercase tracking-widest text-xs hover:bg-foreground hover:text-background transition-colors"
                           >
                             {isExpanded ? "Hide Details" : "View Details"}
                           </button>
@@ -1757,6 +1795,15 @@ export default function StudentProfile() {
           </div>
         </motion.div>
       </div>
+
+      {/* CERTIFICATE PREVIEW / DOWNLOAD MODAL */}
+      {certPreview && (
+        <CertificatePreviewModal
+          open={!!certPreview}
+          certificateData={certPreview}
+          onClose={() => setCertPreview(null)}
+        />
+      )}
 
       {/* EDIT PROFILE MODAL */}
       <AnimatePresence>

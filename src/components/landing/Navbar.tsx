@@ -13,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  GraduationCap,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -24,7 +23,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Typography } from "@/components/ui/Typography";
+import { Logo } from "@/components/ui/Logo";
 import { api } from "../../../convex/_generated/api";
 
 const navLinks = [
@@ -122,18 +121,9 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
       className="fixed left-0 right-0 top-0 z-50 border-b-4 border-black bg-white shadow-[0_4px_0_0_#000] transition-all duration-300 dark:border-white dark:bg-black dark:shadow-[0_4px_0_0_#fff]"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="rounded-none border-2 border-black bg-[#2563EB] p-1.5 shadow-[2px_2px_0_0_#000] dark:border-white">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
-            <Typography
-              variant="span"
-              className="text-xl tracking-tight"
-              weight="bold"
-            >
-              Internify
-            </Typography>
+        <div className="flex h-20 items-center justify-between">
+          <Link href="/" className="flex items-center" aria-label="Internify home">
+            <Logo />
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

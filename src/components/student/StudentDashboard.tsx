@@ -5,7 +5,6 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import {
   Bell,
-  GraduationCap,
   LayoutDashboard,
   Search,
   MessageSquare,
@@ -16,6 +15,7 @@ import {
   LogOut,
   House,
 } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Messages from "@/components/shared/Messages";
 import Notifications from "@/components/shared/Notifications";
@@ -109,11 +109,8 @@ function StudentNavbar({
     <nav className="stu-navbar" ref={navRef}>
       <div className="stu-navbar__left">
         {/* Brand */}
-        <div className="stu-navbar__brand" aria-hidden="true">
-          <div className="stu-navbar__brand-icon">
-            <GraduationCap className="size-4.5 text-white" />
-          </div>
-          <span className="stu-navbar__brand-text">Internify</span>
+        <div className="stu-navbar__brand">
+          <Logo />
         </div>
       </div>
 
