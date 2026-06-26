@@ -222,6 +222,7 @@ export const createTask = mutation({
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
     customRubric: v.optional(v.array(v.string())),
+    enableAiFormat: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -268,6 +269,7 @@ export const createTask = mutation({
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
       customRubric: args.customRubric,
+      enableAiFormat: args.enableAiFormat,
       status: "pending",
       createdAt: now,
       updatedAt: now,
@@ -412,6 +414,8 @@ export const browseTasks = query({
           applicantCount: task.applicantCount,
           createdAt: task.createdAt,
           companyName: employerProfile?.companyName ?? "Unknown Company",
+          companyHiringStatus: employerProfile?.hiringStatus ?? null,
+          enableAiFormat: task.enableAiFormat ?? false,
           resolvedAttachments,
         };
       }),
@@ -573,9 +577,30 @@ export const getEmployerStats = query({
 
     const completedTasks = tasks.filter((t) => t.status === "completed").length;
 
-    // Placeholder values — wire these up once the submissions feature is built
-    const totalSubmissions = 0;
-    const avgQualityScore = 0;
+    // Real submission + quality numbers across all of this employer's tasks.
+    // Total submissions = every submission received; avg quality = mean of the
+    // AI evaluation overall scores (0–100).
+    let totalSubmissions = 0;
+    let scoreSum = 0;
+    let scoreCount = 0;
+    for (const task of tasks) {
+      const submissions = await ctx.db
+        .query("submissions")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+      totalSubmissions += submissions.length;
+
+      const evaluations = await ctx.db
+        .query("evaluations")
+        .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+        .collect();
+      for (const evaluation of evaluations) {
+        scoreSum += evaluation.overallScore;
+        scoreCount += 1;
+      }
+    }
+    const avgQualityScore =
+      scoreCount > 0 ? Math.round(scoreSum / scoreCount) : 0;
 
     return {
       activeTasks,
@@ -763,6 +788,7 @@ export const updateTask = mutation({
     imageStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(attachmentValidator),
     customRubric: v.optional(v.array(v.string())),
+    enableAiFormat: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -831,6 +857,7 @@ export const updateTask = mutation({
       imageStorageIds: args.imageStorageIds,
       attachments: args.attachments,
       customRubric: args.customRubric,
+      enableAiFormat: args.enableAiFormat,
       updatedAt: Date.now(),
     });
   },
@@ -915,6 +942,23 @@ export const acceptTask = mutation({
     }
 
     await ctx.db.patch(args.taskId, updates);
+
+    // Auto-mark the student's "new task posted" notification(s) for this task
+    // as read — accepting the task means they've acted on it.
+    const unreadForStudent = await ctx.db
+      .query("notifications")
+      .withIndex("by_userId_isRead", (q) =>
+        q.eq("userId", user._id).eq("isRead", false),
+      )
+      .collect();
+    await Promise.all(
+      unreadForStudent
+        .filter(
+          (n) =>
+            n.type === "new_task_posted" && n.relatedTaskId === args.taskId,
+        )
+        .map((n) => ctx.db.patch(n._id, { isRead: true })),
+    );
 
     // Notify the employer that a student accepted their task
     const studentName =
@@ -1280,6 +1324,7 @@ export const getTaskSubmissions = query({
 
         return {
           _id: sub._id,
+          applicationId: sub.applicationId,
           studentId: sub.studentId,
           studentName,
           note: sub.note,
@@ -1302,6 +1347,10 @@ export const getTaskSubmissions = query({
 export const getFileUrls = query({
   args: { storageIds: v.array(v.id("_storage")) },
   handler: async (ctx, args) => {
+    // Auth-gate: never hand out storage URLs to an unauthenticated caller.
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
     const results = await Promise.all(
       args.storageIds.map(async (id) => {
         const url = await ctx.storage.getUrl(id);

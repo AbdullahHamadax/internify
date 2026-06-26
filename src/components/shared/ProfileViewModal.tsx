@@ -17,13 +17,15 @@ import {
   Linkedin,
   Building2,
   Award,
+  BadgeCheck,
+  ExternalLink,
   GraduationCap,
   Zap,
   Loader2,
   Star,
   ArrowUpRight,
 } from "lucide-react";
-import deviconData from "devicon/devicon.json";
+import { SkillIcon } from "@/lib/skillIcon";
 import {
   formatExternalLinkLabel,
   getGithubProfileLink,
@@ -34,28 +36,7 @@ import {
   getStudentAvailabilityMeta,
   normalizeStudentAvailabilityStatus,
 } from "@/lib/availability";
-
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
+import { getEmployerHiringMeta } from "@/lib/hiringStatus";
 
 interface ProfileViewModalProps {
   userId: Id<"users">;
@@ -67,6 +48,9 @@ export default function ProfileViewModal({
   onClose,
 }: ProfileViewModalProps) {
   const profile = useQuery(api.users.getPublicProfile, { userId });
+  const certificates = useQuery(api.certificates.getCertificatesByStudent, {
+    studentId: userId,
+  });
   const globalPresence = useQuery(api.presence.listRoom, { roomId: "global:online" });
   const isOnline = globalPresence?.some((u) => u.userId === profile?.userId);
 
@@ -261,7 +245,6 @@ export default function ProfileViewModal({
                     </Typography>
                     <div className="flex flex-wrap gap-2">
                       {sp.skills.map((skill) => {
-                        const devicon = getDeviconClass(skill);
                         const xpEntry = sp.skillXp?.find((e: { skill: string; xp: number }) => e.skill === skill);
                         const xp = xpEntry?.xp ?? 0;
                         const level = xp >= 1500 ? "Advanced" : xp >= 1000 ? "Intermediate" : "Beginner";
@@ -277,9 +260,7 @@ export default function ProfileViewModal({
                             className="flex flex-col items-start gap-1 py-1.5 px-3 bg-card border-2 border-border shadow-[2px_2px_0_0_var(--border)]"
                           >
                             <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider">
-                              {devicon && (
-                                <i className={`${devicon} text-sm`} />
-                              )}
+                              <SkillIcon skill={skill} className="text-sm" />
                               {skill}
                             </span>
                             <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${levelStyle}`}>
@@ -288,6 +269,63 @@ export default function ProfileViewModal({
                           </span>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Certificates (condensed) */}
+                {certificates && certificates.length > 0 && (
+                  <div>
+                    <Typography
+                      variant="h4"
+                      className="flex items-center gap-2 mb-3"
+                    >
+                      <span className="p-0.5 bg-[#E9D5FF] border-2 border-border text-black shadow-[2px_2px_0_0_var(--border)]">
+                        <Award className="w-4 h-4" />
+                      </span>
+                      Certificates
+                    </Typography>
+                    <div className="space-y-2">
+                      {certificates.map((cert) => (
+                        <div
+                          key={cert.certificateId}
+                          className="flex items-center gap-3 bg-card border-2 border-border p-2.5 shadow-[2px_2px_0_0_var(--border)]"
+                        >
+                          {cert.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={cert.logoUrl}
+                              alt={cert.companyName}
+                              className="w-8 h-8 shrink-0 border border-border bg-white object-contain"
+                            />
+                          ) : (
+                            <span className="flex w-8 h-8 shrink-0 items-center justify-center border border-border bg-muted">
+                              <Building2 className="w-4 h-4 text-muted-foreground" />
+                            </span>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className="line-clamp-2 break-words text-xs font-black uppercase tracking-wider"
+                              title={cert.taskTitle}
+                            >
+                              {cert.taskTitle}
+                            </p>
+                            <p className="truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                              {cert.companyName} · {cert.finalScore}/100
+                            </p>
+                          </div>
+                          <a
+                            href={`/verify/${encodeURIComponent(cert.certificateId)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex shrink-0 items-center gap-1 border-2 border-black dark:border-white bg-[#AB47BC] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+                          >
+                            <BadgeCheck className="w-3 h-3" />
+                            Verify
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -361,7 +399,7 @@ export default function ProfileViewModal({
                   <Link
                     href={`/students/${userId}`}
                     onClick={onClose}
-                    className="inline-flex items-center gap-2 border-4 border-black dark:border-white bg-[#2563EB] px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff]"
+                    className="flex w-full items-center justify-center gap-2 border-4 border-black dark:border-white bg-[#2563EB] px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] dark:hover:shadow-[6px_6px_0_0_#fff]"
                   >
                     View Full Profile
                     <ArrowUpRight className="w-4 h-4" />
@@ -421,6 +459,20 @@ export default function ProfileViewModal({
                       {ep.rankLevel}
                     </span>
                   )}
+                  {ep &&
+                    (() => {
+                      const hm = getEmployerHiringMeta(ep.hiringStatus);
+                      return (
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-border text-xs font-black uppercase tracking-wider shadow-[2px_2px_0_0_var(--border)] ${hm.badgeClassName}`}
+                        >
+                          <span
+                            className={`size-2 border border-black dark:border-white ${hm.dotClassName}`}
+                          />
+                          {hm.label}
+                        </span>
+                      );
+                    })()}
                 </div>
 
                 {/* Contact */}

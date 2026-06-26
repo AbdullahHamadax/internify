@@ -266,7 +266,7 @@ export default function Messages({
     <div className="flex bg-card border-4 border-border shadow-[4px_4px_0_0_var(--border)] h-[calc(100vh-14rem)] min-h-[500px] overflow-hidden">
       {/* ─── LEFT PANE: Conversation List ─── */}
       <div
-        className={`w-full md:w-80 flex-shrink-0 border-r-4 border-border flex flex-col h-full ${mobileShowChat ? "hidden md:flex" : "flex"}`}
+        className={`w-full min-[1152px]:w-80 flex-shrink-0 border-r-4 border-border flex flex-col h-full ${mobileShowChat ? "hidden min-[1152px]:flex" : "flex"}`}
       >
         {/* Header */}
         <div className="p-4 border-b-4 border-border">
@@ -453,7 +453,7 @@ export default function Messages({
       {/* ─── RIGHT PANE: Chat View ─── */}
       {activeConvId && activeConv ? (
         <div
-          className={`flex-1 flex flex-col h-full min-w-0 ${!mobileShowChat ? "hidden md:flex" : "flex"}`}
+          className={`flex-1 flex flex-col h-full min-w-0 ${!mobileShowChat ? "hidden min-[1152px]:flex" : "flex"}`}
         >
           {/* Chat Header */}
           <div className="h-16 flex items-center justify-between px-4 md:px-6 border-b-4 border-border bg-card">
@@ -462,7 +462,7 @@ export default function Messages({
               <button
                 type="button"
                 onClick={() => setMobileShowChat(false)}
-                className="md:hidden size-8 flex items-center justify-center border-2 border-border shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all"
+                className="min-[1152px]:hidden size-8 flex items-center justify-center border-2 border-border shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all"
               >
                 <ArrowLeft className="size-4" />
               </button>
@@ -635,7 +635,7 @@ export default function Messages({
         </div>
       ) : (
         <div
-          className={`flex-1 flex flex-col items-center justify-center h-full text-muted-foreground ${!mobileShowChat ? "hidden md:flex" : "hidden"}`}
+          className={`flex-1 flex flex-col items-center justify-center h-full text-muted-foreground ${!mobileShowChat ? "hidden min-[1152px]:flex" : "hidden"}`}
         >
           <div className="bg-card border-4 border-border shadow-[4px_4px_0_0_var(--border)] p-10 text-center">
             <MessageSquare className="size-12 mx-auto mb-4 opacity-20" />

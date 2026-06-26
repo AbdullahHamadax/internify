@@ -5,6 +5,8 @@ import { Typography } from "@/components/ui/Typography";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import TaskContributionsGraph from "@/components/shared/TaskContributionsGraph";
+import StarRating from "@/components/shared/StarRating";
+import FormattedTaskDescription from "@/components/shared/FormattedTaskDescription";
 import {
   Briefcase,
   MapPin,
@@ -17,7 +19,7 @@ import {
   Share2,
   CheckCircle2,
   Loader2,
-  Star,
+  Sparkles,
   Check,
   Zap,
   Trophy,
@@ -38,7 +40,7 @@ import {
 import { EGYPTIAN_UNIVERSITIES, EGYPTIAN_CITIES } from "@/lib/egyptianData";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import deviconData from "devicon/devicon.json";
+import { SkillIcon } from "@/lib/skillIcon";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -232,7 +234,6 @@ function SkillBadgeWithTooltip({
   const badgeRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
 
-  const devicon = getDeviconClass(skill);
   const xpEntry = skillXpData?.find((e) => e.skill === skill);
   const xp = xpEntry?.xp ?? 0;
   const level = getSkillLevel(xp);
@@ -248,7 +249,7 @@ function SkillBadgeWithTooltip({
       className="relative flex flex-col items-start gap-1 py-2 px-4 bg-card border-4 border-black shadow-[4px_4px_0_0_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] transition-all cursor-default"
     >
       <div className="flex items-center gap-2">
-        {devicon && <i className={`${devicon} text-lg`} />}
+        <SkillIcon skill={skill} className="text-lg" />
         <span className="uppercase tracking-wide text-sm font-black text-foreground">
           {skill}
         </span>
@@ -272,28 +273,6 @@ function SkillBadgeWithTooltip({
       />
     </div>
   );
-}
-
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
 }
 
 // Default fallback for profile when fields aren't filled yet
@@ -490,6 +469,42 @@ function UploadedCvPdfRenderer({
   );
 }
 
+/**
+ * Renders every page of a PDF (given as bytes) to PNG data URLs via pdf.js.
+ * We preview the generated CV as images rather than embedding the blob in an
+ * <iframe> — many browsers (notably Firefox) download a blob-URL PDF in an
+ * iframe instead of showing it inline, which both hides the preview and
+ * triggers an unwanted automatic download.
+ */
+async function renderPdfToImages(data: ArrayBuffer): Promise<string[]> {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(data) }).promise;
+  const outputScale =
+    typeof window !== "undefined" ? Math.max(window.devicePixelRatio || 1, 1) : 1;
+  const targetWidth = 1000;
+  const images: string[] = [];
+
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const base = page.getViewport({ scale: 1 });
+    const viewport = page.getViewport({
+      scale: (targetWidth / base.width) * outputScale,
+    });
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) continue;
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    await page.render({ canvas, viewport }).promise;
+    page.cleanup();
+    images.push(canvas.toDataURL("image/png"));
+  }
+
+  return images;
+}
+
 export default function StudentProfile() {
   const { user } = useUser();
   const searchParams = useSearchParams();
@@ -504,6 +519,11 @@ export default function StudentProfile() {
     api.users.updateStudentAvailabilityStatus,
   );
   const skillXpData = useQuery(api.users.getStudentSkillXp);
+  const ratingSummary = useQuery(api.ratings.getStudentRatingSummary, {});
+  // Per-application rating detail (employer stars, AI score, comment) keyed by applicationId.
+  const ratingByApplication = new Map(
+    (ratingSummary?.items ?? []).map((item) => [item.applicationId, item]),
+  );
 
   const studentProfile = currentUserData?.studentProfile;
   const dbUser = currentUserData?.user;
@@ -522,11 +542,8 @@ export default function StudentProfile() {
   const profileLinkedin = studentProfile?.linkedin || DEFAULT_PROFILE.linkedin;
   const profileSkills = studentProfile?.skills || DEFAULT_PROFILE.skills;
 
-  // Derive rating from completed tasks (mocked rating logic for now)
-  const completedCount =
-    applications?.filter((app) => app.status === "completed").length || 0;
-  const rating =
-    completedCount > 0 ? 4.5 + Math.min(completedCount * 0.1, 0.5) : 0; // Fake climbing rating
+  // Overall rating = blended AI + employer-star rating across completed tasks.
+  const rating = ratingSummary?.overall ?? 0;
 
   // Edit Modal State
   const [isEditing, setIsEditing] = useState(false);
@@ -559,6 +576,7 @@ export default function StudentProfile() {
   const [isGeneratingCv, setIsGeneratingCv] = useState(false);
   const [cvError, setCvError] = useState<string | null>(null);
   const [cvPdfBlobUrl, setCvPdfBlobUrl] = useState<string | null>(null);
+  const [cvPreviewPages, setCvPreviewPages] = useState<string[]>([]);
   const [cvPdfFileName, setCvPdfFileName] = useState<string>("CV.pdf");
   const [cvBlockedFields, setCvBlockedFields] = useState<string[]>([]);
 
@@ -894,6 +912,17 @@ export default function StudentProfile() {
       const blobUrl = URL.createObjectURL(pdfBlob);
       const safeName = (user.fullName ?? "Student").replace(/\s+/g, "_");
 
+      // Render pages to images for an inline preview (showing the blob in an
+      // <iframe> makes some browsers auto-download it instead). If rendering
+      // fails, the preview falls back to a message and Download still works.
+      let pages: string[] = [];
+      try {
+        pages = await renderPdfToImages(doc.output("arraybuffer"));
+      } catch (previewErr) {
+        console.error("CV preview render failed:", previewErr);
+      }
+
+      setCvPreviewPages(pages);
       setCvPdfBlobUrl(blobUrl);
       setCvPdfFileName(`${safeName}_CV.pdf`);
       setCvStep("preview");
@@ -1218,10 +1247,17 @@ export default function StudentProfile() {
                   {profileTitle}
                 </Typography>
 
-                {/* Rating Display */}
+                {/* Rating Display — blended AI + employer star rating */}
                 {rating > 0 && (
-                  <div className="flex items-center justify-center gap-1.5 mt-2">
-                    <Star className="w-4 h-4 fill-[#F59E0B] text-[#F59E0B]" />
+                  <div
+                    className="flex items-center justify-center gap-2 mt-2"
+                    title={
+                      ratingSummary && ratingSummary.employerRatingCount > 0
+                        ? `${ratingSummary.employerRatingCount} employer rating${ratingSummary.employerRatingCount > 1 ? "s" : ""}`
+                        : "Based on AI evaluations"
+                    }
+                  >
+                    <StarRating value={rating} size={16} />
                     <Typography variant="span" className="font-black text-sm">
                       {rating.toFixed(1)}
                     </Typography>
@@ -1600,6 +1636,48 @@ export default function StudentProfile() {
                               {new Date(app.completedAt).toLocaleDateString()}
                             </span>
                           </div>
+
+                          {/* Standalone rating for this task: employer stars + AI score */}
+                          {(() => {
+                            const r = ratingByApplication.get(app._id);
+                            if (!r) return null;
+                            return (
+                              <div className="flex flex-wrap items-center gap-3 mt-3">
+                                {r.stars != null ? (
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <StarRating value={r.stars} size={15} />
+                                    <span className="text-xs font-black text-foreground">
+                                      {r.stars.toFixed(1)}
+                                    </span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                      Employer
+                                    </span>
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                    Not yet rated by employer
+                                  </span>
+                                )}
+                                {r.aiScore != null && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 border border-blue-300 dark:border-blue-700">
+                                    <Sparkles className="w-3 h-3" />
+                                    AI {r.aiScore}/100
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
+
+                          {/* Employer's written feedback, if any */}
+                          {(() => {
+                            const r = ratingByApplication.get(app._id);
+                            if (!r?.comment) return null;
+                            return (
+                              <p className="mt-2 text-sm italic text-muted-foreground border-l-2 border-amber-400 pl-3">
+                                &ldquo;{r.comment}&rdquo;
+                              </p>
+                            );
+                          })()}
                         </div>
 
                         <div className="shrink-0 pt-2 sm:pt-0">
@@ -1628,12 +1706,10 @@ export default function StudentProfile() {
                               {/* Description */}
                               {app.task.description && (
                                 <div>
-                                  <Typography variant="h4" className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+                                  <Typography variant="h4" className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
                                     Description
                                   </Typography>
-                                  <Typography variant="p" className="text-sm text-foreground leading-relaxed">
-                                    {app.task.description}
-                                  </Typography>
+                                  <FormattedTaskDescription text={app.task.description} />
                                 </div>
                               )}
 
@@ -1729,6 +1805,33 @@ export default function StudentProfile() {
                     </button>
                   </div>
                 )}
+
+                <div>
+                  <Typography
+                    variant="label"
+                    className="uppercase tracking-widest text-sm font-black mb-2 block"
+                  >
+                    Availability
+                  </Typography>
+                  <select
+                    value={availabilityStatus}
+                    onChange={(e) =>
+                      handleAvailabilityStatusChange(e.target.value)
+                    }
+                    disabled={!studentProfile || isAvailabilitySaving}
+                    className="w-full p-3 bg-card rounded-none border-2 border-border shadow-[4px_4px_0_0_var(--border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-[4px_4px_0_0_hsl(263,70%,50%)] dark:focus-visible:shadow-[4px_4px_0_0_hsl(290,70%,70%)] transition-all focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] font-bold"
+                  >
+                    {STUDENT_AVAILABILITY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1.5 text-xs text-muted-foreground font-bold">
+                    Updates instantly — also editable from the badge on your
+                    profile.
+                  </p>
+                </div>
 
                 <div>
                   <Typography
@@ -1965,15 +2068,12 @@ export default function StudentProfile() {
                   {/* Selected Skills Tags */}
                   <div className="flex flex-wrap gap-2 mb-3">
                     {formData.skills.map((skill) => {
-                      const iconClass = getDeviconClass(skill);
                       return (
                         <span
                           key={skill}
                           className="flex items-center gap-2 py-1 px-3 bg-[#FDE68A] text-black border-2 border-black shadow-[2px_2px_0_0_#000] text-xs font-bold uppercase tracking-wider"
                         >
-                          {iconClass && (
-                            <i className={`${iconClass} text-sm`} />
-                          )}
+                          <SkillIcon skill={skill} className="text-sm" />
                           {skill}
                           <button
                             onClick={() => removeSkill(skill)}
@@ -2018,7 +2118,6 @@ export default function StudentProfile() {
                         ? filteredCatalog.map((skill) => {
                             const isSelected = formData.skills.includes(skill);
                             if (isSelected) return null;
-                            const iconClass = getDeviconClass(skill);
                             return (
                               <button
                                 key={skill}
@@ -2031,7 +2130,7 @@ export default function StudentProfile() {
                                 }}
                                 className="flex items-center gap-1.5 px-2.5 py-1.5 bg-background border-2 border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors shadow-[2px_2px_0_0_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
                               >
-                                {iconClass && <i className={iconClass} />}
+                                <SkillIcon skill={skill} />
                                 <span className="text-xs font-bold">
                                   {skill}
                                 </span>
@@ -2260,13 +2359,27 @@ export default function StudentProfile() {
               {/* STEP 2: PDF Preview */}
               {cvStep === "preview" && cvPdfBlobUrl && (
                 <>
-                  <div className="flex-1 overflow-hidden p-4">
-                    <iframe
-                      src={cvPdfBlobUrl}
-                      title="CV Preview"
-                      className="w-full h-full border-4 border-border shadow-[4px_4px_0_0_var(--border)] bg-white"
-                      style={{ minHeight: "500px" }}
-                    />
+                  <div className="flex-1 overflow-auto p-4 bg-muted">
+                    {cvPreviewPages.length > 0 ? (
+                      <div className="flex flex-col items-center gap-4">
+                        {cvPreviewPages.map((src, i) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={i}
+                            src={src}
+                            alt={`CV page ${i + 1}`}
+                            className="w-full max-w-[800px] border-4 border-border shadow-[4px_4px_0_0_var(--border)] bg-white"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        className="flex h-full items-center justify-center text-center text-sm font-bold text-muted-foreground"
+                        style={{ minHeight: "300px" }}
+                      >
+                        Preview unavailable — use Download to view your CV.
+                      </div>
+                    )}
                   </div>
 
                   {/* Footer */}
@@ -2274,6 +2387,7 @@ export default function StudentProfile() {
                     <button
                       onClick={() => {
                         setCvStep("select");
+                        setCvPreviewPages([]);
                         if (cvPdfBlobUrl) {
                           URL.revokeObjectURL(cvPdfBlobUrl);
                           setCvPdfBlobUrl(null);

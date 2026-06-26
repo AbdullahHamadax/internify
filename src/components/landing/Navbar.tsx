@@ -62,6 +62,15 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
     authenticatedRole ?? currentUser?.user.role ?? metadataRole ?? "student";
   const isAuthenticated = Boolean(isLoaded && isSignedIn);
 
+  // Employers show their company logo as the avatar (falls back to Clerk image).
+  const employerLogo = useQuery(api.users.getEmployerLogoUrl);
+  const avatarImageUrl =
+    accountRole === "employer" && employerLogo?.url
+      ? employerLogo.url
+      : user?.hasImage
+        ? user.imageUrl
+        : null;
+
   useEffect(() => {
     const onHashChange = () => setActiveHash(window.location.hash);
     window.addEventListener("hashchange", onHashChange);
@@ -161,7 +170,9 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
                     <AccountAvatar
                       role={accountRole}
                       name={user?.firstName ?? user?.fullName}
-                      imageUrl={user?.hasImage ? user.imageUrl : null}
+                      imageUrl={avatarImageUrl}
+                      fit={accountRole === "employer" && employerLogo?.url ? "contain" : "cover"}
+                      interactive
                     />
                   </button>
                 </DropdownMenuTrigger>
@@ -236,33 +247,43 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
       </div>
 
       {mobileOpen && (
-        <div className="border-b-4 border-black bg-white px-4 pb-6 shadow-[0_8px_0_0_#000] dark:border-white dark:bg-black dark:shadow-[0_8px_0_0_#fff] md:hidden">
+        <div className="nav-menu-drop border-b-4 border-black bg-white px-4 pb-6 shadow-[0_8px_0_0_#000] dark:border-white dark:bg-black dark:shadow-[0_8px_0_0_#fff] md:hidden">
           <div className="flex flex-col gap-3 pt-3">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={(e) => handleNavClick(e, link.href)}
-                className={`rounded-none border-2 border-black px-4 py-3 text-sm font-black uppercase tracking-widest transition-all shadow-[4px_4px_0_0_#000] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000] dark:border-white dark:shadow-[4px_4px_0_0_#fff] dark:hover:shadow-[6px_6px_0_0_#fff] ${
-                  pathname === link.href ||
-                  (pathname === "/" &&
-                    link.href.startsWith("/#") &&
-                    activeHash === link.href.slice(1))
-                    ? "bg-[#2563EB] text-white"
-                    : "bg-white text-black hover:bg-[#AB47BC] hover:text-white dark:bg-black dark:text-white"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {/* Marketing links — anchor links, kept text-only */}
+            {navLinks.map((link, i) => {
+              const active =
+                pathname === link.href ||
+                (pathname === "/" &&
+                  link.href.startsWith("/#") &&
+                  activeHash === link.href.slice(1));
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={(e) => handleNavClick(e, link.href)}
+                  style={{ animationDelay: `${0.03 * (i + 1)}s` }}
+                  className={`nav-menu-item rounded-none border-2 border-black px-4 py-3 text-sm font-black uppercase tracking-widest transition-all duration-150 shadow-[3px_3px_0_0_#000] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none dark:border-white dark:shadow-[3px_3px_0_0_#fff] ${
+                    active
+                      ? "bg-[var(--role-student)] text-white"
+                      : "bg-white text-black hover:bg-[var(--role-employer)] hover:text-white dark:bg-black dark:text-white"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
 
             {isAuthenticated ? (
               <div className="mt-4 flex flex-col gap-3 border-t-4 border-black pt-4 dark:border-white">
-                <div className="flex items-center gap-3 border-2 border-black bg-white p-3 shadow-[4px_4px_0_0_#000] dark:border-white dark:bg-black dark:shadow-[4px_4px_0_0_#fff]">
+                <div
+                  style={{ animationDelay: "0.15s" }}
+                  className="nav-menu-item flex items-center gap-3 border-2 border-black bg-white p-3 shadow-[3px_3px_0_0_#000] dark:border-white dark:bg-black dark:shadow-[3px_3px_0_0_#fff]"
+                >
                   <AccountAvatar
                     role={accountRole}
                     name={user?.firstName ?? user?.fullName}
-                    imageUrl={user?.hasImage ? user.imageUrl : null}
+                    imageUrl={avatarImageUrl}
+                    fit={accountRole === "employer" && employerLogo?.url ? "contain" : "cover"}
                   />
                   <div className="min-w-0">
                     <div className="truncate text-sm font-black uppercase tracking-widest text-black dark:text-white">
@@ -277,29 +298,37 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
                 <button
                   type="button"
                   onClick={() => handleDashboardNavigation()}
-                  className="border-2 border-black bg-[#2563EB] px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:shadow-[4px_4px_0_0_#fff]"
+                  style={{ animationDelay: "0.18s" }}
+                  className="nav-menu-item flex items-center gap-3 border-2 border-black bg-[var(--role-student)] px-4 py-3 text-sm font-black uppercase tracking-widest text-white shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none dark:border-white dark:shadow-[3px_3px_0_0_#fff]"
                 >
+                  <LayoutDashboard className="size-4 shrink-0" />
                   Dashboard
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDashboardNavigation("profile")}
-                  className="border-2 border-black bg-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:bg-black dark:text-white dark:shadow-[4px_4px_0_0_#fff]"
+                  style={{ animationDelay: "0.21s" }}
+                  className="nav-menu-item flex items-center gap-3 border-2 border-black bg-white px-4 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none dark:border-white dark:bg-black dark:text-white dark:shadow-[3px_3px_0_0_#fff]"
                 >
+                  <User className="size-4 shrink-0" />
                   Profile
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDashboardNavigation("settings")}
-                  className="border-2 border-black bg-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:bg-black dark:text-white dark:shadow-[4px_4px_0_0_#fff]"
+                  style={{ animationDelay: "0.24s" }}
+                  className="nav-menu-item flex items-center gap-3 border-2 border-black bg-white px-4 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none dark:border-white dark:bg-black dark:text-white dark:shadow-[3px_3px_0_0_#fff]"
                 >
+                  <Settings className="size-4 shrink-0" />
                   Settings
                 </button>
                 <button
                   type="button"
                   onClick={() => void handleSignOut()}
-                  className="border-2 border-black bg-[#FF3366] px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:shadow-[4px_4px_0_0_#fff]"
+                  style={{ animationDelay: "0.27s" }}
+                  className="nav-menu-item flex items-center gap-3 border-2 border-black bg-white px-4 py-3 text-sm font-black uppercase tracking-widest text-[hsl(0_72%_51%)] shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-x-[3px] hover:translate-y-[3px] hover:bg-[hsl(0_72%_51%)] hover:text-white hover:shadow-none dark:border-white dark:bg-black dark:shadow-[3px_3px_0_0_#fff]"
                 >
+                  <LogOut className="size-4 shrink-0" />
                   Log Out
                 </button>
               </div>
@@ -308,14 +337,16 @@ export default function Navbar({ authenticatedRole }: NavbarProps) {
                 <Link
                   href="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="border-2 border-black bg-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:bg-black dark:text-white dark:shadow-[4px_4px_0_0_#fff]"
+                  style={{ animationDelay: "0.15s" }}
+                  className="nav-menu-item border-2 border-black bg-white px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-black shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none dark:border-white dark:bg-black dark:text-white dark:shadow-[3px_3px_0_0_#fff]"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/signup"
                   onClick={() => setMobileOpen(false)}
-                  className="border-2 border-black bg-[#2563EB] px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-white shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none dark:border-white dark:shadow-[4px_4px_0_0_#fff]"
+                  style={{ animationDelay: "0.18s" }}
+                  className="nav-menu-item border-2 border-black bg-[var(--role-student)] px-5 py-3 text-center text-sm font-black uppercase tracking-widest text-white shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none dark:border-white dark:shadow-[3px_3px_0_0_#fff]"
                 >
                   Get Started
                 </Link>

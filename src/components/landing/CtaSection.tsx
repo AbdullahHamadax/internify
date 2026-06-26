@@ -38,6 +38,23 @@ export default function CtaSection() {
             Learn More
           </Link>
         </div>
+        {/* Secondary, audience-specific entry point for recruiters holding a
+            certificate — kept as a light text link so it doesn't compete with
+            the primary student CTA above. */}
+        <Typography
+          variant="p"
+          color="default"
+          className="mt-6 text-sm font-bold text-black dark:text-white"
+        >
+          Have a certificate?{" "}
+          <Link
+            href="/verify"
+            className="inline-flex items-center gap-1 underline decoration-2 underline-offset-4 hover:text-[#2563EB] transition-colors"
+          >
+            Verify it
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Typography>
       </AnimateIn>
     </section>
   );

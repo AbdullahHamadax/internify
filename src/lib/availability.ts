@@ -1,19 +1,13 @@
 export const STUDENT_AVAILABILITY_OPTIONS = [
   {
-    value: "available_now",
-    label: "Available Now",
+    // "available_now" was merged into this status — both meant the same thing.
+    // Legacy "available_now" values normalize to this one (see normalize fn).
+    value: "open_to_offers",
+    label: "Open for Offers",
     badgeClassName: "bg-[#A7F3D0] text-black",
     dotClassName: "bg-[#047857]",
     itemClassName:
       "focus:bg-[#A7F3D0] focus:text-black data-[state=checked]:bg-[#A7F3D0] data-[state=checked]:text-black",
-  },
-  {
-    value: "open_to_offers",
-    label: "Open to Offers",
-    badgeClassName: "bg-[#2563EB] text-white",
-    dotClassName: "bg-[#2563EB]",
-    itemClassName:
-      "focus:bg-[#2563EB] focus:text-white data-[state=checked]:bg-[#2563EB] data-[state=checked]:text-white",
   },
   {
     value: "busy",
@@ -40,7 +34,7 @@ export type StudentAvailabilityOption =
   (typeof STUDENT_AVAILABILITY_OPTIONS)[number];
 
 export const DEFAULT_STUDENT_AVAILABILITY_STATUS: StudentAvailabilityStatus =
-  "available_now";
+  "open_to_offers";
 
 export const STUDENT_AVAILABILITY_BY_STATUS =
   STUDENT_AVAILABILITY_OPTIONS.reduce(
@@ -55,10 +49,9 @@ export const STUDENT_AVAILABILITY_SORT_RANK: Record<
   StudentAvailabilityStatus,
   number
 > = {
-  available_now: 0,
-  open_to_offers: 1,
-  busy: 2,
-  unavailable: 3,
+  open_to_offers: 0,
+  busy: 1,
+  unavailable: 2,
 };
 
 export function normalizeStudentAvailabilityStatus(
@@ -68,6 +61,8 @@ export function normalizeStudentAvailabilityStatus(
     return status as StudentAvailabilityStatus;
   }
 
+  // Anything unknown — including the retired "available_now" — falls back to the
+  // default ("open_to_offers"), which is exactly the status it merged into.
   return DEFAULT_STUDENT_AVAILABILITY_STATUS;
 }
 

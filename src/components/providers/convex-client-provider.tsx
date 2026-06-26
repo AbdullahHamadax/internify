@@ -6,6 +6,7 @@ import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ReactNode, useMemo } from "react";
 import usePresence from "@convex-dev/presence/react";
 import { api } from "../../../convex/_generated/api";
+import XpAwardOverlay from "@/components/shared/XpAwardOverlay";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -65,6 +66,7 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
     <ConvexProviderWithClerk client={convex} useAuth={useAuthWithConvexAud}>
       <GlobalPresence />
       {children}
+      <XpAwardOverlay />
     </ConvexProviderWithClerk>
   );
 }

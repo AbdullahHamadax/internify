@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type CSSProperties } from "react";
 import {
   AuthLoading,
   Authenticated,
@@ -259,7 +259,7 @@ const values = [
   {
     icon: ShieldCheck,
     title: "Verified Credentials",
-    desc: "Certificates earned on Internify are tamper-proof and company-branded. Employers trust them because they represent proven ability.",
+    desc: "Certificates earned on Internify are independently verifiable and company-branded. Employers trust them because they represent proven ability.",
     accent: "bg-emerald-500",
     color: "#10B981",
   },
@@ -312,7 +312,7 @@ function AboutContent({
                 <Typography
                   as="span"
                   variant="h1"
-                  className="text-blue-600 dark:text-blue-600"
+                  className="text-blue-600 dark:text-blue-500"
                 >
                   Internify
                 </Typography>
@@ -373,15 +373,15 @@ function AboutContent({
             {/* Cracked divider */}
             <div className="mt-10 mb-14 flex items-center justify-center gap-2">
               <div
-                className="h-[3px] w-16 rounded-full"
+                className="h-[3px] w-16"
                 style={{ background: RED }}
               />
               <div
-                className="h-[3px] w-8 rounded-full opacity-50"
+                className="h-[3px] w-8 opacity-50"
                 style={{ background: RED }}
               />
               <div
-                className="h-[3px] w-4 rounded-full opacity-25"
+                className="h-[3px] w-4 opacity-25"
                 style={{ background: RED }}
               />
             </div>
@@ -393,29 +393,30 @@ function AboutContent({
                 return (
                   <AnimateIn key={item.title} delay={i * 0.12}>
                     <div
-                      className="relative rounded-2xl bg-white dark:bg-gray-900 p-8 h-full transition-all duration-500 hover:rotate-0 hover:-translate-y-1 group"
-                      style={{
-                        transform: `rotate(${item.tilt})`,
-                        borderLeft: `4px solid ${RED}`,
-                        borderTop: "1px solid #fecaca",
-                        borderRight: "1px solid #fecaca",
-                        borderBottom: "1px solid #fecaca",
-                        boxShadow: `0 4px 16px ${RED}15, 0 1px 3px rgba(0,0,0,0.06)`,
-                      }}
+                      className="about-card group relative h-full rounded-none border-2 border-black dark:border-white bg-white dark:bg-gray-900 p-8"
+                      style={
+                        {
+                          "--tilt": item.tilt,
+                          "--press": "6px",
+                          boxShadow: `6px 6px 0 0 ${RED}`,
+                        } as CSSProperties
+                      }
                     >
-                      <div
-                        className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
-                        style={{ backgroundColor: RED }}
-                      >
-                        <Icon className="h-6 w-6 text-white" />
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]"
+                          style={{ backgroundColor: RED }}
+                        >
+                          <Icon className="h-6 w-6 text-white" />
+                        </div>
+                        <Typography variant="h4" as="h3" className="leading-tight">
+                          {item.title}
+                        </Typography>
                       </div>
-                      <Typography variant="h4" as="h3" className="mt-5">
-                        {item.title}
-                      </Typography>
                       <Typography
                         variant="span"
                         color="muted"
-                        className="mt-3 leading-relaxed"
+                        className="mt-4 block leading-relaxed"
                       >
                         {item.text}
                       </Typography>
@@ -466,31 +467,23 @@ function AboutContent({
             {/* Mint divider — calm, continuous */}
             <div className="mt-10 mb-14 flex items-center justify-center">
               <div
-                className="h-[3px] w-32 rounded-full"
+                className="h-[3px] w-32"
                 style={{ background: MINT_DARK, opacity: 0.5 }}
               />
             </div>
 
             <AnimateIn delay={0.15}>
               <div
-                className="relative rounded-2xl p-8 sm:p-10 overflow-hidden"
-                style={{
-                  borderLeft: `4px solid ${MINT_DARK}`,
-                  borderTop: `1px solid ${MINT}`,
-                  borderRight: `1px solid ${MINT}`,
-                  borderBottom: `1px solid ${MINT}`,
-                  background: `linear-gradient(135deg, rgba(167,243,208,0.08) 0%, rgba(52,211,153,0.04) 100%)`,
-                  boxShadow: `0 4px 16px rgba(52,211,153,0.08), 0 1px 3px rgba(0,0,0,0.04)`,
-                }}
+                className="about-card relative overflow-hidden rounded-none border-2 border-black dark:border-white p-8 sm:p-10"
+                style={
+                  {
+                    "--press": "8px",
+                    background: `linear-gradient(135deg, rgba(167,243,208,0.10) 0%, rgba(52,211,153,0.05) 100%)`,
+                    boxShadow: `8px 8px 0 0 ${MINT_DARK}`,
+                  } as CSSProperties
+                }
               >
-                {/* Subtle mint glow bottom-right */}
-                <div
-                  className="absolute bottom-0 right-0 w-40 h-40 rounded-tl-full pointer-events-none opacity-[0.08]"
-                  style={{ background: MINT }}
-                  aria-hidden="true"
-                />
-
-                <div className="relative space-y-6 text-gray-600 dark:text-gray-400 leading-relaxed text-base">
+                <div className="relative max-w-[68ch] space-y-6 text-gray-800 dark:text-gray-200 leading-relaxed text-base text-pretty">
                   <Typography variant="p">
                     Internify is a{" "}
                     <strong
@@ -545,7 +538,7 @@ function AboutContent({
                         paddingBottom: 2,
                       }}
                     >
-                      verified, tamper-proof certificates
+                      verified, independently verifiable certificates
                     </strong>{" "}
                     branded by the employer, turning every completed challenge
                     into a concrete portfolio piece.
@@ -588,27 +581,28 @@ function AboutContent({
                 return (
                   <AnimateIn key={val.title} delay={i * 0.1}>
                     <div
-                      className="relative group rounded-2xl bg-white dark:bg-gray-900 p-8 h-full transition-all duration-300 hover:-translate-y-1 overflow-hidden"
-                      style={{
-                        borderLeft: `4px solid ${val.color}`,
-                        borderTop: "1px solid #e2e8f0",
-                        borderRight: "1px solid #e2e8f0",
-                        borderBottom: "1px solid #e2e8f0",
-                        boxShadow: `0 2px 8px rgba(0,0,0,0.06)`,
-                      }}
+                      className="about-card group relative h-full overflow-hidden rounded-none border-2 border-black dark:border-white bg-white dark:bg-gray-900 p-8"
+                      style={
+                        {
+                          "--press": "6px",
+                          boxShadow: `6px 6px 0 0 ${val.color}`,
+                        } as CSSProperties
+                      }
                     >
-                      <div
-                        className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${val.accent} border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]`}
-                      >
-                        <Icon className="h-6 w-6 text-white" />
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-none ${val.accent} border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]`}
+                        >
+                          <Icon className="h-6 w-6 text-white" />
+                        </div>
+                        <Typography variant="h4" as="h3" className="leading-tight">
+                          {val.title}
+                        </Typography>
                       </div>
-                      <Typography variant="h4" as="h3" className="mt-5">
-                        {val.title}
-                      </Typography>
                       <Typography
                         variant="span"
                         color="muted"
-                        className="mt-3 leading-relaxed"
+                        className="mt-4 block leading-relaxed"
                       >
                         {val.desc}
                       </Typography>

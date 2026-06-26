@@ -1,28 +1,8 @@
 "use client";
 
-import deviconData from "devicon/devicon.json";
-
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
+import { SkillIcon } from "@/lib/skillIcon";
+import { getEmployerHiringMeta } from "@/lib/hiringStatus";
+import AIFormattedDescription from "@/components/shared/AIFormattedDescription";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
@@ -38,6 +18,7 @@ import {
   Users,
   Download,
   Image as ImageIcon,
+  Sparkles,
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
 import { motion, Variants, AnimatePresence } from "framer-motion";
@@ -103,6 +84,27 @@ export type StudentExploreProps = {
   onFocusTaskConsumed?: () => void;
 };
 
+/** Small badge showing an employer's current hiring posture. */
+function HiringBadge({
+  status,
+  className = "",
+}: {
+  status: string | null | undefined;
+  className?: string;
+}) {
+  const meta = getEmployerHiringMeta(status);
+  return (
+    <span
+      className={`inline-flex items-center gap-1 border-2 border-black dark:border-white px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${meta.badgeClassName} ${className}`}
+    >
+      <span
+        className={`size-1.5 border border-black dark:border-white ${meta.dotClassName}`}
+      />
+      {meta.label}
+    </span>
+  );
+}
+
 export default function StudentExplore({
   focusTaskId = null,
   onFocusTaskConsumed,
@@ -118,6 +120,12 @@ export default function StudentExplore({
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
   const [showAcceptSuccess, setShowAcceptSuccess] = useState(false);
+  // Student's own AI-format toggle for the detail view. Defaults to whatever
+  // the employer chose for the task, but the student can flip it either way.
+  const [aiFormatOn, setAiFormatOn] = useState(false);
+  useEffect(() => {
+    if (selectedTask) setAiFormatOn(selectedTask.enableAiFormat ?? false);
+  }, [selectedTask?._id, selectedTask?.enableAiFormat]);
 
   const openTaskDetail = useCallback(
     (task: NonNullable<typeof selectedTask>) => {
@@ -162,8 +170,9 @@ export default function StudentExplore({
     {
       label: "Development",
       match: [
-        "Web Development",
+        "Frontend Development",
         "Backend Development",
+        "Web Development",
         "Full Stack Development",
         "Mobile Development",
         "Software Engineering",
@@ -557,16 +566,19 @@ export default function StudentExplore({
                     >
                       {task.title}
                     </Typography>
-                    <Typography
-                      variant="span"
-                      className="font-medium mt-1 inline-block cursor-pointer hover:underline decoration-2 underline-offset-2 hover:text-[#2563EB] transition-colors"
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        if (task.employerId) openProfile(task.employerId);
-                      }}
-                    >
-                      {task.companyName}
-                    </Typography>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <Typography
+                        variant="span"
+                        className="font-medium inline-block cursor-pointer hover:underline decoration-2 underline-offset-2 hover:text-[#2563EB] transition-colors"
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          if (task.employerId) openProfile(task.employerId);
+                        }}
+                      >
+                        {task.companyName}
+                      </Typography>
+                      <HiringBadge status={task.companyHiringStatus} />
+                    </div>
                   </div>
 
                   <div className="flex flex-row sm:flex-col items-center sm:items-end gap-4 sm:gap-2 shrink-0">
@@ -598,15 +610,12 @@ export default function StudentExplore({
                 <div className="flex flex-wrap items-center justify-between gap-4 border-t-4 border-black dark:border-white pt-6 mt-auto">
                   <div className="flex flex-wrap gap-2">
                     {task.skills.slice(0, 3).map((tag: string) => {
-                      const devicon = getDeviconClass(tag);
                       return (
                         <span
                           key={tag}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#2563EB] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB] transition-colors"
                         >
-                          {devicon && (
-                            <i className={`${devicon} text-[14px]`} />
-                          )}
+                          <SkillIcon skill={tag} className="text-[14px]" />
                           {tag}
                         </span>
                       );
@@ -661,10 +670,11 @@ export default function StudentExplore({
                   </Typography>
 
                   {/* Company row */}
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
                     <span className="text-sm font-bold text-white/90">
                       {selectedTask.companyName}
                     </span>
+                    <HiringBadge status={selectedTask.companyHiringStatus} />
                     {selectedTask.employerId && (
                       <button
                         onClick={() => openProfile(selectedTask.employerId)}
@@ -700,17 +710,31 @@ export default function StudentExplore({
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                {/* Details */}
+                {/* Details — AI-formatted with structured sections */}
                 <section>
-                  <Typography variant="h4" className="mb-3">
-                    About the Task
-                  </Typography>
-                  <Typography
-                    variant="p"
-                    className="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed text-foreground/80"
-                  >
-                    {selectedTask.description}
-                  </Typography>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <Typography variant="h4" className="mb-0">
+                      About the Task
+                    </Typography>
+                    <button
+                      type="button"
+                      onClick={() => setAiFormatOn((v) => !v)}
+                      title="Reorganize this description into clean sections with AI"
+                      className={`inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border-2 transition-all ${
+                        aiFormatOn
+                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 shadow-[2px_2px_0_0_#f59e0b]"
+                          : "border-border bg-card text-muted-foreground shadow-[2px_2px_0_0_var(--border)] hover:border-amber-500 hover:text-amber-700 dark:hover:text-amber-400"
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      {aiFormatOn ? "AI Format: On" : "Format with AI"}
+                    </button>
+                  </div>
+                  <AIFormattedDescription
+                    taskId={selectedTask._id}
+                    description={selectedTask.description}
+                    enableAiFormat={aiFormatOn}
+                  />
                 </section>
 
                 <section>
@@ -719,15 +743,12 @@ export default function StudentExplore({
                   </Typography>
                   <div className="flex flex-wrap gap-2">
                     {selectedTask.skills.map((tag: string) => {
-                      const devicon = getDeviconClass(tag);
                       return (
                         <span
                           key={tag}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white bg-[#2563EB] dark:bg-black text-[11px] font-black uppercase tracking-wider text-white dark:text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#2563EB] transition-colors"
                         >
-                          {devicon && (
-                            <i className={`${devicon} text-[14px]`} />
-                          )}
+                          <SkillIcon skill={tag} className="text-[14px]" />
                           {tag}
                         </span>
                       );

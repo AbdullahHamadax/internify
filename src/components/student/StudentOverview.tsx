@@ -2,29 +2,7 @@
 
 import { useState } from "react";
 
-import deviconData from "devicon/devicon.json";
-
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
+import { SkillIcon } from "@/lib/skillIcon";
 
 import { useUser } from "@clerk/nextjs";
 import { motion, Variants } from "framer-motion";
@@ -120,6 +98,8 @@ export default function StudentOverview({
   );
 
   const applications = useQuery(api.tasks.getStudentApplications);
+  const me = useQuery(api.users.currentUser);
+  const hasSkills = (me?.studentProfile?.skills?.length ?? 0) > 0;
   const recommendations = useQuery(
     api.recommendations.getRecommendedTasks,
     isConvexTokenReady ? {} : "skip",
@@ -345,7 +325,9 @@ export default function StudentOverview({
             ) : topRecs.length === 0 ? (
               <div className="p-6 text-center bg-zinc-100 dark:bg-zinc-900 border-2 border-black dark:border-white shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
                 <Typography variant="p" color="muted" className="text-sm">
-                  Add skills to your profile to get personalized task recommendations.
+                  {hasSkills
+                    ? "No tasks match your skills right now — check back soon as new tasks get posted."
+                    : "Add skills to your profile to get personalized task recommendations."}
                 </Typography>
               </div>
             ) : (
@@ -390,7 +372,6 @@ export default function StudentOverview({
 
                   <div className="flex flex-wrap gap-2">
                     {rec.skills.slice(0, 3).map((skill) => {
-                      const devicon = getDeviconClass(skill);
                       const isMatched = rec.matchedSkills.includes(skill);
                       return (
                         <span
@@ -400,7 +381,7 @@ export default function StudentOverview({
                               : "bg-white dark:bg-black text-foreground/60"
                             }`}
                         >
-                          {devicon && <i className={`${devicon} text-[14px]`} />}
+                          <SkillIcon skill={skill} className="text-[14px]" />
                           {skill}
                         </span>
                       );
@@ -431,15 +412,11 @@ export default function StudentOverview({
         <SubmitTaskModal
           open={!!selectedApp}
           applicationId={selectedApp._id}
-          taskId={selectedApp.taskId}
           taskTitle={selectedApp.task.title}
-          taskDescription={selectedApp.task.description}
           taskCategory={selectedApp.task.category}
-          taskSkills={selectedApp.task.skills}
           companyName={selectedApp.task.companyName}
           deadline={selectedApp.task.deadline}
           hasSubmission={selectedApp.hasSubmission}
-          customRubric={selectedApp.task.customRubric}
           onClose={() => setSelectedApp(null)}
           onSubmitted={() => setSelectedApp(null)}
         />
