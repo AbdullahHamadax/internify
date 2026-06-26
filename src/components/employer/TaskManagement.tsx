@@ -3,13 +3,13 @@
 import { useState } from "react";
 import {
   Search,
-  SlidersHorizontal,
   Users,
   Clock,
   CalendarDays,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Typography } from "@/components/ui/Typography";
+import { useProfileModal } from "@/components/shared/ProfileModalContext";
 
 export type TaskStatus = "pending" | "in_progress" | "completed";
 
@@ -38,6 +38,7 @@ export interface Task {
   }[];
   acceptedBy?: { id: string; name: string }[];
   customRubric?: string[];
+  enableAiFormat?: boolean;
 }
 
 interface TaskManagementProps {
@@ -57,6 +58,10 @@ function getCategoryClass(category: string): string {
   const lower = category.toLowerCase();
   if (
     lower.includes("web") ||
+    lower.includes("frontend") ||
+    lower.includes("backend") ||
+    lower.includes("full stack") ||
+    lower.includes("software") ||
     lower.includes("e-commerce") ||
     lower.includes("cloud") ||
     lower.includes("devops")
@@ -75,6 +80,73 @@ function getCategoryClass(category: string): string {
   if (lower.includes("content") || lower.includes("writing"))
     return "emp-cat-tag--writing";
   return "emp-cat-tag--default";
+}
+
+/**
+ * Renders "Being done by:" / "Completed by:" with each student name as a
+ * clickable link to their profile. Caps the visible names so a task with many
+ * applicants stays readable (e.g. "Alice, Bob, Carol +97 more") instead of
+ * printing a giant comma-separated wall.
+ */
+const ACCEPTED_BY_VISIBLE_LIMIT = 3;
+
+function AcceptedByNames({
+  label,
+  students,
+}: {
+  label: string;
+  students: { id: string; name: string }[];
+}) {
+  const { openProfile } = useProfileModal();
+  const shown = students.slice(0, ACCEPTED_BY_VISIBLE_LIMIT);
+  const remaining = students.length - shown.length;
+
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: "0.25rem",
+        color: "var(--foreground)",
+        fontWeight: 600,
+      }}
+    >
+      {label}:{" "}
+      {shown.map((s, i) => {
+        const needsComma = i < shown.length - 1 || remaining > 0;
+        return (
+          <span key={s.id}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                openProfile(s.id);
+              }}
+              title={`View ${s.name}'s profile`}
+              style={{
+                cursor: "pointer",
+                textDecoration: "underline",
+                textUnderlineOffset: "2px",
+                background: "none",
+                border: "none",
+                padding: 0,
+                font: "inherit",
+                color: "inherit",
+                fontWeight: 600,
+              }}
+            >
+              {s.name}
+            </button>
+            {needsComma ? "," : ""}
+          </span>
+        );
+      })}
+      {remaining > 0 && (
+        <span style={{ fontWeight: 500, opacity: 0.7 }}>+{remaining} more</span>
+      )}
+    </span>
+  );
 }
 
 function TaskRow({
@@ -149,17 +221,7 @@ function TaskRow({
           {currentTab === "in_progress" && task.acceptedBy && task.acceptedBy.length > 0 && (
             <>
               <span className="emp-task-row__meta-sep" />
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                  color: "var(--foreground)",
-                  fontWeight: 600,
-                }}
-              >
-                Being done by: {task.acceptedBy.map((s) => s.name).join(", ")}
-              </span>
+              <AcceptedByNames label="Being done by" students={task.acceptedBy} />
             </>
           )}
 
@@ -168,17 +230,7 @@ function TaskRow({
               {task.acceptedBy && task.acceptedBy.length > 0 && (
                 <>
                   <span className="emp-task-row__meta-sep" />
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.25rem",
-                      color: "var(--foreground)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Completed by: {task.acceptedBy.map((s) => s.name).join(", ")}
-                  </span>
+                  <AcceptedByNames label="Completed by" students={task.acceptedBy} />
                 </>
               )}
               {task.avgScore !== undefined && (
@@ -257,16 +309,10 @@ export default function TaskManagement({
             type="button"
             className="emp-icon-btn"
             onClick={() => setSearchOpen(!searchOpen)}
-            aria-label="Search tasks"
+            aria-label={searchOpen ? "Close search" : "Search tasks"}
+            aria-expanded={searchOpen}
           >
             <Search className="size-4" />
-          </button>
-          <button
-            type="button"
-            className="emp-icon-btn"
-            aria-label="Filter tasks"
-          >
-            <SlidersHorizontal className="size-4" />
           </button>
         </div>
       </div>

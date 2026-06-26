@@ -9,7 +9,7 @@ const footerColumns = [
     links: [
       { label: "Browse Tasks", href: "#" },
       { label: "How it Works", href: "#how-it-works" },
-      { label: "Pricing", href: "#" },
+      { label: "Verify Certificate", href: "/verify" },
     ],
   },
   {
@@ -82,7 +82,7 @@ export default function Footer() {
         <div className="mt-12 border-t-4 border-black dark:border-white pt-8 flex justify-center">
           <Typography
             variant="span"
-            className="text-center font-bold uppercase tracking-widest text-xs"
+            className="text-center text-xs text-muted-foreground"
           >
             &copy; 2026 Internify Platform. All rights reserved.
           </Typography>

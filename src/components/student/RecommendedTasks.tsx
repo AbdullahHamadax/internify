@@ -1,29 +1,6 @@
 "use client";
 
-import deviconData from "devicon/devicon.json";
-
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
-
+import { SkillIcon } from "@/lib/skillIcon";
 import { useState, useMemo } from "react";
 import {
   Sparkles,
@@ -407,7 +384,6 @@ export default function RecommendedTasks({ onNavigate }: RecommendedTasksProps) 
                     <div className="flex flex-wrap gap-1.5 mb-4">
                       {rec.skills.slice(0, 4).map((skill) => {
                         const isMatched = rec.matchedSkills.includes(skill);
-                        const devicon = getDeviconClass(skill);
                         return (
                           <span
                             key={skill}
@@ -417,7 +393,7 @@ export default function RecommendedTasks({ onNavigate }: RecommendedTasksProps) 
                                 : "bg-zinc-100 dark:bg-zinc-900 text-foreground/60"
                             }`}
                           >
-                            {devicon && <i className={`${devicon} text-[12px]`} />}
+                            <SkillIcon skill={skill} className="text-[12px]" />
                             {skill}
                           </span>
                         );

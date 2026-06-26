@@ -40,6 +40,8 @@ Instead of relying on grades, resumes, or interviews alone:
 - About page explaining the motivation, problem, and vision
 - Auth flow with multi-step signup, login, forgot-password, and profile completion
 - Role-aware AI assistant, **Dalil**, available across the platform
+- Public, shareable student profiles (`/students/[userId]`)
+- Public certificate verification page (`/verify` and `/verify/[certificateId]`)
 
 </details>
 
@@ -48,9 +50,15 @@ Instead of relying on grades, resumes, or interviews alone:
 
 - Dashboard with overview, explore, messages, notifications, profile, and settings
 - Explore tasks with real backend data, filtering, sorting, and task detail views
+- **Intelligent task recommendations** ranked by skill-level fit, skill overlap, category affinity, and freshness
 - Task acceptance flow with applicant limits
-- Submission flow for accepted tasks
-- Profile and portfolio-oriented student presentation
+- Multi-format submissions (file upload, GitHub URL, or plain text)
+- **AI evaluation results** with per-dimension scores, verdict, strengths, and improvement feedback
+- **Skill XP system** — earn XP per skill on task completion, progressing through beginner → intermediate → advanced levels
+- **Earned certificates** auto-generated on passing scores, with live reward toasts and a downloadable PDF
+- Star ratings and written feedback from employers, surfaced on the profile
+- Optional **AI-formatted task descriptions** for easier reading
+- Profile with CV upload, AI CV generation, education, skills, and availability status
 
 </details>
 
@@ -58,9 +66,13 @@ Instead of relying on grades, resumes, or interviews alone:
 <summary><strong>🏢 Employer Experience</strong></summary>
 
 - Dashboard with analytics, task management, messages, notifications, profile, and settings
-- Task posting and editing flow
-- Applicant tracking and submission visibility
+- Task posting and editing with **AI skill suggestions** and an **AI-assisted rubric builder**
+- Optional per-task AI-formatting and configurable XP-per-skill rewards
+- Applicant tracking, submission visibility, and AI evaluation summaries
+- Rate and leave feedback on completed submissions
 - Talent search for browsing student profiles and skills
+- Top-students showcase highlighting high performers
+- Editable hiring-status badge (hiring / selective / not hiring)
 
 </details>
 
@@ -68,29 +80,36 @@ Instead of relying on grades, resumes, or interviews alone:
 <summary><strong>⚙️ Platform Systems</strong></summary>
 
 - Clerk authentication integrated with Convex user persistence
-- Real-time messaging and notifications
+- Real-time messaging and notifications with typing/online presence
 - Role-aware navigation and dashboard routing
-- File upload support for tasks and submissions
+- File upload support for tasks, submissions, CVs, and logos
 - Retrieval-assisted chatbot pipeline using Groq, Pinecone, and Hugging Face
+- Multi-agent AI evaluation pipeline secured with a shared server secret
+- Task contribution graph and gamified skill progression
 
 </details>
 
 ---
 
-## 🤖 AI Roadmap
+## 🤖 AI Pipeline
 
-AI is the next major track of Internify. This phase is intentionally presented as **in progress** and the team is actively building the full evaluation pipeline.
+The AI track that was previously planned is now **live**. Internify runs a multi-agent evaluation pipeline plus a suite of generative AI features powered by Groq.
 
-| Feature                                | Status         |
-| -------------------------------------- | -------------- |
-| Automated submission grading           | 🔄 In Progress |
-| Code and solution evaluation           | 🔄 In Progress |
-| Feedback generation for students       | 🔄 In Progress |
-| Fairer skill assessment for employers  | 🔄 In Progress |
-| Stronger retrieval & assistant quality | 🔄 In Progress |
-| AI CV generator and analyzer           | 🔄 Planned     |
-| AI recommendation system               | 🔄 Planned     |
-| Certificate generation                 | 🔄 Planned     |
+| Feature                                  | Status        |
+| ---------------------------------------- | ------------- |
+| Automated submission grading             | ✅ Live        |
+| Domain-specific evaluation agents        | ✅ Live        |
+| Feedback generation for students         | ✅ Live        |
+| Certificate generation & verification    | ✅ Live        |
+| Skill XP & gamified progression          | ✅ Live        |
+| Intelligent task recommendations         | ✅ Live        |
+| AI CV generator & analyzer               | ✅ Live        |
+| AI skill detection & rubric suggestion   | ✅ Live        |
+| AI-formatted task descriptions           | ✅ Live        |
+| Dalil retrieval-assisted assistant       | ✅ Live        |
+| Deeper analytics & ranking refinements   | 🔄 Ongoing    |
+
+**Evaluation agents.** Submissions are routed by task category to a specialized agent — `web`, `ai_ml`, `fullstack`, `se`, or `cybersec` — which scores the work across rubric dimensions and returns a verdict, strengths, improvements, and a summary. Passing evaluations (score ≥ 60) automatically mint a verifiable certificate and award skill XP.
 
 ---
 
@@ -98,11 +117,13 @@ AI is the next major track of Internify. This phase is intentionally presented a
 
 | Layer                  | Technology                                                                                          |
 | ---------------------- | --------------------------------------------------------------------------------------------------- |
-| **Frontend**           | Next.js, React, TypeScript                                                                          |
-| **Styling / UI**       | Tailwind CSS v4, Radix UI, Lucide Icons                                                             |
+| **Frontend**           | Next.js 16, React 19, TypeScript                                                                   |
+| **Styling / UI**       | Tailwind CSS v4, Radix UI, Lucide Icons, Devicon                                                    |
+| **Animation**          | Motion, GSAP                                                                                        |
 | **Auth**               | Clerk                                                                                               |
 | **Backend / Database** | Convex                                                                                              |
 | **AI / Retrieval**     | Groq (`llama-3.3-70b-versatile`), Pinecone, Hugging Face (`sentence-transformers/all-MiniLM-L6-v2`) |
+| **Documents**          | jsPDF, pdfjs-dist, JSZip (CV generation, PDF parsing, submission bundling)                          |
 | **Validation / Forms** | Zod, React Hook Form                                                                                |
 
 ---
@@ -134,9 +155,19 @@ internify/
 │   │   │   └── layout.tsx
 │   │   ├── about/page.tsx              # About / story page
 │   │   ├── api/
-│   │   │   ├── chat/route.ts           # Chat assistant endpoint
-│   │   │   └── seed/route.ts           # Seed/testing helpers
+│   │   │   ├── chat/route.ts           # Dalil chat assistant endpoint
+│   │   │   ├── evaluate-submission/    # Multi-agent AI submission grading
+│   │   │   ├── format-description/     # AI task-description formatting
+│   │   │   ├── suggest-rubric/         # AI rubric suggestions for employers
+│   │   │   ├── detect-skills/          # AI skill detection
+│   │   │   ├── generate-cv/            # AI CV generation
+│   │   │   ├── analyze-cv/             # AI CV analysis
+│   │   │   ├── parse-cv-profile/       # CV → profile field parsing
+│   │   │   ├── seed/route.ts           # Seed/testing helpers
+│   │   │   └── seed-skill-xp/route.ts  # Skill-XP seeding helper
 │   │   ├── dashboard/page.tsx          # Role-aware signed-in dashboard entry
+│   │   ├── students/[userId]/page.tsx  # Public student profile page
+│   │   ├── verify/                     # Certificate verification (list + by id)
 │   │   ├── globals.css                 # Global styles
 │   │   ├── layout.tsx                  # Root app layout
 │   │   ├── not-found.tsx               # 404 page
@@ -144,14 +175,13 @@ internify/
 │   ├── components/
 │   │   ├── about/                      # About page visuals
 │   │   ├── auth/                       # Auth-specific presentation components
-│   │   ├── employer/                   # Employer dashboard, task management, analytics
-│   │   │   └── talent-search/
-│   │   │       └── TalentSearch.tsx    # Employer talent search filters and results
+│   │   ├── employer/                   # Employer dashboard, task mgmt, analytics, rubric builder
+│   │   │   └── talent-search/          # Employer talent search filters and results
 │   │   ├── home/                       # Signed-in home controls
 │   │   ├── landing/                    # Landing page sections and marketing UI
 │   │   ├── providers/                  # App providers (Convex client, etc.)
-│   │   ├── shared/                     # Messages, notifications, settings, profile modals
-│   │   ├── student/                    # Student dashboard, explore, profile, submissions
+│   │   ├── shared/                     # Messages, notifications, settings, ratings, certificates
+│   │   ├── student/                    # Dashboard, explore, evaluation results, certificates, XP
 │   │   ├── ui/                         # Reusable UI primitives and wrappers
 │   │   ├── Chatbot.tsx                 # Role-aware Dalil assistant shell
 │   │   ├── SignedInView.tsx            # Signed-in landing/home wrapper
@@ -159,7 +189,10 @@ internify/
 │   │   └── ThemeToggle.tsx             # Theme switching control
 │   └── lib/
 │       ├── convexAuth.ts               # Auth helpers bridging Clerk and Convex
-│       ├── profileLinks.ts             # GitHub / LinkedIn URL helpers
+│       ├── cvPdfGenerator.ts           # CV → PDF rendering
+│       ├── pdfTextExtractor.ts         # PDF text extraction for CV parsing
+│       ├── egyptianData.ts             # Egyptian universities / cities data
+│       ├── xp.ts                       # Skill-XP levels and thresholds
 │       ├── skillCatalog.ts             # Skill definitions and metadata
 │       ├── skillMatching.ts            # Skill matching utilities
 │       └── utils.ts                    # Shared utility helpers
@@ -167,6 +200,12 @@ internify/
 │   ├── _generated/                     # Convex generated API/types
 │   ├── auth.config.ts                  # Convex auth integration config
 │   ├── convex.config.ts                # Convex project config
+│   ├── certificates.ts                 # Certificate generation & verification
+│   ├── evaluations.ts                  # AI evaluation persistence and queries
+│   ├── ratings.ts                      # Employer ratings of student submissions
+│   ├── recommendations.ts              # Task recommendation engine
+│   ├── recommendationHelpers.ts        # Recommendation scoring helpers
+│   ├── seedSkillXp.ts                  # Skill-XP seeding logic
 │   ├── messages.ts                     # Real-time messaging logic
 │   ├── nameLimits.ts                   # Name validation rules
 │   ├── notifications.ts                # Notification logic
@@ -233,33 +272,29 @@ The product is organized around two main application surfaces — the **student 
 </details>
 
 <details>
-<summary><strong>Youseff Tarek</strong>: AI evaluation pipeline (planned)</summary>
+<summary><strong>Youseff Tarek</strong>: AI evaluation pipeline</summary>
 
-- AI evaluation pipeline
-- Submission analysis and grading research
-- Intelligent scoring and feedback logic
-- Certificate generation
-
-</details>
-
-<details>
-<summary><strong>Ahmed Hisham</strong>: AI experimentation (planned)</summary>
-
-- AI experimentation and model workflow design
-- Evaluation quality improvements
-- Assistant and grading system support
-- AI CV generator and analyzer
+- Built the multi-agent AI evaluation pipeline with domain-specific grading agents
+- Submission analysis, intelligent scoring, and structured feedback generation
+- Certificate generation and verification on passing evaluations
 
 </details>
 
 <details>
-<summary><strong>Abdallah Mousa</strong>: Updated Auth integration + AI infrastructure (planned)</summary>
+<summary><strong>Ahmed Hisham</strong>: AI experimentation & generative features</summary>
+
+- AI experimentation and model/prompt workflow design
+- Evaluation quality and rubric refinements
+- AI CV generator and analyzer, plus assistant and grading support
+
+</details>
+
+<details>
+<summary><strong>Abdallah Mousa</strong>: Updated Auth integration + AI infrastructure</summary>
 
 - Contributed to updating Convex and Clerk's authentication and integration
-- AI implementation support
-- Evaluation pipeline integration
-- Infrastructure support for the AI stage
-- AI recommendation system
+- AI implementation and evaluation-pipeline integration support
+- Infrastructure for the AI stage and the task recommendation system
 
 </details>
 
@@ -295,9 +330,13 @@ GROQ_API_KEY=
 PINECONE_API_KEY=
 PINECONE_INDEX_NAME=
 HF_TOKEN=
+EVAL_SERVER_SECRET=        # Shared secret guarding the AI evaluation pipeline
 ```
 
 You will also need the standard Clerk application keys for local development.
+
+> [!IMPORTANT]
+> `EVAL_SERVER_SECRET` must be set in **both** the Next.js environment and the Convex environment (`npx convex env set EVAL_SERVER_SECRET ...`). If the two values differ, the submission-evaluation pipeline will reject requests.
 
 ### 3. Run Convex
 

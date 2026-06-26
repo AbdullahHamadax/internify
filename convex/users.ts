@@ -5,10 +5,11 @@ import {
   academicStatusValidator,
   rankLevelValidator,
   studentAvailabilityStatusValidator,
+  employerHiringStatusValidator,
 } from "./schema";
 import { assertValidUserNameFields } from "./nameLimits";
 
-const DEFAULT_STUDENT_AVAILABILITY_STATUS = "available_now" as const;
+const DEFAULT_STUDENT_AVAILABILITY_STATUS = "open_to_offers" as const;
 
 /**
  * QUERY: currentUser
@@ -140,6 +141,7 @@ export const upsertCurrentUser = mutation({
         position: v.string(),
         rankLevel: rankLevelValidator,
         logoStorageId: v.optional(v.id("_storage")),
+        hiringStatus: v.optional(employerHiringStatusValidator),
       }),
     ),
   },
@@ -304,6 +306,9 @@ export const upsertCurrentUser = mutation({
           ...(args.employerProfile.logoStorageId !== undefined
             ? { logoStorageId: args.employerProfile.logoStorageId }
             : {}),
+          ...(args.employerProfile.hiringStatus !== undefined
+            ? { hiringStatus: args.employerProfile.hiringStatus }
+            : {}),
           updatedAt: now,
         });
       } else {
@@ -315,6 +320,9 @@ export const upsertCurrentUser = mutation({
           rankLevel: args.employerProfile.rankLevel,
           ...(args.employerProfile.logoStorageId !== undefined
             ? { logoStorageId: args.employerProfile.logoStorageId }
+            : {}),
+          ...(args.employerProfile.hiringStatus !== undefined
+            ? { hiringStatus: args.employerProfile.hiringStatus }
             : {}),
           updatedAt: now,
         });
@@ -365,6 +373,51 @@ export const updateStudentAvailabilityStatus = mutation({
     });
 
     return args.availabilityStatus;
+  },
+});
+
+/**
+ * MUTATION: updateEmployerHiringStatus
+ * Lets the current employer update their live hiring posture (the badge on
+ * their profile). Lightweight counterpart to upsertCurrentUser for quick
+ * inline edits.
+ */
+export const updateEmployerHiringStatus = mutation({
+  args: {
+    hiringStatus: employerHiringStatusValidator,
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "employer") {
+      throw new Error("Only employers can update hiring status.");
+    }
+
+    const profile = await ctx.db
+      .query("employerProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!profile) {
+      throw new Error("Employer profile not found.");
+    }
+
+    await ctx.db.patch(profile._id, {
+      hiringStatus: args.hiringStatus,
+      updatedAt: Date.now(),
+    });
+
+    return args.hiringStatus;
   },
 });
 
@@ -442,10 +495,19 @@ export const syncCurrentUserNames = mutation({
 export const getStudentsForEmployer = query({
   args: {},
   handler: async (ctx) => {
-    // 1. Ensure the user is authenticated
+    // 1. Only authenticated employers may browse the student directory.
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Unauthorized");
+    }
+    const viewer = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+    if (!viewer || viewer.role !== "employer") {
+      throw new Error("Unauthorized: only employers can browse students");
     }
 
     // 2. Fetch all student users
@@ -455,7 +517,10 @@ export const getStudentsForEmployer = query({
       .filter((q) => q.eq(q.field("role"), "student"))
       .collect();
 
-    // 3. For each student, get their profile
+    // 3. For each student, get their profile + real performance stats
+    //    derived from completed tasks, AI evaluations, and employer ratings.
+    //    Blended rating mirrors ratings.getStudentRatingSummary (employer
+    //    stars weighted 60/40 with AI score; AI alone when unrated).
     const studentsWithProfiles = await Promise.all(
       students.map(async (student) => {
         const profile = await ctx.db
@@ -463,9 +528,75 @@ export const getStudentsForEmployer = query({
           .withIndex("by_userId", (q) => q.eq("userId", student._id))
           .unique();
 
+        const applications = await ctx.db
+          .query("applications")
+          .withIndex("by_studentId", (q) => q.eq("studentId", student._id))
+          .collect();
+        const completedApps = applications.filter(
+          (app) => app.status === "completed",
+        );
+
+        let blendedSum = 0;
+        let blendedCount = 0;
+        let aiScoreSum = 0;
+        let aiScoreCount = 0;
+
+        for (const app of completedApps) {
+          const evaluation = await ctx.db
+            .query("evaluations")
+            .withIndex("by_applicationId", (q) =>
+              q.eq("applicationId", app._id),
+            )
+            .unique();
+          const ratingRecord = await ctx.db
+            .query("ratings")
+            .withIndex("by_applicationId", (q) =>
+              q.eq("applicationId", app._id),
+            )
+            .unique();
+
+          const aiScore = evaluation?.overallScore ?? null;
+          const stars = ratingRecord?.stars ?? null;
+          if (aiScore == null && stars == null) continue;
+
+          if (aiScore != null) {
+            aiScoreSum += aiScore;
+            aiScoreCount += 1;
+          }
+
+          const aiStars = Math.max(
+            0,
+            Math.min(5, (aiScore ?? stars! * 20) / 20),
+          );
+          blendedSum +=
+            stars != null ? stars * 0.6 + aiStars * 0.4 : aiStars;
+          blendedCount += 1;
+        }
+
+        const rating =
+          blendedCount > 0
+            ? Math.round((blendedSum / blendedCount) * 10) / 10
+            : 0;
+        const avgScore =
+          aiScoreCount > 0 ? Math.round(aiScoreSum / aiScoreCount) : 0;
+
         return {
-          user: student,
+          // Only expose what the talent UI needs + contact email for employers.
+          // Never return the raw user doc — it carries auth identifiers
+          // (tokenIdentifier, clerkUserId) that must not reach the browser.
+          user: {
+            _id: student._id,
+            firstName: student.firstName,
+            lastName: student.lastName,
+            email: student.email,
+          },
           profile: profile || null,
+          stats: {
+            completedTasks: completedApps.length,
+            rating, // blended 0–5, one decimal
+            avgScore, // average AI score 0–100
+            ratedTaskCount: blendedCount, // tasks with an AI score or rating
+          },
         };
       })
     );
@@ -500,11 +631,37 @@ export const getPublicProfile = query({
         .query("applications")
         .withIndex("by_studentId", (q) => q.eq("studentId", user._id))
         .collect();
-      const completedTasks = applications.filter(
+      const completedApps = applications.filter(
         (app) => app.status === "completed",
-      ).length;
+      );
+      const completedTasks = completedApps.length;
+
+      // Blended overall rating (employer stars 60/40 with AI score; AI alone
+      // when unrated). Mirrors ratings.getStudentRatingSummary.
+      const blendedValues: number[] = [];
+      for (const app of completedApps) {
+        const evaluation = await ctx.db
+          .query("evaluations")
+          .withIndex("by_applicationId", (q) => q.eq("applicationId", app._id))
+          .unique();
+        const ratingRecord = await ctx.db
+          .query("ratings")
+          .withIndex("by_applicationId", (q) => q.eq("applicationId", app._id))
+          .unique();
+        const aiScore = evaluation?.overallScore ?? null;
+        const stars = ratingRecord?.stars ?? null;
+        if (aiScore == null && stars == null) continue;
+        const aiStars = Math.max(0, Math.min(5, (aiScore ?? stars! * 20) / 20));
+        blendedValues.push(stars != null ? stars * 0.6 + aiStars * 0.4 : aiStars);
+      }
       const rating =
-        completedTasks > 0 ? 4.5 + Math.min(completedTasks * 0.1, 0.5) : 0;
+        blendedValues.length > 0
+          ? Math.round(
+              (blendedValues.reduce((sum, v) => sum + v, 0) /
+                blendedValues.length) *
+                10,
+            ) / 10
+          : 0;
 
       return {
         userId: user._id,
@@ -556,6 +713,7 @@ export const getPublicProfile = query({
             position: profile.position,
             rankLevel: profile.rankLevel,
             logoStorageId: profile.logoStorageId,
+            hiringStatus: profile.hiringStatus ?? null,
           }
         : null,
     };
@@ -693,6 +851,18 @@ export const getPublicStudentProfileDetail = query({
               q.eq("applicationId", app._id),
             )
             .unique();
+          const evaluation = await ctx.db
+            .query("evaluations")
+            .withIndex("by_applicationId", (q) =>
+              q.eq("applicationId", app._id),
+            )
+            .unique();
+          const ratingRecord = await ctx.db
+            .query("ratings")
+            .withIndex("by_applicationId", (q) =>
+              q.eq("applicationId", app._id),
+            )
+            .unique();
 
           return {
             applicationId: app._id,
@@ -703,6 +873,9 @@ export const getPublicStudentProfileDetail = query({
             skillLevel: task.skillLevel,
             skills: task.skills,
             companyName: employerProfile?.companyName ?? "Unknown Company",
+            aiScore: evaluation?.overallScore ?? null,
+            stars: ratingRecord?.stars ?? null,
+            comment: ratingRecord?.comment ?? null,
             recordedAt: app.completedAt ?? submission?.submittedAt ?? app.createdAt,
           };
         }),
@@ -711,9 +884,21 @@ export const getPublicStudentProfileDetail = query({
       .filter((item) => item !== null)
       .sort((a, b) => b.recordedAt - a.recordedAt);
 
+    // Blended overall rating (0–5): employer stars weighted 60/40 with AI score,
+    // AI score alone when not yet rated. Mirrors ratings.getStudentRatingSummary.
+    const blendedValues = completedWork
+      .filter((w) => w.aiScore != null || w.stars != null)
+      .map((w) => {
+        const aiStars = Math.max(0, Math.min(5, (w.aiScore ?? w.stars! * 20) / 20));
+        return w.stars != null ? w.stars * 0.6 + aiStars * 0.4 : aiStars;
+      });
     const rating =
-      completedApplications.length > 0
-        ? 4.5 + Math.min(completedApplications.length * 0.1, 0.5)
+      blendedValues.length > 0
+        ? Math.round(
+            (blendedValues.reduce((sum, v) => sum + v, 0) /
+              blendedValues.length) *
+              10,
+          ) / 10
         : 0;
 
     const cvUrl =

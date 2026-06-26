@@ -7,6 +7,10 @@ type AccountAvatarProps = {
   name?: string | null;
   imageUrl?: string | null;
   className?: string;
+  /** "cover" for photos, "contain" for logos (avoids cropping wide brand marks). */
+  fit?: "cover" | "contain";
+  /** When the avatar is a clickable trigger, enable the press-to-flatten hover. */
+  interactive?: boolean;
 };
 
 export default function AccountAvatar({
@@ -14,17 +18,22 @@ export default function AccountAvatar({
   name,
   imageUrl,
   className = "",
+  fit = "cover",
+  interactive = false,
 }: AccountAvatarProps) {
   const fallback = (name?.trim().charAt(0) || "U").toUpperCase();
   const backgroundColor = role === "employer" ? "#AB47BC" : "#2563EB";
 
   return (
     <span
-      className={`relative inline-flex h-[2.125rem] w-[2.125rem] shrink-0 items-center justify-center overflow-hidden border-2 bg-[var(--background)] font-black text-white ${className}`.trim()}
+      className={`relative inline-flex size-9 shrink-0 items-center justify-center overflow-hidden border-2 bg-[var(--background)] font-black text-white shadow-[2px_2px_0_0_var(--foreground)] ${
+        interactive
+          ? "cursor-pointer transition-all duration-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+          : ""
+      } ${className}`.trim()}
       style={{
         backgroundColor,
         borderColor: "var(--foreground)",
-        boxShadow: "2px 2px 0 0 var(--foreground)",
       }}
       aria-hidden="true"
     >
@@ -33,8 +42,8 @@ export default function AccountAvatar({
           src={imageUrl}
           alt=""
           fill
-          sizes="34px"
-          className="object-cover"
+          sizes="36px"
+          className={fit === "contain" ? "object-contain bg-white p-0.5" : "object-cover"}
         />
       ) : (
         <span className="relative z-10 text-[0.8125rem] leading-none">

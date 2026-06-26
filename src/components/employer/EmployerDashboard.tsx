@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
@@ -44,6 +44,7 @@ import TaskDetailModal from "./TaskDetailModal";
 import TalentSearch from "./talent-search/TalentSearch";
 import Messages from "@/components/shared/Messages";
 import Notifications from "@/components/shared/Notifications";
+
 import EmployerProfile from "./EmployerProfile";
 import HomeButton from "@/components/shared/HomeButton";
 import AccountAvatar from "@/components/shared/AccountAvatar";
@@ -78,18 +79,55 @@ function EmployerNavbar({
   const { signOut } = useClerk();
   const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
   const isConvexTokenReady = useConvexTokenReady();
   const unreadCount =
     useQuery(
       api.notifications.getUnreadCount,
       isConvexTokenReady ? {} : "skip",
     ) ?? 0;
+  const employerLogo = useQuery(
+    api.users.getEmployerLogoUrl,
+    isConvexTokenReady ? {} : "skip",
+  );
+  const avatarImageUrl = employerLogo?.url ?? (user?.hasImage ? user.imageUrl : null);
   const handleSignOut = useCallback(async () => {
     await signOut({ redirectUrl: "/login?role=employer" });
   }, [signOut]);
 
+  // Close the compact menu once the viewport grows back to the desktop layout,
+  // otherwise the open menu's leftover items strand on-screen after resize.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1152px)");
+    const handle = (e: MediaQueryListEvent) => {
+      if (e.matches) setMobileOpen(false);
+    };
+    if (mq.matches) setMobileOpen(false);
+    mq.addEventListener("change", handle);
+    return () => mq.removeEventListener("change", handle);
+  }, []);
+
+  // Dismiss the compact menu on outside click or Escape.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileOpen]);
+
   return (
-    <nav className="emp-navbar">
+    <nav className="emp-navbar" ref={navRef}>
       <div className="emp-navbar__left">
         {/* Brand */}
         <div className="emp-navbar__brand" aria-hidden="true">
@@ -123,8 +161,8 @@ function EmployerNavbar({
       </div>
 
       <div className="emp-navbar__right">
-        {/* Hidden on mobile, shown on md screens */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* Hidden on mobile, shown on wide screens (matches nav collapse at 1152px) */}
+        <div className="hidden min-[1152px]:flex items-center gap-2">
           <HomeButton href="/" />
           <ThemeToggle />
 
@@ -171,7 +209,9 @@ function EmployerNavbar({
               <AccountAvatar
                 role="employer"
                 name={user?.firstName ?? user?.fullName}
-                imageUrl={user?.hasImage ? user.imageUrl : null}
+                imageUrl={avatarImageUrl}
+                fit={employerLogo?.url ? "contain" : "cover"}
+                interactive
               />
             </button>
           </DropdownMenuTrigger>
@@ -215,7 +255,9 @@ function EmployerNavbar({
           type="button"
           className="emp-navbar__icon-btn emp-mobile-toggle"
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileOpen}
+          aria-controls="emp-mobile-menu"
         >
           {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
         </button>
@@ -223,40 +265,19 @@ function EmployerNavbar({
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            right: 0,
-            background: "var(--card)",
-            padding: "1rem",
-            zIndex: 50,
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          {/* Mobile Actions: Theme & Notifications */}
-          <div className="flex items-center justify-between mb-2 pb-3 border-b border-border md:hidden">
-            <span className="text-sm font-medium text-muted-foreground">
-              Appearance
-            </span>
+        <div className="emp-navbar__mobile-menu" id="emp-mobile-menu">
+          {/* Utility strip: Home + theme + notifications */}
+          <div className="emp-menu-utility">
+            <HomeButton href="/" className="flex-1 justify-center" />
             <ThemeToggle />
-          </div>
-
-          <div className="mb-2 pb-3 border-b border-border md:hidden">
-            <HomeButton href="/" className="w-full justify-center" />
-          </div>
-
-          <div className="flex items-center justify-between mb-2 pb-3 border-b border-border md:hidden">
-            <span className="text-sm font-medium text-muted-foreground">
-              Notifications
-            </span>
             <button
               type="button"
               className="emp-navbar__icon-btn"
-              aria-label="Notifications"
+              aria-label={
+                unreadCount > 0
+                  ? `Notifications, ${unreadCount} unread`
+                  : "Notifications"
+              }
               onClick={() => {
                 onNavigate("notifications");
                 setMobileOpen(false);
@@ -288,39 +309,41 @@ function EmployerNavbar({
             </button>
           </div>
 
-          {NAV_LINKS.map((link) => (
-            <button
-              key={link.id}
-              type="button"
-              className={`emp-navbar__link${
-                activeNav === link.id ? " emp-navbar__link--active" : ""
-              }`}
-              style={{ display: "block", width: "100%", textAlign: "left" }}
-              onClick={() => {
-                if (link.id === "post-task") {
-                  onPostTask();
-                } else {
-                  onNavigate(link.id);
-                }
-                setMobileOpen(false);
-              }}
-            >
-              {link.label}
-            </button>
-          ))}
+          <div className="emp-menu-divider" />
+
+          {/* Primary nav as brutalist blocks */}
+          {NAV_LINKS.map((link) => {
+            const Icon = link.icon;
+            return (
+              <button
+                key={link.id}
+                type="button"
+                className={`emp-menu-link${
+                  activeNav === link.id ? " emp-menu-link--active" : ""
+                }`}
+                aria-current={activeNav === link.id ? "page" : undefined}
+                onClick={() => {
+                  if (link.id === "post-task") {
+                    onPostTask();
+                  } else {
+                    onNavigate(link.id);
+                  }
+                  setMobileOpen(false);
+                }}
+              >
+                <Icon className="emp-menu-link__icon" />
+                {link.label}
+              </button>
+            );
+          })}
+
           <button
             type="button"
-            className="emp-navbar__link"
-            style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
-              color: "hsl(0 72% 51%)",
-              marginTop: "0.5rem",
-            }}
+            className="emp-menu-link emp-menu-link--danger"
             onClick={() => void handleSignOut()}
           >
-            Logout
+            <LogOut className="emp-menu-link__icon" />
+            Log Out
           </button>
         </div>
       )}
@@ -353,6 +376,9 @@ export default function EmployerDashboard() {
   const createTask = useMutation(api.tasks.createTask);
   const deleteTask = useMutation(api.tasks.deleteTask);
   const updateTask = useMutation(api.tasks.updateTask);
+  const getOrCreateConversation = useMutation(
+    api.messages.getOrCreateConversation,
+  );
   const routeTab = searchParams.get("tab");
   const normalizedRouteTab =
     routeTab &&
@@ -370,6 +396,12 @@ export default function EmployerDashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  // Conversation to open when navigating to Messages from within the dashboard
+  // (e.g. the Talent Spotlight "Invite" button). Kept in state rather than the
+  // URL to avoid fighting the tab<->URL sync effects.
+  const [pendingConversationId, setPendingConversationId] = useState<
+    string | null
+  >(null);
 
   const [now] = useState(() => Date.now());
 
@@ -397,6 +429,7 @@ export default function EmployerDashboard() {
         resolvedAttachments: t.resolvedAttachments,
         acceptedBy: t.acceptedBy,
         customRubric: t.customRubric,
+        enableAiFormat: t.enableAiFormat,
       })) || [],
     [employerTasks, now],
   );
@@ -424,6 +457,23 @@ export default function EmployerDashboard() {
       setActiveNav(id);
     },
     [tasks],
+  );
+
+  // Start (or reuse) a conversation with a student and open Messages on it.
+  const handleMessageStudent = useCallback(
+    async (studentUserId: string) => {
+      const conversationId = await getOrCreateConversation({
+        otherUserId: studentUserId as Id<"users">,
+      });
+      setPendingConversationId(conversationId as string);
+      setActiveNav("messages");
+      // Reset scroll — the user had scrolled down to the spotlight, and
+      // Messages should open from the top, not mid-page.
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "auto" });
+      }
+    },
+    [getOrCreateConversation],
   );
 
   const handleViewTask = useCallback((task: Task) => {
@@ -481,6 +531,7 @@ export default function EmployerDashboard() {
                 }[]
               | undefined,
             customRubric: taskData.customRubric,
+            enableAiFormat: taskData.enableAiFormat,
           });
           setEditingTask(null);
         } else {
@@ -503,6 +554,7 @@ export default function EmployerDashboard() {
                 }[]
               | undefined,
             customRubric: taskData.customRubric,
+            enableAiFormat: taskData.enableAiFormat,
           });
         }
         setModalOpen(false);
@@ -539,7 +591,7 @@ export default function EmployerDashboard() {
         {activeNav === "messages" && (
           <Messages
             role="employer"
-            initialConversationId={initialConversationId}
+            initialConversationId={pendingConversationId ?? initialConversationId}
           />
         )}
         {activeNav === "profile" && <EmployerProfile />}
@@ -563,7 +615,7 @@ export default function EmployerDashboard() {
                   <span className="inline-flex items-center justify-center font-black text-black bg-white px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] -rotate-2 text-xl md:text-2xl">
                     {stats.totalSubmissions} submissions
                   </span>{" "}
-                  this month.{" "}
+                  so far.{" "}
                   <span className="inline-flex items-center justify-center font-black text-black bg-[#FCD34D] px-2 py-0.5 mx-0.5 border-2 border-black shadow-[2px_2px_0_0_#000] rotate-2 text-xl md:text-2xl">
                     {stats.activeTasks}
                   </span>{" "}
@@ -590,7 +642,11 @@ export default function EmployerDashboard() {
             </div>
 
             {/* Showcase */}
-            <TopStudentsShowcase />
+            <TopStudentsShowcase
+              tasks={tasks}
+              onNavigate={handleNavigate}
+              onInvite={handleMessageStudent}
+            />
           </>
         )}
       </main>

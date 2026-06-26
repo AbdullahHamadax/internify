@@ -225,6 +225,9 @@
 }
 
 .emp-talent-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   padding: 0.125rem 0.5rem;
   border-radius: 0;
   background: var(--card);
@@ -259,4 +262,27 @@
 .emp-talent-card__invite:hover {
   transform: translate(2px, 2px);
   box-shadow: none;
+}
+
+.emp-talent-card__invite:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 2px 2px 0 0 var(--border);
+}
+
+/* ── Loading / empty state ── */
+
+.emp-showcase__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 2.5rem 1.5rem;
+  border: 4px dashed var(--border);
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-align: center;
 }

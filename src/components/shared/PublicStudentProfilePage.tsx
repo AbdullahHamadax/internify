@@ -6,11 +6,14 @@ import { useEffect, useState } from "react";
 import { AuthLoading, Authenticated, Unauthenticated, useMutation, useQuery } from "convex/react";
 import {
   ArrowLeft,
+  Award,
+  BadgeCheck,
   Briefcase,
   Building2,
   CalendarDays,
   CheckCircle2,
   Download,
+  ExternalLink,
   Eye,
   FileCheck,
   FileText,
@@ -23,18 +26,21 @@ import {
   MapPin,
   Phone,
   Send,
+  Sparkles,
   Star,
   Trophy,
   X,
   Zap,
 } from "lucide-react";
-import deviconData from "devicon/devicon.json";
+import { SkillIcon } from "@/lib/skillIcon";
 import { useRouter } from "next/navigation";
 
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Typography } from "@/components/ui/Typography";
 import TaskContributionsGraph from "@/components/shared/TaskContributionsGraph";
+import StarRating from "@/components/shared/StarRating";
+import FormattedTaskDescription from "@/components/shared/FormattedTaskDescription";
 import { useConvexTokenReady } from "@/lib/convexAuth";
 import {
   formatExternalLinkLabel,
@@ -47,29 +53,6 @@ import {
   normalizeStudentAvailabilityStatus,
 } from "@/lib/availability";
 
-const ICON_MAPPINGS: Record<string, string> = {
-  Vue: "vuejs",
-  HTML: "html5",
-  CSS: "css3",
-  Express: "express",
-  TensorFlow: "tensorFlow",
-};
-
-function getDeviconClass(skillName: string) {
-  if (ICON_MAPPINGS[skillName]) {
-    return `devicon-${ICON_MAPPINGS[skillName]}-plain colored`;
-  }
-
-  const match = (
-    deviconData as Array<{ name: string; altnames: string[] }>
-  ).find(
-    (icon) =>
-      icon.name === skillName.toLowerCase() ||
-      icon.altnames.includes(skillName.toLowerCase()),
-  );
-
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
 
 type RenderedPdfPage = {
   src: string;
@@ -270,6 +253,10 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
   const profile = useQuery(
     api.users.getPublicStudentProfileDetail,
     isConvexTokenReady ? { userId: userId as Id<"users"> } : "skip",
+  );
+  const certificates = useQuery(
+    api.certificates.getCertificatesByStudent,
+    isConvexTokenReady ? { studentId: userId as Id<"users"> } : "skip",
   );
   const getOrCreateConversation = useMutation(
     api.messages.getOrCreateConversation,
@@ -594,21 +581,49 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                         </span>
                       </div>
 
-                      <Typography variant="p" className="mt-4 text-sm leading-relaxed text-foreground">
-                        {item.description}
-                      </Typography>
+                      {/* Employer rating + AI score for this completed task */}
+                      {(item.stars != null || item.aiScore != null) && (
+                        <div className="mt-3 flex flex-wrap items-center gap-3">
+                          {item.stars != null && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <StarRating value={item.stars} size={15} />
+                              <span className="text-xs font-black text-foreground">
+                                {item.stars.toFixed(1)}
+                              </span>
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                Employer
+                              </span>
+                            </span>
+                          )}
+                          {item.aiScore != null && (
+                            <span className="inline-flex items-center gap-1 border border-blue-300 bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-blue-700 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                              <Sparkles className="h-3 w-3" />
+                              AI {item.aiScore}/100
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {item.comment && (
+                        <p className="mt-2 border-l-2 border-amber-400 pl-3 text-sm italic text-muted-foreground">
+                          &ldquo;{item.comment}&rdquo;
+                        </p>
+                      )}
+
+                      <FormattedTaskDescription
+                        text={item.description}
+                        className="mt-4 space-y-2.5"
+                      />
 
                       {item.skills.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                           {item.skills.map((skill) => {
-                            const devicon = getDeviconClass(skill);
-
                             return (
                               <span
                                 key={`${item.applicationId}-${skill}`}
                                 className="inline-flex items-center gap-1.5 border-2 border-black bg-[#2563EB] px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-[2px_2px_0_0_#000] dark:border-white dark:shadow-[2px_2px_0_0_#fff]"
                               >
-                                {devicon && <i className={`${devicon} text-xs`} />}
+                                <SkillIcon skill={skill} className="text-xs" />
                                 {skill}
                               </span>
                             );
@@ -620,6 +635,76 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                 )}
               </div>
             </div>
+
+            {/* Earned certificates — shown to employers in context, each links
+                out to the public verification page. */}
+            {certificates && certificates.length > 0 && (
+              <div className="border-4 border-black bg-card p-6 shadow-[8px_8px_0_0_#000] dark:border-white dark:shadow-[8px_8px_0_0_#fff]">
+                <Typography variant="h3" className="mb-4 flex items-center gap-3 uppercase">
+                  <span className="border-2 border-black bg-[#E9D5FF] p-1 text-black shadow-[2px_2px_0_0_#000] dark:border-white dark:shadow-[2px_2px_0_0_#fff]">
+                    <Award className="h-5 w-5" />
+                  </span>
+                  Certificates
+                </Typography>
+
+                <div className="space-y-4">
+                  {certificates.map((cert) => (
+                    <article
+                      key={cert.certificateId}
+                      className="border-4 border-border bg-card p-5 shadow-[4px_4px_0_0_var(--border)]"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                          {cert.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={cert.logoUrl}
+                              alt={cert.companyName}
+                              className="h-10 w-10 shrink-0 border-2 border-border bg-white object-contain"
+                            />
+                          ) : (
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-border bg-muted">
+                              <Building2 className="h-5 w-5 text-muted-foreground" />
+                            </span>
+                          )}
+                          <div className="min-w-0">
+                            <Typography variant="h4" className="break-words">
+                              {cert.taskTitle}
+                            </Typography>
+                            <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                              {cert.companyName}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="shrink-0 border-2 border-border bg-[#047857] px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                          {cert.finalScore}/100
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {new Date(cert.completedAt).toLocaleDateString()}
+                          <span className="ml-2 font-black tracking-widest text-foreground">
+                            {cert.certificateId}
+                          </span>
+                        </span>
+                        <a
+                          href={`/verify/${encodeURIComponent(cert.certificateId)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 border-2 border-black bg-[#AB47BC] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none dark:border-white dark:shadow-[2px_2px_0_0_#fff]"
+                        >
+                          <BadgeCheck className="h-3.5 w-3.5" />
+                          Verify
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
 
           <aside className="space-y-6">
@@ -756,7 +841,6 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                 </Typography>
                 <div className="flex flex-wrap gap-2">
                   {studentProfile.skills.map((skill) => {
-                    const devicon = getDeviconClass(skill);
                     const xpEntry = studentProfile.skillXp?.find((e: { skill: string; xp: number }) => e.skill === skill);
                     const xp = xpEntry?.xp ?? 0;
                     const level = xp >= 1500 ? "Advanced" : xp >= 1000 ? "Intermediate" : "Beginner";
@@ -773,7 +857,7 @@ function PublicStudentProfileContent({ userId }: { userId: string }) {
                         className="flex flex-col items-start gap-1 border-2 border-border bg-card px-3 py-1.5 shadow-[2px_2px_0_0_var(--border)]"
                       >
                         <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider">
-                          {devicon && <i className={`${devicon} text-sm`} />}
+                          <SkillIcon skill={skill} className="text-sm" />
                           {skill}
                         </span>
                         <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${levelStyle}`}>

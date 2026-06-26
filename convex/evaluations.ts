@@ -21,18 +21,88 @@ function generateCertificateId(completedAt: number): string {
 }
 
 /**
- * Store a new AI evaluation result for a submission.
- * Called from the client after the API route returns evaluation data.
+ * Assert the request carries the server-only evaluation secret. This is what
+ * makes scoring tamper-proof: only our backend (the /api/evaluate-submission
+ * route, which holds EVAL_SERVER_SECRET) can call the functions below. A student
+ * cannot reach them from the browser, so they cannot inject their own score.
+ */
+function assertServerSecret(secret: string) {
+  const expected = process.env.EVAL_SERVER_SECRET;
+  if (!expected) {
+    throw new Error(
+      "EVAL_SERVER_SECRET is not configured on the Convex deployment.",
+    );
+  }
+  if (secret !== expected) {
+    throw new Error("Forbidden: invalid server secret");
+  }
+}
+
+/**
+ * Read-only context the server needs to evaluate a submission: the task's
+ * authoritative description/rubric and the stored submission content. Served
+ * straight from the database so a student cannot substitute an easier task or a
+ * different submission than the one they actually saved. Secret-gated.
+ */
+export const getEvaluationContext = query({
+  args: {
+    secret: v.string(),
+    applicationId: v.id("applications"),
+    submissionId: v.id("submissions"),
+  },
+  handler: async (ctx, args) => {
+    assertServerSecret(args.secret);
+
+    const application = await ctx.db.get(args.applicationId);
+    if (!application) throw new Error("Application not found");
+
+    const submission = await ctx.db.get(args.submissionId);
+    if (!submission || submission.applicationId !== args.applicationId) {
+      throw new Error("Submission does not belong to this application");
+    }
+
+    const task = await ctx.db.get(application.taskId);
+    if (!task) throw new Error("Task not found");
+
+    // Resolve storage URLs here (secret-gated) so the route never needs a
+    // separate public file-URL endpoint.
+    const files = await Promise.all(
+      (submission.files ?? []).map(async (f) => ({
+        storageId: f.storageId,
+        name: f.name,
+        type: f.type,
+        url: await ctx.storage.getUrl(f.storageId),
+      })),
+    );
+
+    return {
+      taskDescription: task.description,
+      taskCategory: task.category,
+      taskSkills: task.skills ?? [],
+      customRubric: task.customRubric ?? [],
+      submissionType: submission.submissionType ?? "file_upload",
+      githubUrl: submission.githubUrl ?? null,
+      plainText: submission.plainText ?? null,
+      files,
+    };
+  },
+});
+
+/**
+ * Persist a server-computed evaluation. The score arrives ONLY from our backend
+ * (proven by EVAL_SERVER_SECRET), never from the client — this is the fix for
+ * the score-spoofing hole. The student identity is derived from the application,
+ * not trusted from the caller.
  *
  * Score-gating logic:
- * - Score ≥ 60%: marks application + task as "completed", awards XP
+ * - Score ≥ 60%: marks application + task as "completed", awards XP, mints cert
  * - Score < 60%: keeps application as "in_progress", student can retry
  */
-export const storeEvaluation = mutation({
+export const storeServerEvaluation = mutation({
   args: {
+    secret: v.string(),
     submissionId: v.id("submissions"),
     applicationId: v.id("applications"),
-    taskId: v.id("tasks"),
     agentType: v.string(),
     overallScore: v.number(),
     verdict: v.string(),
@@ -49,25 +119,20 @@ export const storeEvaluation = mutation({
     rawResponse: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    assertServerSecret(args.secret);
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_tokenIdentifier", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier),
-      )
-      .unique();
+    const application = await ctx.db.get(args.applicationId);
+    if (!application) throw new Error("Application not found");
 
-    if (!user || user.role !== "student") {
-      throw new Error("Unauthorized: Only students can store evaluations");
-    }
-
-    // Verify submission belongs to this student
     const submission = await ctx.db.get(args.submissionId);
-    if (!submission || submission.studentId !== user._id) {
-      throw new Error("Submission not found or unauthorized");
+    if (!submission || submission.applicationId !== args.applicationId) {
+      throw new Error("Submission does not belong to this application");
     }
+
+    // Student identity comes from the application, never from the caller.
+    const user = await ctx.db.get(application.studentId);
+    if (!user) throw new Error("Student not found");
+    const taskIdFromApplication = application.taskId;
 
     // If an old evaluation already exists for this submission, delete it
     // (this can happen in edge cases with rapid resubmission)
@@ -86,7 +151,7 @@ export const storeEvaluation = mutation({
       submissionId: args.submissionId,
       applicationId: args.applicationId,
       studentId: user._id,
-      taskId: args.taskId,
+      taskId: taskIdFromApplication,
       agentType: args.agentType,
       overallScore: args.overallScore,
       verdict: args.verdict,
@@ -116,9 +181,9 @@ export const storeEvaluation = mutation({
       });
 
       // Mark task as completed so it appears in the employer's Completed tab
-      const task = await ctx.db.get(args.taskId);
+      const task = await ctx.db.get(taskIdFromApplication);
       if (task) {
-        await ctx.db.patch(args.taskId, {
+        await ctx.db.patch(taskIdFromApplication, {
           status: "completed",
           updatedAt: completedAt,
         });
@@ -182,7 +247,7 @@ export const storeEvaluation = mutation({
       const studentName =
         [studentUser.firstName, studentUser.lastName].filter(Boolean).join(" ") || "Student";
 
-      const task = await ctx.db.get(args.taskId);
+      const task = await ctx.db.get(taskIdFromApplication);
       const taskTitle = task?.title ?? "Unknown Task";
 
       // Get employer profile for company name and logo
@@ -224,7 +289,7 @@ export const storeEvaluation = mutation({
         await ctx.db.insert("certificates", {
           evaluationId,
           studentId: user._id,
-          taskId: args.taskId,
+          taskId: taskIdFromApplication,
           certificateId,
           studentName,
           taskTitle,

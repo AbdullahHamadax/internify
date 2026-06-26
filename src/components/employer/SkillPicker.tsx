@@ -1,33 +1,9 @@
 "use client";
 
 import { useState, useRef, useMemo, type KeyboardEvent, type DragEvent } from "react";
-import { X, Tag, Plus, Search, Sparkles } from "lucide-react";
-import deviconData from "devicon/devicon.json";
+import { X, Plus, Search, Sparkles } from "lucide-react";
+import { SkillIcon } from "@/lib/skillIcon";
 import { SKILL_CATALOG } from "@/lib/skillCatalog";
-
-/**
- * Get the devicon class name for a skill, if available.
- * Returns null if no matching devicon icon exists.
- */
-const ICON_MAPPINGS: Record<string, string> = {
-  "Vue": "vuejs",
-  "HTML": "html5",
-  "CSS": "css3",
-  "Express": "express",
-  "TensorFlow": "tensorFlow",
-};
-
-function getDeviconClass(skill: string): string | null {
-  if (ICON_MAPPINGS[skill]) {
-    return `devicon-${ICON_MAPPINGS[skill]}-plain colored`;
-  }
-  const normalized = skill.toLowerCase().replace(/[^a-z0-9]/g, "");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const match = (deviconData as any[]).find(
-    (icon) => icon.name === normalized || icon.altnames?.includes(normalized),
-  );
-  return match ? `devicon-${match.name}-plain colored` : null;
-}
 
 /* ── Props ── */
 interface SkillPickerProps {
@@ -138,18 +114,13 @@ export default function SkillPicker({ skills, onChange, aiDetectedSet }: SkillPi
       {skills.length > 0 && (
         <div className="emp-skill-picker__selected">
           {skills.map((skill) => {
-            const iconClass = getDeviconClass(skill);
             const isAiDetected = aiDetectedSet?.has(skill) ?? false;
             return (
               <span
                 key={skill}
                 className={`emp-tag flex items-center pr-1 pl-2.5${isAiDetected ? " emp-tag--ai-detected" : ""}`}
               >
-                {iconClass ? (
-                  <i className={`${iconClass} text-sm mr-1.5 opacity-90`}></i>
-                ) : (
-                  <Tag className="w-3.5 h-3.5 mr-1.5 opacity-70" />
-                )}
+                <SkillIcon skill={skill} className="text-sm mr-1.5 opacity-90" />
                 {skill}
                 {isAiDetected && (
                   <span className="emp-tag__ai-badge">
@@ -201,7 +172,6 @@ export default function SkillPicker({ skills, onChange, aiDetectedSet }: SkillPi
 
         {filteredCatalog.map((skill) => {
           const isSelected = skills.includes(skill);
-          const iconClass = getDeviconClass(skill);
 
           return (
             <button
@@ -210,11 +180,7 @@ export default function SkillPicker({ skills, onChange, aiDetectedSet }: SkillPi
               className={`emp-skill-option${isSelected ? " emp-skill-option--selected" : ""}`}
               onClick={() => toggleSkill(skill)}
             >
-              {iconClass ? (
-                <i className={`${iconClass} text-sm`}></i>
-              ) : (
-                <Tag className="size-3.5 opacity-60" />
-              )}
+              <SkillIcon skill={skill} className="text-sm" />
               <span>{skill}</span>
             </button>
           );

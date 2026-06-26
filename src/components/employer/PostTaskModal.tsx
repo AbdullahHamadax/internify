@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect, useMemo, useCallback, useRef, type ChangeEvent } from "react";
-import { X, Plus, Save, Upload, Trash2, FileText, Loader2, Sparkles } from "lucide-react";
+import { X, Plus, Save, Upload, Trash2, FileText, Loader2, Sparkles, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +38,7 @@ export interface PostTaskData {
     type: string;
   }[];
   customRubric?: string[];
+  enableAiFormat?: boolean;
 }
 
 /** Matches convex/tasks.ts — deadlines must be future and at least this far ahead. */
@@ -58,6 +59,7 @@ const CATEGORIES = [
   "Database Administration",
   "DevOps",
   "Embedded Systems",
+  "Frontend Development",
   "Full Stack Development",
   "Game Development",
   "Machine Learning",
@@ -65,7 +67,6 @@ const CATEGORIES = [
   "Networking",
   "Software Engineering",
   "UI/UX Design",
-  "Web Development",
 ];
 
 const SKILL_LEVELS = [
@@ -161,6 +162,7 @@ export default function PostTaskModal({
   const [category, setCategory] = useState("");
   const [skillLevel, setSkillLevel] = useState("");
   const [description, setDescription] = useState("");
+  const [enableAiFormat, setEnableAiFormat] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
   const [deadline, setDeadline] = useState("");
   const [maxApplicants, setMaxApplicants] = useState("");
@@ -181,6 +183,55 @@ export default function PostTaskModal({
     }[]
   >([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  /* ── AI Description Format Preview ── */
+  const [showFormatPreview, setShowFormatPreview] = useState(false);
+  const [formatPreviewLoading, setFormatPreviewLoading] = useState(false);
+  const [formatPreviewResult, setFormatPreviewResult] = useState<{
+    summary: string | null;
+    requirements: string[] | null;
+    deliverables: string[] | null;
+  } | null>(null);
+  const formatPreviewAbortRef = useRef<AbortController | null>(null);
+
+  const fetchFormatPreview = useCallback(async (desc: string) => {
+    if (desc.trim().length < 80) {
+      setFormatPreviewResult({ summary: desc.trim(), requirements: null, deliverables: null });
+      return;
+    }
+    formatPreviewAbortRef.current?.abort();
+    const controller = new AbortController();
+    formatPreviewAbortRef.current = controller;
+    setFormatPreviewLoading(true);
+    try {
+      const res = await fetch("/api/format-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: desc }),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error("API error");
+      const data = await res.json();
+      setFormatPreviewResult(data);
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        console.warn("Format preview failed:", err);
+      }
+    } finally {
+      setFormatPreviewLoading(false);
+    }
+  }, []);
+
+  const toggleFormatPreview = useCallback(() => {
+    setShowFormatPreview((prev) => {
+      const next = !prev;
+      if (next && description.trim()) {
+        setFormatPreviewResult(null);
+        fetchFormatPreview(description);
+      }
+      return next;
+    });
+  }, [description, fetchFormatPreview]);
 
   /* ── AI Skill Detection ── */
   const handleAiAutoSelect = useCallback((newSkills: string[]) => {
@@ -217,13 +268,28 @@ export default function PostTaskModal({
     [triggerDetection, triggerRubricSuggestion, category, rubricDimensions],
   );
 
+  /* Skills the user accepted from the green AI-suggested chips. Tracked
+   * separately so they keep the "AI" badge even after later detection runs
+   * rebuild aiDetectedSet. */
+  const [acceptedAiSuggestions, setAcceptedAiSuggestions] = useState<Set<string>>(
+    new Set(),
+  );
+
   const handleAddSuggestedSkill = useCallback(
     (skill: string) => {
       if (!skills.includes(skill)) {
         setSkills((prev) => [...prev, skill]);
       }
+      setAcceptedAiSuggestions((prev) => new Set(prev).add(skill));
     },
     [skills],
+  );
+
+  /* Any skill that originated from AI — auto-detected or an accepted
+   * suggestion — gets the badge, so the meaning is consistent. */
+  const aiBadgeSet = useMemo(
+    () => new Set<string>([...aiDetectedSet, ...acceptedAiSuggestions]),
+    [aiDetectedSet, acceptedAiSuggestions],
   );
   const generateUploadUrl = useMutation(api.tasks.generateUploadUrl);
 
@@ -262,6 +328,9 @@ export default function PostTaskModal({
         setImageStorageIds(initialData.imageStorageIds || []);
         setImageUrls(initialData.imageUrls || []);
         setAttachments(initialData.resolvedAttachments || []);
+        setEnableAiFormat(initialData.enableAiFormat ?? false);
+        setShowFormatPreview(false);
+        setFormatPreviewResult(null);
 
         // Convert existing custom rubric labels back to RubricDimension objects
         const defaultLabels = getDefaultRubric(initialData.category);
@@ -341,6 +410,10 @@ export default function PostTaskModal({
     setAttachments([]);
     setRubricDimensions([]);
     setDiscardedDefaults([]);
+    setAcceptedAiSuggestions(new Set());
+    setEnableAiFormat(false);
+    setShowFormatPreview(false);
+    setFormatPreviewResult(null);
     clearAiResults();
     clearRubricSuggestions();
   };
@@ -454,6 +527,7 @@ export default function PostTaskModal({
         customRubric: rubricDimensions.length > 0
           ? rubricDimensions.map((d) => d.label)
           : undefined,
+        enableAiFormat,
       });
 
       resetForm();
@@ -482,8 +556,8 @@ export default function PostTaskModal({
     "cursor-pointer focus:bg-black focus:text-white dark:focus:bg-white dark:focus:text-black rounded-none font-bold tracking-wide";
 
   return (
-    <div className="emp-modal-overlay" onClick={onClose}>
-      <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="emp-modal-overlay">
+      <div className="emp-modal">
         <div className="emp-modal__header">
           <Typography variant="h2" className="emp-modal__header-title">
             {initialData ? "Edit Task" : "Post a New Task"}
@@ -596,12 +670,141 @@ export default function PostTaskModal({
               selectedSkills={skills}
               onAddSkill={handleAddSuggestedSkill}
             />
+
+            {/* AI Format Checkbox + Preview */}
+            <div className="mt-4">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={enableAiFormat}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setEnableAiFormat(checked);
+                    if (checked && description.trim()) {
+                      setShowFormatPreview(true);
+                      setFormatPreviewResult(null);
+                      fetchFormatPreview(description);
+                    } else {
+                      setShowFormatPreview(false);
+                    }
+                  }}
+                />
+                <div
+                  className={`size-5 flex shrink-0 items-center justify-center border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] transition-colors ${
+                    enableAiFormat
+                      ? "bg-amber-500 text-white group-hover:bg-amber-600"
+                      : "bg-white dark:bg-black group-hover:bg-amber-50 dark:group-hover:bg-amber-950/30"
+                  }`}
+                >
+                  {enableAiFormat && (
+                    <Sparkles className="size-3" strokeWidth={3} />
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-black uppercase tracking-wider text-foreground group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
+                    Enable AI-Formatted Description
+                  </span>
+                  <span className="text-xs text-muted-foreground leading-tight mt-0.5">
+                    AI will organize your description into clean sections for students
+                  </span>
+                </div>
+              </label>
+
+              {enableAiFormat && description.trim().length > 0 && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={toggleFormatPreview}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest border-2 transition-all ${
+                      showFormatPreview
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 shadow-[2px_2px_0_0_#f59e0b]"
+                        : "border-border bg-card text-muted-foreground shadow-[2px_2px_0_0_var(--border)] hover:border-amber-500 hover:text-amber-700 dark:hover:text-amber-400"
+                    }`}
+                  >
+                    {showFormatPreview ? (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5" />
+                    )}
+                    {showFormatPreview ? "Hide Preview" : "Show Preview"}
+                  </button>
+                </div>
+              )}
+
+              {showFormatPreview && enableAiFormat && (
+                  <div className="mt-3 border-2 border-dashed border-amber-400/60 bg-amber-50/30 dark:bg-amber-950/10 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">
+                        <Sparkles className="w-3 h-3" />
+                        How students will see your description
+                      </span>
+                      {formatPreviewLoading && (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                      )}
+                    </div>
+
+                    {formatPreviewLoading && !formatPreviewResult ? (
+                      <div className="flex items-center gap-2 py-6 justify-center text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Formatting with AI…
+                      </div>
+                    ) : formatPreviewResult ? (
+                      <div className="space-y-4">
+                        {formatPreviewResult.summary && (
+                          <>
+                            <FormatPreviewHeading title="Description" />
+                            <p className="text-sm leading-relaxed text-foreground">
+                              {formatPreviewResult.summary}
+                            </p>
+                          </>
+                        )}
+                        {formatPreviewResult.requirements && formatPreviewResult.requirements.length > 0 && (
+                          <>
+                            <FormatPreviewHeading title="Requirements" />
+                            <ul className="space-y-1.5">
+                              {formatPreviewResult.requirements.map((item, i) => (
+                                <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-foreground">
+                                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rotate-45 bg-foreground" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                        {formatPreviewResult.deliverables && formatPreviewResult.deliverables.length > 0 && (
+                          <>
+                            <FormatPreviewHeading title="Deliverables" />
+                            <ul className="space-y-1.5">
+                              {formatPreviewResult.deliverables.map((item, i) => (
+                                <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-foreground">
+                                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rotate-45 bg-foreground" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                        {!formatPreviewResult.summary && !formatPreviewResult.requirements && !formatPreviewResult.deliverables && (
+                          <p className="text-sm text-muted-foreground italic py-4 text-center">
+                            Write a longer description for AI formatting to activate.
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic py-4 text-center">
+                        Write a description to see the AI-formatted preview.
+                      </p>
+                    )}
+                  </div>
+                )}
+            </div>
           </div>
 
           {/* Skills picker */}
           <div className="emp-modal__field">
             <Label>Required Skills</Label>
-            <SkillPicker skills={skills} onChange={setSkills} aiDetectedSet={aiDetectedSet} />
+            <SkillPicker skills={skills} onChange={setSkills} aiDetectedSet={aiBadgeSet} />
           </div>
 
           {/* Evaluation Rubric (optional) */}
@@ -873,6 +1076,19 @@ export default function PostTaskModal({
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Brutalist section heading: yellow rotated diamond + uppercase title + horizontal rule */
+function FormatPreviewHeading({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <span className="h-3 w-3 shrink-0 rotate-45 border-2 border-foreground bg-[#FDE68A]" />
+      <span className="text-xs font-black uppercase tracking-widest text-foreground">
+        {title}
+      </span>
+      <span className="h-px flex-1 bg-border" />
     </div>
   );
 }
