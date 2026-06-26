@@ -1,7 +1,7 @@
 "use client";
 
-import { GraduationCap } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
+import { Logo } from "@/components/ui/Logo";
 
 const footerColumns = [
   {
@@ -36,14 +36,7 @@ export default function Footer() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 text-center sm:text-left">
           {/* Brand */}
           <div className="flex flex-col items-center sm:items-start">
-            <div className="flex items-start gap-2.5">
-              <div className="bg-[#2563EB] rounded-none border-2 border-black dark:border-white p-1.5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] -mt-1">
-                <GraduationCap className="h-6 w-6 text-white" />
-              </div>
-              <Typography variant="span" className="text-lg" weight="bold">
-                Internify
-              </Typography>
-            </div>
+            <Logo />
             <Typography
               variant="span"
               className="mt-6 leading-relaxed max-w-xs font-bold"

@@ -2,7 +2,8 @@
 import { AuthHero } from "@/components/auth/auth-hero";
 import HomeButton from "@/components/shared/HomeButton";
 import ThemeToggle from "@/components/ThemeToggle";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 import { Suspense } from "react";
 
 export default function AuthLayout({
@@ -31,11 +32,8 @@ export default function AuthLayout({
             }}
           />
 
-          <div className="relative z-10 flex items-center gap-3 text-2xl font-black uppercase tracking-widest text-black dark:text-white">
-            <div className="border-4 border-black dark:border-white bg-white dark:bg-black p-2.5 shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff]">
-              <GraduationCap className="h-6 w-6 text-black dark:text-white" />
-            </div>
-            <span>Internify</span>
+          <div className="relative z-10">
+            <Logo />
           </div>
 
           <Suspense fallback={null}>

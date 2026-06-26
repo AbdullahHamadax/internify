@@ -78,6 +78,8 @@ export const getCertificatesByStudent = query({
         .sort((a, b) => b.completedAt - a.completedAt)
         .map(async (c) => ({
           certificateId: c.certificateId!,
+          taskId: c.taskId,
+          studentName: c.studentName,
           taskTitle: c.taskTitle,
           companyName: c.companyName,
           finalScore: c.finalScore,

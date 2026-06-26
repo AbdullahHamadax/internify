@@ -3,7 +3,8 @@
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { Typography } from "@/components/ui/Typography";
-import { GraduationCap, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 import { api } from "../../convex/_generated/api";
 
@@ -31,13 +32,8 @@ export default function SignedInView() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background text-foreground p-6">
       <div className="w-full max-w-sm space-y-8 text-center">
-        <div className="flex items-center justify-center gap-3">
-          <div className="bg-brand-gradient p-2.5 rounded-xl shadow-lg">
-            <GraduationCap className="w-7 h-7 text-white" />
-          </div>
-          <Typography variant="h3" as="span" className="tracking-wide">
-            Internify
-          </Typography>
+        <div className="flex items-center justify-center">
+          <Logo />
         </div>
 
         <div className="space-y-3">
