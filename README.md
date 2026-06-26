@@ -107,7 +107,6 @@ The AI track that was previously planned is now **live**. Internify runs a multi
 | AI skill detection & rubric suggestion   | ✅ Live        |
 | AI-formatted task descriptions           | ✅ Live        |
 | Dalil retrieval-assisted assistant       | ✅ Live        |
-| Deeper analytics & ranking refinements   | 🔄 Ongoing    |
 
 **Evaluation agents.** Submissions are routed by task category to a specialized agent — `web`, `ai_ml`, `fullstack`, `se`, or `cybersec` — which scores the work across rubric dimensions and returns a verdict, strengths, improvements, and a summary. Passing evaluations (score ≥ 60) automatically mint a verifiable certificate and award skill XP.
 
