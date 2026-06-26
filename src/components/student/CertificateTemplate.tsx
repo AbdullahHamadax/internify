@@ -268,7 +268,7 @@ async function buildCertificatePDF(data: CertificateData): Promise<jsPDF> {
   // Load logos (aspect ratio preserved). The Internify brand logo lives in
   // /public; the employer logo (if any) comes from the certificate record.
   const [brandLogo, logo] = await Promise.all([
-    loadImage("/logo.jpeg"),
+    loadImage("/InternifyLogo.png"),
     employerLogoUrl ? loadImage(employerLogoUrl) : Promise.resolve(null),
   ]);
 
