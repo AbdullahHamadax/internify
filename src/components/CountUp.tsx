@@ -33,8 +33,11 @@ export default function CountUp({
   const ref = useRef<HTMLSpanElement>(null);
   const motionValue = useMotionValue(direction === 'down' ? to : from);
 
-  const damping = 20 + 40 * (1 / duration);
-  const stiffness = 100 * (1 / duration);
+  // Guard against duration <= 0 (e.g. the reduced-motion path passes 0), which
+  // makes 1 / duration === Infinity and the spring emit NaN ("+NaN XP").
+  const safeDuration = duration > 0 ? duration : 0.001;
+  const damping = 20 + 40 * (1 / safeDuration);
+  const stiffness = 100 * (1 / safeDuration);
 
   const springValue = useSpring(motionValue, {
     damping,
@@ -59,6 +62,8 @@ export default function CountUp({
 
   const formatValue = useCallback(
     (latest: number) => {
+      // Never render NaN/Infinity — fall back to the target value.
+      const safeLatest = Number.isFinite(latest) ? latest : to;
       const hasDecimals = maxDecimals > 0;
 
       const options: Intl.NumberFormatOptions = {
@@ -67,11 +72,11 @@ export default function CountUp({
         maximumFractionDigits: hasDecimals ? maxDecimals : 0
       };
 
-      const formattedNumber = Intl.NumberFormat('en-US', options).format(latest);
+      const formattedNumber = Intl.NumberFormat('en-US', options).format(safeLatest);
 
       return separator ? formattedNumber.replace(/,/g, separator) : formattedNumber;
     },
-    [maxDecimals, separator]
+    [maxDecimals, separator, to]
   );
 
   useEffect(() => {
