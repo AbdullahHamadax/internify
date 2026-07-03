@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 
 // Turn a long run-on task description into something readable, regardless of
 // how it was written. Handles three signals, in order of reliability:
@@ -17,8 +17,47 @@ type Block =
 const LABEL_REGEX =
   /(?:^|(?<=[.!?])\s+)([A-Z][A-Za-z]*(?:\s+(?:[A-Z][A-Za-z]*|\d+)){0,3}\s*:)/g;
 const BULLET_REGEX = /^\s*(?:[-*•]|\d+[.)])\s+/;
+// Markdown ATX heading, e.g. "### Requirements" or "## **Deliverables**".
+const MD_HEADING_REGEX = /^#{1,6}\s+(.+?)\s*#*$/;
+// A horizontal rule line ("---", "***", "___") used as a section divider.
+const HR_REGEX = /^\s*[-*_]{3,}\s*$/;
 // Split into sentences while keeping the terminating punctuation.
 const SENTENCE_REGEX = /[^.!?]+[.!?]+(?:["')\]]+)?|\S[^.!?]*$/g;
+
+// Strip inline markdown markers (**bold**, `code`) down to plain text — used
+// for headings, which are already styled and shouldn't carry raw symbols.
+function stripInlineMarkers(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .trim();
+}
+
+// Render inline markdown (**bold** and `code`) as React nodes so body text and
+// list items don't show literal ** or backticks.
+function renderInline(text: string): ReactNode[] {
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (/^`[^`]+`$/.test(part)) {
+      return (
+        <code
+          key={i}
+          className="px-1 py-0.5 text-[0.85em] font-mono bg-muted border border-border"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    if (/^\*\*[^*]+\*\*$/.test(part)) {
+      return (
+        <strong key={i} className="font-black text-foreground">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
 
 // Break one chunk of prose into paragraph / list blocks.
 function parseBody(text: string): Block[] {
@@ -46,6 +85,19 @@ function parseBody(text: string): Block[] {
       // Blank line = paragraph boundary.
       flushList();
       flushProse();
+      continue;
+    }
+    if (HR_REGEX.test(line)) {
+      // Divider "---": treat as a section boundary, render nothing.
+      flushList();
+      flushProse();
+      continue;
+    }
+    const mdHeading = MD_HEADING_REGEX.exec(line);
+    if (mdHeading) {
+      flushList();
+      flushProse();
+      blocks.push({ kind: "heading", text: stripInlineMarkers(mdHeading[1]) });
       continue;
     }
     if (BULLET_REGEX.test(line)) {
@@ -157,7 +209,7 @@ export default function FormattedTaskDescription({
                   className="flex items-start gap-2.5 text-sm leading-relaxed text-foreground"
                 >
                   <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rotate-45 bg-foreground" />
-                  <span>{item}</span>
+                  <span>{renderInline(item)}</span>
                 </li>
               ))}
             </ul>
@@ -165,7 +217,7 @@ export default function FormattedTaskDescription({
         }
         return (
           <p key={i} className="text-sm leading-relaxed text-foreground">
-            {block.text}
+            {renderInline(block.text)}
           </p>
         );
       })}

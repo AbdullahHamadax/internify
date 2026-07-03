@@ -12,11 +12,15 @@ import {
   FileCode,
   Sparkles,
   ExternalLink,
+  ChevronDown,
+  ClipboardList,
+  Building2,
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { Typography } from "@/components/ui/Typography";
+import FormattedTaskDescription from "@/components/shared/FormattedTaskDescription";
 import { useLiveNow } from "@/lib/useLiveNow";
 import EvaluationResults, { type EvaluationData } from "./EvaluationResults";
 import type { CertificateData } from "./CertificateTemplate";
@@ -26,6 +30,9 @@ interface SubmitTaskModalProps {
   applicationId: string;
   taskTitle: string;
   taskCategory: string;
+  taskDescription: string;
+  taskSkills: string[];
+  customRubric?: string[];
   companyName: string;
   deadline: number;
   hasSubmission: boolean;
@@ -64,6 +71,9 @@ export default function SubmitTaskModal({
   applicationId,
   taskTitle,
   taskCategory,
+  taskDescription,
+  taskSkills,
+  customRubric,
   companyName,
   deadline,
   hasSubmission,
@@ -72,6 +82,7 @@ export default function SubmitTaskModal({
 }: SubmitTaskModalProps) {
   const now = useLiveNow();
   const [mode, setMode] = useState<SubmitMode>("file_upload");
+  const [showRequirements, setShowRequirements] = useState(true);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [githubUrl, setGithubUrl] = useState("");
   const [plainText, setPlainText] = useState("");
@@ -376,6 +387,18 @@ export default function SubmitTaskModal({
     );
   }
 
+  // State-aware header treatment: the badge announces the mode (submit / resubmit
+  // / complete / closed); the task title stays the prominent subject beneath it.
+  const headerMeta =
+    hasSubmission && !isRetrying
+      ? { label: "Submission Complete", Icon: CheckCircle2, badge: "bg-[#047857]" }
+      : isExpired
+        ? { label: "Deadline Passed", Icon: Clock, badge: "bg-[#EA4335]" }
+        : isRetrying
+          ? { label: "Resubmit Work", Icon: Upload, badge: "bg-[#2563EB]" }
+          : { label: "Submit Work", Icon: Upload, badge: "bg-[#2563EB]" };
+  const HeaderIcon = headerMeta.Icon;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
@@ -386,24 +409,34 @@ export default function SubmitTaskModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b-4 border-black dark:border-white">
-          <div className="min-w-0 flex-1 pr-4">
-            <Typography variant="h3" className="uppercase font-black tracking-tight truncate">
-              {hasSubmission && !isRetrying
-                ? "Submission Complete"
-                : isExpired
-                  ? "Deadline Passed"
-                  : isRetrying
-                    ? "Resubmit Work"
-                    : "Submit Work"}
+        <div className="flex items-start justify-between gap-4 p-5 border-b-4 border-black dark:border-white">
+          <div className="min-w-0 flex-1">
+            {/* Mode badge — the action/state, no longer competing with the task */}
+            <span
+              className={`inline-flex items-center gap-1.5 mb-2 px-2 py-1 border-2 border-black dark:border-white text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] ${headerMeta.badge}`}
+            >
+              <HeaderIcon className="w-3 h-3 shrink-0" strokeWidth={3} />
+              <span className="text-[10px] font-black uppercase tracking-widest">
+                {headerMeta.label}
+              </span>
+            </span>
+            {/* Task title — the real subject of this modal, now the focus */}
+            <Typography
+              variant="h3"
+              className="font-black tracking-tight leading-tight truncate text-foreground"
+            >
+              {taskTitle}
             </Typography>
-            <Typography variant="span" color="muted" className="text-sm truncate block mt-1">
-              {taskTitle} • {companyName}
-            </Typography>
+            {/* Company — its own legible line instead of a bullet-mashed subtitle */}
+            <div className="mt-1.5 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+              <Building2 className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate font-bold">{companyName}</span>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close"
             className="p-2 border-2 border-black dark:border-white bg-white dark:bg-black shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shrink-0"
           >
             <X className="w-4 h-4" />
@@ -447,6 +480,86 @@ export default function SubmitTaskModal({
             </div>
           ) : (
             <>
+              {/* ── Task Requirements (collapsible) ── */}
+              <div className="border-2 border-black dark:border-white bg-muted/30">
+                <button
+                  type="button"
+                  onClick={() => setShowRequirements((v) => !v)}
+                  aria-expanded={showRequirements}
+                  className="w-full flex items-center gap-2 p-3 text-left"
+                >
+                  <ClipboardList className="w-4 h-4 shrink-0 text-[#2563EB]" />
+                  <Typography
+                    variant="h4"
+                    className="flex-1 font-black uppercase text-xs tracking-widest"
+                  >
+                    Task Requirements
+                  </Typography>
+                  <ChevronDown
+                    className={`w-4 h-4 shrink-0 transition-transform ${
+                      showRequirements ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {showRequirements && (
+                  <div className="px-3 pb-3 space-y-3 border-t-2 border-black/20 dark:border-white/20 pt-3">
+                    {taskDescription?.trim() ? (
+                      <FormattedTaskDescription text={taskDescription} />
+                    ) : (
+                      <Typography variant="p" color="muted" className="text-sm italic">
+                        No description was provided for this task.
+                      </Typography>
+                    )}
+
+                    {taskSkills.length > 0 && (
+                      <div className="space-y-1.5">
+                        <Typography
+                          variant="span"
+                          color="muted"
+                          className="text-[10px] font-black uppercase tracking-widest block"
+                        >
+                          Required Skills
+                        </Typography>
+                        <div className="flex flex-wrap gap-1.5">
+                          {taskSkills.map((skill) => (
+                            <span
+                              key={skill}
+                              className="px-2 py-0.5 bg-card border-2 border-black dark:border-white text-xs font-bold"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {customRubric && customRubric.length > 0 && (
+                      <div className="space-y-1.5">
+                        <Typography
+                          variant="span"
+                          color="muted"
+                          className="text-[10px] font-black uppercase tracking-widest block"
+                        >
+                          You&apos;ll be graded on
+                        </Typography>
+                        <ul className="space-y-1">
+                          {customRubric.map((dim) => (
+                            <li
+                              key={dim}
+                              className="flex items-start gap-2 text-xs text-foreground"
+                            >
+                              <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rotate-45 bg-[#2563EB]" />
+                              <span>{dim}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* ── Submission Mode Tabs ── */}
               <div className="flex border-2 border-black dark:border-white">
                 {MODE_TABS.map((tab) => (
