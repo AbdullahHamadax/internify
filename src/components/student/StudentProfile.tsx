@@ -1701,6 +1701,8 @@ export default function StudentProfile() {
                             if (!cert) return null;
                             return (
                               <button
+                                type="button"
+                                title="View & download your certificate"
                                 onClick={() =>
                                   setCertPreview({
                                     certificateId: cert.certificateId,
@@ -1712,10 +1714,30 @@ export default function StudentProfile() {
                                     employerLogoUrl: cert.logoUrl,
                                   })
                                 }
-                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-[#AB47BC] text-white border-2 border-border font-black uppercase tracking-widest text-xs shadow-[2px_2px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                                className="group w-full sm:w-56 text-left bg-card border-2 border-border shadow-[3px_3px_0_0_var(--border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all overflow-hidden"
                               >
-                                <Award className="w-4 h-4" />
-                                Certificate
+                                {/* Ribbon header */}
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#AB47BC] text-white border-b-2 border-border">
+                                  <Award className="w-3.5 h-3.5 shrink-0" />
+                                  <span className="text-[10px] font-black uppercase tracking-widest">
+                                    Certified
+                                  </span>
+                                  <span className="ml-auto text-[10px] font-black tabular-nums">
+                                    {cert.finalScore}/100
+                                  </span>
+                                </div>
+                                {/* Body: cert ID + view affordance */}
+                                <div className="px-3 py-2">
+                                  <p className="font-mono text-[10px] font-bold tracking-wider text-muted-foreground truncate">
+                                    {cert.certificateId}
+                                  </p>
+                                  <span className="mt-0.5 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#AB47BC] dark:text-[#CE93D8]">
+                                    <Eye className="w-3 h-3" />
+                                    View
+                                    <Download className="w-3 h-3 ml-0.5" />
+                                    Download
+                                  </span>
+                                </div>
                               </button>
                             );
                           })()}

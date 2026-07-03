@@ -7,6 +7,7 @@ import {
   Bell,
   LayoutDashboard,
   Search,
+  Building2,
   MessageSquare,
   Menu,
   X,
@@ -39,6 +40,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 // Sub-components to be implemented
 import StudentOverview from "./StudentOverview";
 import StudentExplore from "./StudentExplore";
+import CompanySearch from "./company-search/CompanySearch";
 import StudentProfile from "./StudentProfile";
 import SettingsPage from "@/components/shared/Settings";
 import Footer from "@/components/landing/Footer";
@@ -49,6 +51,7 @@ import "./student-dashboard.css";
 const NAV_LINKS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "explore", label: "Explore Tasks", icon: Search },
+  { id: "companies", label: "Companies", icon: Building2 },
   { id: "messages", label: "Messages", icon: MessageSquare },
 ];
 
@@ -326,7 +329,7 @@ export default function StudentDashboard() {
   const initialConversationId = searchParams.get("conversationId");
   const normalizedRouteTab =
     routeTab &&
-    ["dashboard", "explore", "profile", "settings", "messages", "notifications"].includes(
+    ["dashboard", "explore", "companies", "profile", "settings", "messages", "notifications"].includes(
       routeTab,
     )
       ? routeTab
@@ -335,14 +338,25 @@ export default function StudentDashboard() {
   const [exploreFocusTaskId, setExploreFocusTaskId] = useState<string | null>(
     null,
   );
+  const [dashboardFocusTaskId, setDashboardFocusTaskId] = useState<
+    string | null
+  >(null);
 
   const handleNavigate = useCallback((id: string) => {
     if (id.startsWith("explore-task:")) {
+      setDashboardFocusTaskId(null);
       setExploreFocusTaskId(id.slice("explore-task:".length));
       setActiveNav("explore");
       return;
     }
+    if (id.startsWith("dashboard-task:")) {
+      setExploreFocusTaskId(null);
+      setDashboardFocusTaskId(id.slice("dashboard-task:".length));
+      setActiveNav("dashboard");
+      return;
+    }
     setExploreFocusTaskId(null);
+    setDashboardFocusTaskId(null);
     setActiveNav(id);
   }, []);
 
@@ -378,13 +392,20 @@ export default function StudentDashboard() {
 
       <main className="stu-main">
         {activeNav === "dashboard" && (
-          <StudentOverview onNavigate={handleNavigate} />
+          <StudentOverview
+            onNavigate={handleNavigate}
+            focusTaskId={dashboardFocusTaskId}
+            onFocusTaskConsumed={() => setDashboardFocusTaskId(null)}
+          />
         )}
         {activeNav === "explore" && (
           <StudentExplore
             focusTaskId={exploreFocusTaskId}
             onFocusTaskConsumed={() => setExploreFocusTaskId(null)}
           />
+        )}
+        {activeNav === "companies" && (
+          <CompanySearch onNavigate={handleNavigate} />
         )}
         {activeNav === "profile" && <StudentProfile />}
         {activeNav === "settings" && <SettingsPage />}
