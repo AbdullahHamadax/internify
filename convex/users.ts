@@ -606,6 +606,112 @@ export const getStudentsForEmployer = query({
 });
 
 /**
+ * QUERY: getCompaniesForStudent
+ *
+ * The student-side mirror of getStudentsForEmployer: lists every employer as a
+ * browsable company so students can discover who's on the platform and what
+ * they're hiring for — instead of only waiting for tasks to surface. Returns
+ * public-safe company fields plus *derived* proof: each company's currently-open
+ * roles (the work itself), the skills/categories they hire for, and engagement
+ * stats (open roles, total posted, talent hired). Never returns raw user docs.
+ */
+export const getCompaniesForStudent = query({
+  args: {},
+  handler: async (ctx) => {
+    // Only authenticated students browse the company directory.
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    const viewer = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+    if (!viewer || viewer.role !== "student") {
+      throw new Error("Unauthorized: only students can browse companies");
+    }
+
+    const now = Date.now();
+    const profiles = await ctx.db.query("employerProfiles").collect();
+
+    const companies = await Promise.all(
+      profiles.map(async (profile) => {
+        const tasks = await ctx.db
+          .query("tasks")
+          .withIndex("by_employerId", (q) =>
+            q.eq("employerId", profile.userId),
+          )
+          .collect();
+
+        // "Open" mirrors browseTasks: pending, not past deadline, not full.
+        const openTasks = tasks
+          .filter(
+            (task) =>
+              task.status === "pending" &&
+              task.deadline > now &&
+              !(
+                task.maxApplicants != null &&
+                (task.applicantCount ?? 0) >= task.maxApplicants
+              ),
+          )
+          .sort((a, b) => a.deadline - b.deadline);
+
+        // Talent hired = completed applications across all of this company's tasks.
+        let hired = 0;
+        for (const task of tasks) {
+          const apps = await ctx.db
+            .query("applications")
+            .withIndex("by_taskId", (q) => q.eq("taskId", task._id))
+            .collect();
+          hired += apps.filter((app) => app.status === "completed").length;
+        }
+
+        // Skills + categories aggregated from open roles (drives filters + tags).
+        const skillSet = new Set<string>();
+        const categorySet = new Set<string>();
+        for (const task of openTasks) {
+          for (const skill of task.skills) skillSet.add(skill);
+          if (task.category) categorySet.add(task.category);
+        }
+
+        const logoUrl = profile.logoStorageId
+          ? await ctx.storage.getUrl(profile.logoStorageId)
+          : null;
+
+        return {
+          companyId: profile.userId,
+          companyName: profile.companyName,
+          position: profile.position,
+          logoUrl,
+          hiringStatus: profile.hiringStatus ?? null,
+          skills: Array.from(skillSet),
+          categories: Array.from(categorySet),
+          stats: {
+            openRoles: openTasks.length,
+            totalPosted: tasks.length,
+            hired,
+          },
+          openRoles: openTasks.map((task) => ({
+            id: task._id,
+            title: task.title,
+            category: task.category,
+            skillLevel: task.skillLevel,
+            deadline: task.deadline,
+            skills: task.skills,
+            applicantCount: task.applicantCount ?? 0,
+            maxApplicants: task.maxApplicants ?? null,
+          })),
+        };
+      }),
+    );
+
+    return companies;
+  },
+});
+
+/**
  * QUERY: getPublicProfile
  * Fetches any user's public-facing profile by their userId.
  * Used to show read-only profile modals when clicking avatars/names.

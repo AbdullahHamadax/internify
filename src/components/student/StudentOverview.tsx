@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { SkillIcon } from "@/lib/skillIcon";
 
@@ -70,8 +70,13 @@ const itemVariants: Variants = {
 
 export default function StudentOverview({
   onNavigate,
+  focusTaskId,
+  onFocusTaskConsumed,
 }: {
   onNavigate?: (id: string) => void;
+  /** When set, open this task's submission modal (deep-link from Companies). */
+  focusTaskId?: string | null;
+  onFocusTaskConsumed?: () => void;
 }) {
   const now = useLiveNow();
   type SelectedApplication = {
@@ -98,6 +103,18 @@ export default function StudentOverview({
   );
 
   const applications = useQuery(api.tasks.getStudentApplications);
+
+  // Deep-link from the Companies tab: open the submission modal for a task the
+  // student already applied to, then clear the focus so it fires only once.
+  useEffect(() => {
+    if (!focusTaskId || !applications) return;
+    const match = applications.find(
+      (a) => String(a.taskId) === focusTaskId,
+    );
+    if (match) setSelectedApp(match);
+    onFocusTaskConsumed?.();
+  }, [focusTaskId, applications, onFocusTaskConsumed]);
+
   const me = useQuery(api.users.currentUser);
   const hasSkills = (me?.studentProfile?.skills?.length ?? 0) > 0;
   const recommendations = useQuery(
@@ -414,6 +431,9 @@ export default function StudentOverview({
           applicationId={selectedApp._id}
           taskTitle={selectedApp.task.title}
           taskCategory={selectedApp.task.category}
+          taskDescription={selectedApp.task.description}
+          taskSkills={selectedApp.task.skills}
+          customRubric={selectedApp.task.customRubric}
           companyName={selectedApp.task.companyName}
           deadline={selectedApp.task.deadline}
           hasSubmission={selectedApp.hasSubmission}

@@ -162,9 +162,22 @@ export default function TaskDetailModal({
     <div className="emp-modal-overlay" onClick={onClose}>
       <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
         <div className="emp-modal__header">
-          <Typography variant="h2" className="emp-modal__header-title">
-            Task Details
-          </Typography>
+          <div className="min-w-0 flex-1 pr-4">
+            {/* Context badge — the mode, so the task title can be the subject */}
+            <span className="inline-flex items-center gap-1.5 mb-2 px-2 py-0.5 border-2 border-black dark:border-white bg-[#AB47BC] text-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff]">
+              <FileText className="w-3 h-3 shrink-0" strokeWidth={3} />
+              <span className="text-[10px] font-black uppercase tracking-widest">
+                Task Details
+              </span>
+            </span>
+            {/* Task title — promoted from the body into the header */}
+            <Typography
+              variant="h2"
+              className="emp-modal__header-title block truncate"
+            >
+              {task.title}
+            </Typography>
+          </div>
           <button
             type="button"
             className="emp-icon-btn"
@@ -176,11 +189,8 @@ export default function TaskDetailModal({
         </div>
 
         <div className="emp-modal__body space-y-6">
-          {/* Header Info */}
+          {/* Task meta (title now lives in the header) */}
           <div>
-            <Typography variant="h3" className="text-xl font-bold mb-2">
-              {task.title}
-            </Typography>
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span className="emp-cat-tag emp-cat-tag--default">
                 {task.category}
