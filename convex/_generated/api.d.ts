@@ -9,6 +9,8 @@
  */
 
 import type * as certificates from "../certificates.js";
+import type * as crons from "../crons.js";
+import type * as deadlines from "../deadlines.js";
 import type * as evaluations from "../evaluations.js";
 import type * as messages from "../messages.js";
 import type * as nameLimits from "../nameLimits.js";
@@ -17,6 +19,7 @@ import type * as presence from "../presence.js";
 import type * as ratings from "../ratings.js";
 import type * as recommendationHelpers from "../recommendationHelpers.js";
 import type * as recommendations from "../recommendations.js";
+import type * as savedTasks from "../savedTasks.js";
 import type * as seedSkillXp from "../seedSkillXp.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
@@ -29,6 +32,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   certificates: typeof certificates;
+  crons: typeof crons;
+  deadlines: typeof deadlines;
   evaluations: typeof evaluations;
   messages: typeof messages;
   nameLimits: typeof nameLimits;
@@ -37,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   ratings: typeof ratings;
   recommendationHelpers: typeof recommendationHelpers;
   recommendations: typeof recommendations;
+  savedTasks: typeof savedTasks;
   seedSkillXp: typeof seedSkillXp;
   tasks: typeof tasks;
   users: typeof users;

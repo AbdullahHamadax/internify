@@ -978,6 +978,117 @@ export const acceptTask = mutation({
 });
 
 /**
+ * WITHDRAW AN APPLICATION
+ *
+ * The inverse of acceptTask. Accepting is a commitment (it takes a slot and
+ * shows up in the employer's applicant list), so a student who accepted by
+ * mistake, or who decides they can't deliver, needs a way out that leaves the
+ * task in a clean state for everyone else.
+ *
+ * Reverses every effect of acceptTask:
+ *  - deletes the application (and any submission / evaluation under it)
+ *  - frees the slot: applicantCount goes back down
+ *  - reopens the task if it had auto-closed on reaching max applicants
+ *  - tells the employer, so their applicant list isn't silently wrong
+ *
+ * A completed application cannot be withdrawn: the work was done, scored, and
+ * may already have minted a certificate. That history is not the student's to
+ * erase.
+ */
+export const withdrawApplication = mutation({
+  args: {
+    applicationId: v.id("applications"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user || user.role !== "student") {
+      throw new Error("Unauthorized: only students can withdraw");
+    }
+
+    const application = await ctx.db.get(args.applicationId);
+    if (!application || application.studentId !== user._id) {
+      throw new Error("Application not found");
+    }
+
+    if (application.status === "completed") {
+      throw new Error(
+        "This task is already completed and can no longer be withdrawn",
+      );
+    }
+
+    const task = await ctx.db.get(application.taskId);
+
+    // ── Remove the student's work under this application ──
+    const submission = await ctx.db
+      .query("submissions")
+      .withIndex("by_applicationId", (q) =>
+        q.eq("applicationId", args.applicationId),
+      )
+      .unique();
+
+    if (submission) {
+      const evaluation = await ctx.db
+        .query("evaluations")
+        .withIndex("by_submissionId", (q) =>
+          q.eq("submissionId", submission._id),
+        )
+        .unique();
+      if (evaluation) await ctx.db.delete(evaluation._id);
+      await ctx.db.delete(submission._id);
+    }
+
+    await ctx.db.delete(args.applicationId);
+
+    // ── Give the slot back ──
+    if (task) {
+      const newCount = Math.max(0, (task.applicantCount ?? 1) - 1);
+      const updates: Record<string, unknown> = {
+        applicantCount: newCount,
+        updatedAt: Date.now(),
+      };
+
+      // acceptTask auto-closes a task at capacity. Freeing a slot should reopen
+      // it, otherwise one withdrawal would strand the task closed forever.
+      if (
+        task.status === "in_progress" &&
+        task.maxApplicants &&
+        newCount < task.maxApplicants
+      ) {
+        updates.status = "pending";
+      }
+
+      await ctx.db.patch(application.taskId, updates);
+
+      // ── Tell the employer, so their applicant list stays truthful ──
+      const studentName =
+        [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+        "A student";
+
+      await ctx.db.insert("notifications", {
+        userId: task.employerId,
+        type: "application_withdrawn",
+        title: "Applicant Withdrew",
+        message: `${studentName} withdrew from your task "${task.title}".`,
+        relatedTaskId: application.taskId,
+        relatedUserId: user._id,
+        relatedUserName: studentName,
+        isRead: false,
+        createdAt: Date.now(),
+      });
+    }
+  },
+});
+
+/**
  * Get all task IDs the current student has accepted.
  * Used in the explore page to disable duplicate applications.
  */

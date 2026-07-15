@@ -19,11 +19,15 @@ import {
   Download,
   Image as ImageIcon,
   Sparkles,
+  Bookmark,
+  BookmarkCheck,
+  CalendarClock,
 } from "lucide-react";
 import { Typography } from "@/components/ui/Typography";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { useProfileModal } from "@/components/shared/ProfileModalContext";
 import { SKILL_CATALOG } from "@/lib/skillCatalog";
 import { entityMatchesSkillFilter, skillMatchKey } from "@/lib/skillMatching";
@@ -147,6 +151,39 @@ export default function StudentExplore({
 
   const tasks = useQuery(api.tasks.browseTasks);
   const acceptTask = useMutation(api.tasks.acceptTask);
+
+  // ── Saved tasks (bookmarks) ──
+  // Ids drive the toggle on every card; the enriched list backs the Saved view,
+  // which also surfaces bookmarks that are no longer actionable.
+  const savedTaskIds = useQuery(api.savedTasks.getSavedTaskIds);
+  const savedTasks = useQuery(api.savedTasks.getSavedTasks);
+  const toggleSaveTask = useMutation(api.savedTasks.toggleSaveTask);
+
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+  const savedIdSet = useMemo(
+    () => new Set(savedTaskIds ?? []),
+    [savedTaskIds],
+  );
+
+  // Lets a still-actionable saved task open the same detail drawer as Explore.
+  // Non-actionable ones (applied / expired / full) aren't in browseTasks, so
+  // they render as read-only rows with the reason instead.
+  const taskById = useMemo(() => {
+    const map = new Map<string, NonNullable<typeof tasks>[number]>();
+    (tasks ?? []).forEach((t) => map.set(t._id, t));
+    return map;
+  }, [tasks]);
+
+  const handleToggleSave = useCallback(
+    async (taskId: string) => {
+      try {
+        await toggleSaveTask({ taskId: taskId as Id<"tasks"> });
+      } catch (err) {
+        console.error("Failed to toggle saved task:", err);
+      }
+    },
+    [toggleSaveTask],
+  );
   const { openProfile } = useProfileModal();
   const activeTasks = useMemo(
     () => (tasks ?? []).filter((task) => task.deadline > now),
@@ -461,25 +498,54 @@ export default function StudentExplore({
             className="flex items-center justify-between mb-2"
           >
             <Typography variant="span" color="muted">
-              {tasks === undefined
-                ? "Loading tasks…"
-                : `Showing ${filteredTasks.length} task${filteredTasks.length !== 1 ? "s" : ""}`}
+              {showSavedOnly
+                ? savedTasks === undefined
+                  ? "Loading saved tasks…"
+                  : `${savedTasks.length} saved task${savedTasks.length !== 1 ? "s" : ""}`
+                : tasks === undefined
+                  ? "Loading tasks…"
+                  : `Showing ${filteredTasks.length} task${filteredTasks.length !== 1 ? "s" : ""}`}
             </Typography>
-            <button
-              onClick={() =>
-                setSortOrder((o) => (o === "newest" ? "oldest" : "newest"))
-              }
-              className="text-sm font-black uppercase tracking-wider flex items-center gap-1 hover:underline decoration-2 transition-all"
-            >
-              Sort by: {sortOrder === "newest" ? "Newest" : "Oldest"}{" "}
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${sortOrder === "oldest" ? "rotate-180" : ""}`}
-              />
-            </button>
+
+            <div className="flex items-center gap-3">
+              {/* Saved view toggle */}
+              <button
+                type="button"
+                aria-pressed={showSavedOnly}
+                onClick={() => setShowSavedOnly((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 border-2 border-black dark:border-white text-xs font-black uppercase tracking-widest shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all ${
+                  showSavedOnly
+                    ? "bg-[#FCD34D] text-black"
+                    : "bg-card text-foreground"
+                }`}
+              >
+                {showSavedOnly ? (
+                  <BookmarkCheck className="w-3.5 h-3.5" strokeWidth={3} />
+                ) : (
+                  <Bookmark className="w-3.5 h-3.5" strokeWidth={3} />
+                )}
+                Saved
+                {savedIdSet.size > 0 && ` (${savedIdSet.size})`}
+              </button>
+
+              {!showSavedOnly && (
+                <button
+                  onClick={() =>
+                    setSortOrder((o) => (o === "newest" ? "oldest" : "newest"))
+                  }
+                  className="text-sm font-black uppercase tracking-wider flex items-center gap-1 hover:underline decoration-2 transition-all"
+                >
+                  Sort by: {sortOrder === "newest" ? "Newest" : "Oldest"}{" "}
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${sortOrder === "oldest" ? "rotate-180" : ""}`}
+                  />
+                </button>
+              )}
+            </div>
           </motion.div>
 
           {/* Loading State */}
-          {tasks === undefined && (
+          {!showSavedOnly && tasks === undefined && (
             <motion.div
               variants={itemVariants}
               className="flex flex-col items-center justify-center py-20 text-muted-foreground"
@@ -492,7 +558,7 @@ export default function StudentExplore({
           )}
 
           {/* Empty State */}
-          {tasks !== undefined && filteredTasks.length === 0 && (
+          {!showSavedOnly && tasks !== undefined && filteredTasks.length === 0 && (
             <motion.div
               variants={itemVariants}
               className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-card border border-border rounded-xl"
@@ -530,7 +596,127 @@ export default function StudentExplore({
             </motion.div>
           )}
 
+          {/* ── Saved Tasks View ── */}
+          {showSavedOnly && savedTasks === undefined && (
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin mb-4" />
+              <Typography variant="p" color="muted">
+                Loading your saved tasks…
+              </Typography>
+            </div>
+          )}
+
+          {showSavedOnly && savedTasks !== undefined && savedTasks.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-card border-4 border-dashed border-[#C9D1DC] dark:border-zinc-700">
+              <Bookmark className="w-12 h-12 mb-4 opacity-40" />
+              <Typography
+                variant="h3"
+                className="mb-2 font-black uppercase tracking-widest"
+              >
+                Nothing saved yet
+              </Typography>
+              <Typography variant="p" color="muted" className="max-w-sm">
+                Hit the bookmark on any task to keep it here. Saving is just a
+                shortlist, it does not apply you to anything.
+              </Typography>
+              <button
+                type="button"
+                onClick={() => setShowSavedOnly(false)}
+                className="mt-6 px-6 py-3 bg-[#2563EB] text-white border-2 border-black dark:border-white font-black uppercase tracking-widest text-xs shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+              >
+                Browse tasks
+              </button>
+            </div>
+          )}
+
+          {showSavedOnly && savedTasks !== undefined && savedTasks.length > 0 && (
+            <div className="grid grid-cols-1 gap-4">
+              {savedTasks.map((s) => {
+                const full = taskById.get(s.taskId);
+                const canOpen = s.isActionable && !!full;
+                const status = s.isApplied
+                  ? { label: "In your pipeline", cls: "bg-[#047857] text-white" }
+                  : s.isExpired
+                    ? { label: "Deadline passed", cls: "bg-[#EA4335] text-white" }
+                    : s.isFull
+                      ? { label: "Full", cls: "bg-black text-white dark:bg-white dark:text-black" }
+                      : null;
+
+                return (
+                  <div
+                    key={s.taskId}
+                    onClick={canOpen && full ? () => openTaskDetail(full) : undefined}
+                    className={`w-full min-w-0 bg-white dark:bg-black border-2 border-black dark:border-white p-5 shadow-[6px_6px_0_0_#000] dark:shadow-[6px_6px_0_0_#2563EB] transition-all ${
+                      canOpen
+                        ? "cursor-pointer hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0_0_#000] dark:hover:shadow-[3px_3px_0_0_#2563EB]"
+                        : "opacity-80"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span
+                            className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 border-2 border-black dark:border-white ${
+                              s.skillLevel === "advanced"
+                                ? "bg-[#E11D48] text-white"
+                                : s.skillLevel === "intermediate"
+                                  ? "bg-[#AB47BC] text-white"
+                                  : "bg-[#2563EB] text-white"
+                            }`}
+                          >
+                            {capitalize(s.skillLevel)}
+                          </span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                            {s.category}
+                          </span>
+                          {status && (
+                            <span
+                              className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 border-2 border-black dark:border-white ${status.cls}`}
+                            >
+                              {status.label}
+                            </span>
+                          )}
+                        </div>
+
+                        <Typography variant="h3" className="truncate block mb-1">
+                          {s.title}
+                        </Typography>
+
+                        <div className="flex flex-wrap items-center gap-3 text-sm">
+                          <span className="font-bold text-foreground">
+                            {s.companyName}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            <CalendarClock className="w-3.5 h-3.5" />
+                            {s.isExpired
+                              ? "Closed"
+                              : `Due ${new Date(s.deadline).toLocaleDateString()}`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Un-save */}
+                      <button
+                        type="button"
+                        aria-label={`Remove ${s.title} from saved tasks`}
+                        title="Remove from saved"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleSave(s.taskId);
+                        }}
+                        className="shrink-0 p-2 border-2 border-black dark:border-white bg-[#FCD34D] text-black shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                      >
+                        <BookmarkCheck className="w-4 h-4" strokeWidth={3} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Task Cards */}
+          {!showSavedOnly && (
           <div className="grid grid-cols-1 gap-4">
             {filteredTasks.map((task) => (
               <div
@@ -582,6 +768,36 @@ export default function StudentExplore({
                   </div>
 
                   <div className="flex flex-row sm:flex-col items-center sm:items-end gap-4 sm:gap-2 shrink-0">
+                    {/* Save for later — browsing and committing are different acts */}
+                    <button
+                      type="button"
+                      aria-pressed={savedIdSet.has(task._id)}
+                      aria-label={
+                        savedIdSet.has(task._id)
+                          ? `Remove ${task.title} from saved tasks`
+                          : `Save ${task.title} for later`
+                      }
+                      title={
+                        savedIdSet.has(task._id)
+                          ? "Saved. Click to remove."
+                          : "Save for later"
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleSave(task._id);
+                      }}
+                      className={`p-2 border-2 border-black dark:border-white shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all ${
+                        savedIdSet.has(task._id)
+                          ? "bg-[#FCD34D] text-black"
+                          : "bg-card text-foreground hover:bg-[#FCD34D]/40"
+                      }`}
+                    >
+                      {savedIdSet.has(task._id) ? (
+                        <BookmarkCheck className="w-4 h-4" strokeWidth={3} />
+                      ) : (
+                        <Bookmark className="w-4 h-4" strokeWidth={3} />
+                      )}
+                    </button>
                     <span className="text-[10px] font-black px-3 py-1 bg-black text-white dark:bg-white dark:text-black uppercase tracking-widest border-2 border-black dark:border-white">
                       {task.category}
                     </span>
@@ -639,6 +855,7 @@ export default function StudentExplore({
               </div>
             ))}
           </div>
+          )}
         </div>
       </div>
 
@@ -906,7 +1123,7 @@ export default function StudentExplore({
               <div className="flex items-center justify-between p-4 border-b-4 border-black dark:border-white bg-[#A7F3D0] text-black">
                 <Typography
                   variant="h4"
-                  className="truncate pr-4 font-black uppercase tracking-widest border-r-4 border-transparent"
+                  className="truncate pr-4 font-black uppercase tracking-widest"
                 >
                   {previewAttachment.name}
                 </Typography>

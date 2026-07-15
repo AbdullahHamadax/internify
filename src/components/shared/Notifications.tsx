@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import {
   BellOff,
   UserCheck,
+  UserMinus,
   FileUp,
   MessageSquare,
   CheckCircle,
@@ -22,6 +23,7 @@ import "./notifications.css";
 
 type NotificationType =
   | "task_accepted"
+  | "application_withdrawn"
   | "task_submitted"
   | "new_message"
   | "task_completed"
@@ -34,6 +36,10 @@ const ICON_MAP: Record<
   { icon: typeof MessageSquare; className: string }
 > = {
   task_accepted: { icon: UserCheck, className: "notif-icon--accepted" },
+  application_withdrawn: {
+    icon: UserMinus,
+    className: "notif-icon--withdrawn",
+  },
   task_submitted: { icon: FileUp, className: "notif-icon--submitted" },
   new_message: { icon: MessageSquare, className: "notif-icon--message" },
   task_completed: { icon: CheckCircle, className: "notif-icon--completed" },
@@ -47,6 +53,10 @@ const ACTION_MAP: Record<
   { label: string; className: string }
 > = {
   task_accepted: { label: "View Applicant", className: "notif-action--green" },
+  application_withdrawn: {
+    label: "View Task",
+    className: "notif-action--red",
+  },
   task_submitted: {
     label: "Review Submission",
     className: "notif-action--blue",
@@ -129,16 +139,26 @@ export default function Notifications({
       onNavigate("profile");
     } else if (type === "task_accepted" && notif.relatedUserId) {
       openProfile(notif.relatedUserId as Id<"users">);
-    } else if (type === "task_submitted" && onNavigate) {
+    } else if (
+      (type === "task_submitted" || type === "application_withdrawn") &&
+      onNavigate
+    ) {
+      // Both land on the employer's task, where the applicant list lives.
       if (notif.relatedTaskId) {
         onNavigate(`task:${notif.relatedTaskId}`);
       } else {
         onNavigate("dashboard");
       }
+    } else if (type === "deadline_approaching" && onNavigate) {
+      // The task is already accepted, so it lives on the student's
+      // dashboard pipeline — Explore filters accepted tasks out.
+      if (notif.relatedTaskId) {
+        onNavigate(`dashboard-task:${notif.relatedTaskId}`);
+      } else {
+        onNavigate("dashboard");
+      }
     } else if (
-      (type === "new_task_posted" ||
-        type === "task_completed" ||
-        type === "deadline_approaching") &&
+      (type === "new_task_posted" || type === "task_completed") &&
       onNavigate
     ) {
       if (role === "student") {

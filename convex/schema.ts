@@ -194,6 +194,21 @@ export default defineSchema({
     .index("by_studentId_taskId", ["studentId", "taskId"]),
 
   /**
+   * SAVED TASKS TABLE
+   * A student's bookmarks. Lets a student keep a task they are interested in
+   * without committing to it, so browsing and deciding are separate acts.
+   * A row exists only while the task is saved; unsaving deletes it.
+   */
+  savedTasks: defineTable({
+    studentId: v.id("users"),
+    taskId: v.id("tasks"),
+    createdAt: v.number(),
+  })
+    .index("by_studentId", ["studentId"])
+    .index("by_taskId", ["taskId"])
+    .index("by_studentId_taskId", ["studentId", "taskId"]),
+
+  /**
    * SUBMISSIONS TABLE
    * Tracks file submissions from students for their accepted tasks.
    */
@@ -344,6 +359,7 @@ export default defineSchema({
     userId: v.id("users"),
     type: v.union(
       v.literal("task_accepted"),
+      v.literal("application_withdrawn"),
       v.literal("task_submitted"),
       v.literal("new_message"),
       v.literal("task_completed"),

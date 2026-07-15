@@ -16,10 +16,13 @@ import {
   Sparkles,
   Zap,
   Target,
+  UserMinus,
+  AlertTriangle,
 } from "lucide-react";
 
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 import { Typography } from "@/components/ui/Typography";
 import SubmitTaskModal from "./SubmitTaskModal";
@@ -101,6 +104,36 @@ export default function StudentOverview({
   const [selectedApp, setSelectedApp] = useState<SelectedApplication | null>(
     null,
   );
+
+  // ── Withdraw ──
+  // Withdrawing frees the slot and deletes any work under the application, so
+  // it is confirmed explicitly rather than fired from a single click.
+  const withdrawApplication = useMutation(api.tasks.withdrawApplication);
+  const [withdrawTarget, setWithdrawTarget] = useState<{
+    id: string;
+    title: string;
+    hasSubmission: boolean;
+  } | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
+
+  const confirmWithdraw = async () => {
+    if (!withdrawTarget) return;
+    setWithdrawing(true);
+    setWithdrawError(null);
+    try {
+      await withdrawApplication({
+        applicationId: withdrawTarget.id as Id<"applications">,
+      });
+      setWithdrawTarget(null);
+    } catch (err) {
+      setWithdrawError(
+        err instanceof Error ? err.message : "Could not withdraw. Try again.",
+      );
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   const applications = useQuery(api.tasks.getStudentApplications);
 
@@ -318,6 +351,28 @@ export default function StudentOverview({
                         }}
                       />
                     </div>
+
+                    {/* Withdraw — an accepted task holds a slot, so let the
+                        student give it back. Completed work is not erasable. */}
+                    {app.status !== "completed" && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setWithdrawError(null);
+                          setWithdrawTarget({
+                            id: app._id,
+                            title: app.task.title,
+                            hasSubmission: app.hasSubmission,
+                          });
+                        }}
+                        aria-label={`Withdraw from ${app.task.title}`}
+                        className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-[#EA4335] transition-colors underline-offset-4 hover:underline decoration-2"
+                      >
+                        <UserMinus className="w-3 h-3" strokeWidth={3} />
+                        Withdraw
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
@@ -440,6 +495,92 @@ export default function StudentOverview({
           onClose={() => setSelectedApp(null)}
           onSubmitted={() => setSelectedApp(null)}
         />
+      )}
+
+      {/* ── Withdraw confirmation ── */}
+      {withdrawTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => !withdrawing && setWithdrawTarget(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="withdraw-title"
+        >
+          <div
+            className="relative w-full max-w-md bg-card border-4 border-black dark:border-white shadow-[8px_8px_0_0_#000] dark:shadow-[8px_8px_0_0_#fff]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 p-5 border-b-4 border-black dark:border-white">
+              <span className="p-2 border-2 border-black dark:border-white bg-[#EA4335] text-white shrink-0">
+                <AlertTriangle className="w-4 h-4" strokeWidth={3} />
+              </span>
+              <Typography
+                id="withdraw-title"
+                variant="h3"
+                className="font-black uppercase tracking-tight leading-tight"
+              >
+                Withdraw from this task?
+              </Typography>
+            </div>
+
+            <div className="p-5 space-y-3">
+              <Typography variant="p" className="text-sm">
+                You&apos;re about to withdraw from{" "}
+                <strong className="font-black">{withdrawTarget.title}</strong>.
+                This gives your slot back to the employer and removes you from
+                their applicant list.
+              </Typography>
+
+              {withdrawTarget.hasSubmission && (
+                <div className="p-3 border-2 border-[#EA4335] bg-red-50 dark:bg-red-950/30">
+                  <Typography variant="p" className="text-xs font-bold">
+                    Your submission and its AI evaluation for this task will be
+                    deleted. This cannot be undone.
+                  </Typography>
+                </div>
+              )}
+
+              <Typography variant="p" color="muted" className="text-xs">
+                You can accept the task again later if it&apos;s still open.
+              </Typography>
+
+              {withdrawError && (
+                <div className="p-3 border-2 border-red-600 bg-red-100 dark:bg-red-900/30 text-sm font-bold text-red-700 dark:text-red-400">
+                  {withdrawError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 p-5 border-t-4 border-black dark:border-white">
+              <button
+                type="button"
+                onClick={() => setWithdrawTarget(null)}
+                disabled={withdrawing}
+                className="px-5 py-2.5 border-2 border-black dark:border-white bg-card font-black uppercase text-xs tracking-widest shadow-[2px_2px_0_0_#000] dark:shadow-[2px_2px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50"
+              >
+                Keep task
+              </button>
+              <button
+                type="button"
+                onClick={confirmWithdraw}
+                disabled={withdrawing}
+                className="px-5 py-2.5 border-2 border-black dark:border-white bg-[#EA4335] text-white font-black uppercase text-xs tracking-widest shadow-[4px_4px_0_0_#000] dark:shadow-[4px_4px_0_0_#fff] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] dark:hover:shadow-[2px_2px_0_0_#fff] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {withdrawing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Withdrawing…
+                  </>
+                ) : (
+                  <>
+                    <UserMinus className="w-4 h-4" strokeWidth={3} />
+                    Withdraw
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </motion.div>
   );

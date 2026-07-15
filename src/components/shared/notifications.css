@@ -123,13 +123,13 @@
 }
 
 .notif-tab--active-student {
-  border-color: #2563EB;
-  color: #2563EB;
+  border-color: var(--role-student);
+  color: var(--role-student);
 }
 
 .notif-tab--active-employer {
-  border-color: #d946ef;
-  color: #d946ef;
+  border-color: var(--role-employer);
+  color: var(--role-employer);
 }
 
 .notif-tabs__spacer {
@@ -183,16 +183,14 @@
   box-shadow: var(--brutal-shadow-sm);
 }
 
-.notif-card--unread {
-  border-left-width: 6px;
-}
-
+/* Unread state: the whole card border takes the role color (paired with the
+   inline unread dot, so meaning never rides on color alone). */
 .notif-card--unread.notif-card--student {
-  border-left-color: #2563EB;
+  border-color: var(--role-student);
 }
 
 .notif-card--unread.notif-card--employer {
-  border-left-color: #d946ef;
+  border-color: var(--role-employer);
 }
 
 .notif-card--read {
@@ -212,8 +210,15 @@
 }
 
 .notif-icon--accepted {
-  background: #22c55e;
+  background: var(--dash-emerald-bright);
   color: #000;
+}
+
+/* Withdrawal is informational, not an alarm: neutral ink, not the red used for
+   deadlines. Uses the DESIGN.md muted-ink token rather than a new literal. */
+.notif-icon--withdrawn {
+  background: #64748b;
+  color: #fff;
 }
 
 .notif-icon--submitted {
@@ -222,17 +227,17 @@
 }
 
 .notif-icon--message {
-  background: #f59e0b;
+  background: #fcd34d;
   color: #000;
 }
 
 .notif-icon--completed {
-  background: #8b5cf6;
+  background: var(--dash-violet);
   color: #fff;
 }
 
 .notif-icon--new-task {
-  background: #f97316;
+  background: #d243ef;
   color: #fff;
 }
 
@@ -242,7 +247,7 @@
 }
 
 .notif-icon--rated {
-  background: #eab308;
+  background: #fcd34d;
   color: #000;
 }
 
@@ -305,16 +310,6 @@
   border-color: var(--foreground);
 }
 
-.notif-action-icon--delete:hover {
-  background: #fef2f2;
-  color: #ef4444;
-  border-color: #ef4444;
-}
-
-.dark .notif-action-icon--delete:hover {
-  background: #450a0a;
-}
-
 .notif-content__message {
   font-size: 0.8125rem;
   line-height: 1.5;
@@ -347,11 +342,11 @@
 }
 
 .notif-unread-dot--student {
-  background: #2563EB;
+  background: var(--role-student);
 }
 
 .notif-unread-dot--employer {
-  background: #d946ef;
+  background: var(--role-employer);
 }
 
 /* ── Action Buttons ── */
@@ -387,16 +382,17 @@
 }
 
 .notif-action--green {
-  background: #22c55e;
+  background: var(--dash-emerald-bright);
   color: #000;
 }
 
 .notif-action--orange {
-  background: #f97316;
+  background: #fcd34d;
+  color: #000;
 }
 
 .notif-action--purple {
-  background: #8b5cf6;
+  background: var(--dash-violet);
 }
 
 .notif-action--red {
