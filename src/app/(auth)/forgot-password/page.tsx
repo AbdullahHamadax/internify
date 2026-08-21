@@ -1,11 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useClerk, useSignIn } from "@clerk/nextjs";
+import { useSignIn } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import { Mail, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -57,8 +57,8 @@ type ResetFormData = z.infer<typeof resetSchema>;
 // ── Component ─────────────────────────────────────────────
 
 export default function ForgotPasswordPage() {
-  const { isLoaded, signIn } = useSignIn();
-  const { signOut } = useClerk();
+  const { isLoaded, setActive, signIn } = useSignIn();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const role = searchParams.get("role") ?? "student";
   const isEmployer = role === "employer";
@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
 
   // ── Step 2: Verify code + set new password ──
   async function onResetSubmit(data: ResetFormData) {
-    if (!isLoaded || !signIn) {
+    if (!isLoaded || !signIn || !setActive) {
       setSubmitError("Authentication is still loading. Please try again.");
       return;
     }
@@ -130,12 +130,21 @@ export default function ForgotPasswordPage() {
         password: data.password,
       });
 
-      if (result.status === "complete") {
+      if (result.status === "complete" && result.createdSessionId) {
+        // A successful password reset creates a new Clerk session. Activate
+        // that exact session instead of starting a second sign-in attempt.
+        await setActive({
+          session: result.createdSessionId,
+          navigate: async () => {},
+        });
         setSuccessMessage(
-          "Password reset successfully! Please sign in with your new password.",
+          "Password reset successfully! Redirecting to your dashboard...",
         );
+        router.replace("/dashboard");
       } else {
-        setSubmitError("Password reset incomplete. Please try the code again.");
+        setSubmitError(
+          `Password reset is not complete yet. Status: ${result.status}.`,
+        );
       }
     } catch (error) {
       if (isClerkAPIResponseError(error)) {
@@ -250,13 +259,7 @@ export default function ForgotPasswordPage() {
             <div className="w-full rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 text-center font-medium dark:border-green-800 dark:bg-green-950 dark:text-green-400">
               {successMessage}
             </div>
-            <Button
-              type="button"
-              onClick={() => signOut({ redirectUrl: `/login?role=${role}` })}
-              className={`w-full h-11 text-base font-semibold text-white ${isEmployer ? "bg-purple-600 hover:bg-purple-700" : "bg-blue-600 hover:bg-blue-700"}`}
-            >
-              Back to sign in
-            </Button>
+            <div className="h-7 w-7 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           </div>
         ) : (
           <form
