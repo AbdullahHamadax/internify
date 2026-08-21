@@ -5,7 +5,7 @@ import { useSignIn } from "@clerk/nextjs";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import { Mail, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -58,7 +58,6 @@ type ResetFormData = z.infer<typeof resetSchema>;
 
 export default function ForgotPasswordPage() {
   const { isLoaded, setActive, signIn } = useSignIn();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const role = searchParams.get("role") ?? "student";
   const isEmployer = role === "employer";
@@ -140,7 +139,11 @@ export default function ForgotPasswordPage() {
         setSuccessMessage(
           "Password reset successfully! Redirecting to your dashboard...",
         );
-        router.replace("/dashboard");
+
+        // Force a document navigation so Clerk's new session and the Convex
+        // auth provider both initialize from fresh browser state. A client-side
+        // transition here can leave Convex waiting on the previous auth state.
+        window.location.replace("/dashboard");
       } else {
         setSubmitError(
           `Password reset is not complete yet. Status: ${result.status}.`,
