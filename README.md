@@ -121,7 +121,7 @@ The AI track that was previously planned is now **live**. Internify runs a multi
 | **Animation**          | Motion, GSAP                                                                                        |
 | **Auth**               | Clerk                                                                                               |
 | **Backend / Database** | Convex                                                                                              |
-| **AI / Retrieval**     | Groq (`llama-3.3-70b-versatile`), Pinecone, Hugging Face (`sentence-transformers/all-MiniLM-L6-v2`) |
+| **AI / Retrieval**     | Groq (`openai/gpt-oss-120b`), Pinecone, Hugging Face (`sentence-transformers/all-MiniLM-L6-v2`) |
 | **Documents**          | jsPDF, pdfjs-dist, JSZip (CV generation, PDF parsing, submission bundling)                          |
 | **Validation / Forms** | Zod, React Hook Form                                                                                |
 

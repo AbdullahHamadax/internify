@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { HfInference } from "@huggingface/inference";
+import { GROQ_MODEL, GROQ_REASONING_CONFIG } from "@/lib/groq";
 
 // Initialize SDKs
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
@@ -134,7 +135,8 @@ If the answer is not in the knowledge base above, say: "I don't have specific in
         ...conversationHistory,
         { role: "user", content: message },
       ],
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
+      ...GROQ_REASONING_CONFIG,
       temperature: 0.3,
       max_tokens: 500,
       stream: true,

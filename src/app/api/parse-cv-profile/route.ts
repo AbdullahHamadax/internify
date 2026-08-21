@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import { GROQ_MODEL, GROQ_REASONING_CONFIG } from "@/lib/groq";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
@@ -118,7 +119,8 @@ Return JSON in this exact shape:
         { role: "system", content: systemPrompt },
         { role: "user", content: truncatedText },
       ],
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
+      ...GROQ_REASONING_CONFIG,
       temperature: 0.1,
       response_format: { type: "json_object" },
     });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import { GROQ_MODEL, GROQ_REASONING_CONFIG } from "@/lib/groq";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
@@ -67,7 +68,8 @@ export async function POST(req: NextRequest) {
           content: `Format this task description:\n\n${trimmed}`,
         },
       ],
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
+      ...GROQ_REASONING_CONFIG,
       temperature: 0,
       max_tokens: 2000,
       response_format: { type: "json_object" },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import { GROQ_MODEL, GROQ_REASONING_CONFIG } from "@/lib/groq";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
@@ -117,7 +118,8 @@ RESPOND WITH ONLY valid JSON (no markdown, no code fences):
           content: `Here is the raw text extracted from a PDF resume. Analyze it for a ${field} position. Remember: score each criterion independently based on evidence you find in the text.\n\n---BEGIN RESUME TEXT---\n${truncatedText}\n---END RESUME TEXT---`,
         },
       ],
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
+      ...GROQ_REASONING_CONFIG,
       temperature: 0.4,
       response_format: { type: "json_object" },
     });

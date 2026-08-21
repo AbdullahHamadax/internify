@@ -1,6 +1,7 @@
 // app/api/suggest-rubric/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import { GROQ_MODEL, GROQ_REASONING_CONFIG } from "@/lib/groq";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
@@ -58,7 +59,8 @@ Active Rubric Dimensions (do NOT duplicate these): ${JSON.stringify(activeDimens
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
+      ...GROQ_REASONING_CONFIG,
       temperature: 0.2,
       max_tokens: 600,
     });

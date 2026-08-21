@@ -3,6 +3,7 @@ import Groq from "groq-sdk";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { GROQ_MODEL, GROQ_REASONING_CONFIG } from "@/lib/groq";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
@@ -491,7 +492,8 @@ export async function POST(req: NextRequest) {
           content: `Here is the student's submission. Evaluate it thoroughly against the rubric.\n\n---BEGIN SUBMISSION---\n${truncatedContent}\n---END SUBMISSION---`,
         },
       ],
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
+      ...GROQ_REASONING_CONFIG,
       temperature: 0.3,
       max_tokens: 2000,
       response_format: { type: "json_object" },
